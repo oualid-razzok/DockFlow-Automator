@@ -1,0 +1,32 @@
+[build-system]
+requires = ["scikit-build-core>=0.9.0", "pybind11>=2.12.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "dockflow-bindings"
+version = "0.1.0"
+description = "C++ accelerator kernels (PDBQT parsing, grid box, contacts, RMSD) for DockFlow-Automator"
+readme = "README.md"
+license = { file = "../LICENSE" }
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+[project.urls]
+Homepage = "https://github.com/dockflow/DockFlow-Automator"
+
+[tool.scikit-build]
+minimum-version = "0.9"
+build-dir = "build/{wheel_tag}"
+cmake.build-type = "Release"
+sdist.exclude = ["build"]
+wheel.packages = []
+
+[tool.scikit-build.cmake.define]
+# keep the build hermetic (pybind11 comes from the build requirements)
+SKBUILD = "1"

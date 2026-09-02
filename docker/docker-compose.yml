@@ -1,0 +1,26 @@
+# Docker Compose for DockFlow-Automator.
+#
+#   docker compose -f docker/docker-compose.yml run dockflow info
+#   docker compose -f docker/docker-compose.yml run dockflow \
+#       run --config /data/run.yaml
+#
+# Put your pipeline YAML and input files in ./data (bind-mounted to /data).
+services:
+  dockflow:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: dockflow-automator:latest
+    container_name: dockflow
+    volumes:
+      - ./data:/data
+    environment:
+      DOCKFLOW_HOME: /data
+      MPLBACKEND: Agg
+    command: ["info"]
+    # For the GUI (Linux + X11):
+    # environment:
+    #   DISPLAY: ${DISPLAY}
+    # volumes:
+    #   - /tmp/.X11-unix:/tmp/.X11-unix
+    # command: ["gui"]

@@ -1,0 +1,156 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+# ---------------------------------------------------------------------------
+# DockFlow-Automator: unified, automated molecular docking platform.
+# Target / ligand download -> preparation -> grid box -> docking -> 3D view.
+# ---------------------------------------------------------------------------
+
+[project]
+name = "dockflow-automator"
+version = "0.1.0"
+description = "Unified, automated molecular docking: download, prepare, dock and visualize - end to end."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "DockFlow-Automator Contributors" }]
+keywords = [
+    "molecular-docking",
+    "autodock-vina",
+    "chemoinformatics",
+    "pdbqt",
+    "meeko",
+    "openbabel",
+    "pymol",
+    "drug-discovery",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+# Core, dependency-light requirements (everything else degrades gracefully).
+dependencies = [
+    "requests>=2.28",
+    "numpy>=1.23",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+# Modern replacements for legacy MGLTools (prepare_ligand4.py logic).
+prep = [
+    "meeko>=0.5.0",
+    "rdkit>=2023.03.1",
+]
+# OpenBabel Python bindings (wheel distribution); conda-forge also works.
+obabel = ["openbabel-wheel>=3.1.1"]
+# Official AutoDock Vina Python bindings.
+engine = ["vina>=1.2.3"]
+# Desktop application.
+gui = ["PyQt6>=6.5.0"]
+# Static fallback renderer when PyMOL is unavailable.
+viz = ["matplotlib>=3.7"]
+# Everything except the C++ bindings (built separately via scikit-build-core).
+all = [
+    "meeko>=0.5.0",
+    "rdkit>=2023.03.1",
+    "openbabel-wheel>=3.1.1",
+    "vina>=1.2.3",
+    "PyQt6>=6.5.0",
+    "matplotlib>=3.7",
+]
+test = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+    "build>=1.0",
+]
+
+[project.scripts]
+dockflow = "dockflow_core.cli:main"
+dockflow-gui = "dockflow_gui.app:main"
+
+[project.urls]
+Homepage = "https://github.com/dockflow/DockFlow-Automator"
+Documentation = "https://github.com/dockflow/DockFlow-Automator#readme"
+Issues = "https://github.com/dockflow/DockFlow-Automator/issues"
+
+# ---------------------------------------------------------------------------
+# Packaging
+# ---------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["dockflow_core", "dockflow_gui"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "dockflow_core",
+    "dockflow_gui",
+    "bindings",
+    "scripts",
+    "tests",
+    "examples",
+    "docker",
+    "CMakeLists.txt",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "7.4"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers -m 'not network'"
+markers = [
+    "network: tests that require live internet access (deselected by default)",
+    "gui: tests that require PyQt6 with a working (offscreen) display",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:rdkit.*",
+    "ignore::DeprecationWarning:meeko.*",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+exclude = ["bindings/build", "docker"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4"]
+ignore = [
+    "E501", # line length handled by formatter preference / manual wrapping
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+"scripts/*" = ["E402"] # scripts may re-order sys.path before imports
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["dockflow_core", "dockflow_gui"]
+omit = ["tests/*"]

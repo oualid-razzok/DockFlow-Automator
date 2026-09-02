@@ -1,0 +1,60 @@
+# =============================================================================
+# DockFlow-Automator pipeline configuration
+#
+# HIV-1 protease redocking validation: the co-crystallized cyclic-urea
+# inhibitor XK2 of PDB 1HVR is re-docked into its own binding site, plus
+# aspirin / caffeine as decoy controls.
+#
+# Run:
+#   dockflow run --config examples/configs/hiv1_protease_example.yaml
+# =============================================================================
+run_id: hiv1_protease_redocking
+
+workdir: runs
+
+target:
+  pdb_id: 1HVR
+
+ligands:
+  - id: xk2_redock
+    pdb_ligand: XK2          # download the co-crystal ligand from RCSB
+  - id: aspirin_decoy
+    pubchem: aspirin         # name lookup (CID or SMILES also work)
+  - id: caffeine_decoy
+    smiles: "Cn1cnc2c1c(=O)n(C)c(=O)n2C"
+
+receptor:
+  chains: null               # keep both chains of the homodimer
+  keep_water: false
+  keep_hetero: false
+  keep_resnames: []          # e.g. [ZN] for metalloproteases
+  altloc: best
+  add_hydrogens: true
+  merge_nonpolar_h: true
+  engine: auto               # openbabel > rdkit > obabel-cli > none
+
+gridbox:
+  source: ligand             # derive from the co-crystallized ligand
+  reference_ligand_resname: XK2
+  padding: 4.0               # A around the ligand bounding box
+
+docking:
+  backend: auto              # python > cli (vina) > smina
+  scoring: vina              # vina | vinardo | ad4
+  exhaustiveness: 16
+  num_modes: 9
+  refine: 5
+  seed: 2026                 # reproducible
+  cpu: 0                     # 0 = all cores
+  parallel: 1
+  timeout: 3600
+
+analysis:
+  top_poses: 3
+  contacts_cutoff: 5.0
+
+visualization:
+  enabled: true
+  engine: auto               # pymol when available, matplotlib otherwise
+  session: true
+  top_poses: 5
