@@ -1,0 +1,17 @@
+# Keep the container image small and reproducible.
+.git
+.github
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.ruff_cache
+**/.coverage
+**/*.egg-info
+build/
+dist/
+wheelhouse/
+data/
+*.zip
+.venv
+venv
