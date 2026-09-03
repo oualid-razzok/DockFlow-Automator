@@ -4,6 +4,43 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-09-03
+
+### Added
+
+- **Windows support**: `scripts/install_tools.ps1` bootstrap (miniforge +
+  conda-forge openbabel/PyMOL + automatic download of the official
+  AutoDock Vina 1.2.7 Windows executable, renamed `vina.exe` so the CLI
+  engine backend auto-detects it) and a `run_dockflow.bat` double-click
+  launcher with `--cli` passthrough.
+- **macOS support**: `run_dockflow.command` double-click launcher (Finder),
+  `install_tools.sh` now works on Apple Silicon and Intel (conda-forge +
+  bioconda) and degrades gracefully when the vina python bindings cannot
+  be installed from wheels (the bioconda CLI backend takes over).
+- **Linux launcher**: `run_dockflow.sh` (same semantics as the other two).
+- **CI/CD**: `.github/workflows/build.yml` — ruff lint; offline test matrix
+  on Ubuntu/macOS/Windows × Python 3.10/3.12; offscreen GUI smoke tests on
+  all three OS; cibuildwheel builds of the C++ accelerator (cp310–cp312,
+  macOS x86_64 + arm64); Docker image build + smoke test; release job that
+  attaches sdist, wheel and accelerator wheels to `v*` tags.
+- **Documentation**: `BUILD_GUIDE.md` (per-OS compile/install manual: pip,
+  conda, C++ bindings with MSVC/Xcode/gcc, vina bindings from source,
+  Docker, PyInstaller standalone executables, verification checklist,
+  troubleshooting) and `USER_GUIDE.md` (GUI walkthrough, CLI reference,
+  YAML reference, output interpretation, virtual screening, Python API
+  cookbook, FAQ). README links both and documents the platform matrix.
+
+### Fixed
+
+- `pyproject.toml`: `gemmi` added to the `prep`/`all` extras — meeko ≥ 0.6
+  imports gemmi at runtime without declaring it, which broke
+  `import meeko` on Python 3.10+ (`ModuleNotFoundError: gemmi`).
+- `pyproject.toml`: `openbabel-wheel` (Linux-only wheels) is now guarded
+  with a `sys_platform == 'linux'` marker so `.[obabel]`/`.[all]` do not
+  fail on Windows/macOS.
+- Repository URLs (README badge, project urls, Dockerfile label) point to
+  the actual repository.
+
 ## [0.1.0] - 2026-09-02
 
 ### Added

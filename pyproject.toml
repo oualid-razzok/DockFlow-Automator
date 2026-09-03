@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dockflow-automator"
-version = "0.1.0"
+version = "0.1.1"
 description = "Unified, automated molecular docking: download, prepare, dock and visualize - end to end."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -31,6 +31,9 @@ classifiers = [
     "Environment :: X11 Applications :: Qt",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
     "Operating System :: OS Independent",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
@@ -50,12 +53,16 @@ dependencies = [
 
 [project.optional-dependencies]
 # Modern replacements for legacy MGLTools (prepare_ligand4.py logic).
+# gemmi: imported at runtime by meeko >= 0.6 (undeclared upstream dependency;
+# without it `import meeko` raises ModuleNotFoundError on py3.10+).
 prep = [
     "meeko>=0.5.0",
     "rdkit>=2023.03.1",
+    "gemmi>=0.6.6; python_version >= '3.10'",
 ]
-# OpenBabel Python bindings (wheel distribution); conda-forge also works.
-obabel = ["openbabel-wheel>=3.1.1"]
+# OpenBabel Python bindings (wheel distribution, Linux x86_64 only);
+# on Windows/macOS install openbabel through conda-forge instead.
+obabel = ["openbabel-wheel>=3.1.1; sys_platform == 'linux'"]
 # Official AutoDock Vina Python bindings.
 engine = ["vina>=1.2.3"]
 # Desktop application.
@@ -66,8 +73,9 @@ viz = ["matplotlib>=3.7"]
 all = [
     "meeko>=0.5.0",
     "rdkit>=2023.03.1",
-    "openbabel-wheel>=3.1.1",
-    "vina>=1.2.3",
+    "gemmi>=0.6.6; python_version >= '3.10'",
+    "openbabel-wheel>=3.1.1; sys_platform == 'linux'",
+    "vina>=1.2.5",
     "PyQt6>=6.5.0",
     "matplotlib>=3.7",
 ]
@@ -88,9 +96,11 @@ dockflow = "dockflow_core.cli:main"
 dockflow-gui = "dockflow_gui.app:main"
 
 [project.urls]
-Homepage = "https://github.com/dockflow/DockFlow-Automator"
-Documentation = "https://github.com/dockflow/DockFlow-Automator#readme"
-Issues = "https://github.com/dockflow/DockFlow-Automator/issues"
+Homepage = "https://github.com/oualid-razzok/DockFlow-Automator"
+Documentation = "https://github.com/oualid-razzok/DockFlow-Automator#readme"
+Issues = "https://github.com/oualid-razzok/DockFlow-Automator/issues"
+BuildGuide = "https://github.com/oualid-razzok/DockFlow-Automator/blob/main/BUILD_GUIDE.md"
+UserGuide = "https://github.com/oualid-razzok/DockFlow-Automator/blob/main/USER_GUIDE.md"
 
 # ---------------------------------------------------------------------------
 # Packaging
@@ -107,9 +117,15 @@ include = [
     "tests",
     "examples",
     "docker",
+    ".github",
+    "run_dockflow.sh",
+    "run_dockflow.command",
+    "run_dockflow.bat",
     "CMakeLists.txt",
     "pyproject.toml",
     "README.md",
+    "BUILD_GUIDE.md",
+    "USER_GUIDE.md",
     "LICENSE",
     "CHANGELOG.md",
 ]

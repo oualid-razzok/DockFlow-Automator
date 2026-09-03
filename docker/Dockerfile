@@ -67,7 +67,7 @@ USER $MAMBA_USER
 LABEL org.opencontainers.image.title="DockFlow-Automator" \
       org.opencontainers.image.description="Unified, automated molecular docking platform" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/dockflow/DockFlow-Automator"
+      org.opencontainers.image.source="https://github.com/oualid-razzok/DockFlow-Automator"
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD micromamba run -n dockflow dockflow --version || exit 1

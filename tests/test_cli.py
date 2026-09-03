@@ -24,7 +24,14 @@ def test_parser_version(capsys):
         main(["--version"])
     assert excinfo.value.code == 0
     out = capsys.readouterr().out
-    assert "dockflow 0.1.0" in out
+    # version follows the installed distribution metadata (pyproject.toml);
+    # assert the prefix and that it matches dockflow_core.__version__
+    import re
+
+    assert re.search(r"dockflow \d+\.\d+\.\d+", out)
+    from dockflow_core import __version__
+
+    assert __version__ in out
 
 
 def test_main_requires_command():

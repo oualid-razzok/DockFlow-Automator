@@ -21,7 +21,23 @@ Quick start::
 from .config import AppConfig, get_config
 from .utils import DockFlowError
 
-__version__ = "0.1.0"
+
+def _resolve_version() -> str:
+    """Prefer the installed distribution metadata; fall back to a literal.
+
+    This keeps ``__version__`` in sync with ``pyproject.toml`` when the
+    package is installed (regular or editable) while still working when the
+    repository is used straight from a source checkout without installation.
+    """
+    try:
+        from importlib import metadata
+
+        return metadata.version("dockflow-automator")
+    except Exception:  # pragma: no cover - source checkout without install
+        return "0.1.1"
+
+
+__version__ = _resolve_version()
 
 __all__ = [
     "__version__",

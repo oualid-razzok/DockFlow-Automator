@@ -2,8 +2,9 @@
 
 **Unified, automated molecular docking: target/ligand download → preparation → grid box → docking → 3D visualization — end to end.**
 
-[![build](https://github.com/dockflow/DockFlow-Automator/actions/workflows/build.yml/badge.svg)](https://github.com/dockflow/DockFlow-Automator/actions/workflows/build.yml)
+[![build](https://github.com/oualid-razzok/DockFlow-Automator/actions/workflows/build.yml/badge.svg)](https://github.com/oualid-razzok/DockFlow-Automator/actions/workflows/build.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org)
+[![Platforms: Linux · Windows · macOS](https://img.shields.io/badge/platforms-Linux%20%C2%B7%20Windows%20%C2%B7%20macOS-blueviolet.svg)](BUILD_GUIDE.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230.svg)](https://github.com/astral-sh/ruff)
 
@@ -21,6 +22,13 @@ into one reproducible workflow with three interchangeable front ends:
 | **CLI** | scripters, HPC users | `dockflow <command>` |
 | **Python API / pipeline** | developers, automation | `DockingPipeline` |
 | **Docker image** | reproducibility | `docker run dockflow-automator` |
+
+**Runs on Linux, Windows and macOS** — one-command installers and
+double-click launchers are included for all three
+(`scripts/install_tools.sh`, `scripts/install_tools.ps1`,
+`run_dockflow.bat` / `run_dockflow.command` / `run_dockflow.sh`); see
+[**BUILD_GUIDE.md**](BUILD_GUIDE.md) to compile and install, and
+[**USER_GUIDE.md**](USER_GUIDE.md) for the full usage manual.
 
 > The automation style follows the spirit of
 > [`omicscodeathon/anticrcwu`](https://github.com/omicscodeathon/anticrcwu)
@@ -52,6 +60,11 @@ into one reproducible workflow with three interchangeable front ends:
 12. [Licenses & third-party components](#licenses--third-party-components)
 13. [Troubleshooting](#troubleshooting)
 14. [Roadmap](#roadmap)
+
+> Full manuals: **[BUILD_GUIDE.md](BUILD_GUIDE.md)** (compile & install on
+> Linux/Windows/macOS, C++ bindings, Docker, standalone executables) and
+> **[USER_GUIDE.md](USER_GUIDE.md)** (GUI walkthrough, CLI reference, YAML
+> reference, result interpretation, virtual screening, FAQ).
 
 ---
 
@@ -99,24 +112,38 @@ definition, AutoDock Vina docking, interaction analysis, rendering and reporting
 
 ### Install
 
+Platform support (verified): everything installs from pip on all three OS;
+the Vina *python bindings* ship wheels for Linux (cp38–cp312) only, so on
+Windows/macOS the equally capable **vina CLI backend** is used (installed
+automatically by the scripts below). Details in
+[BUILD_GUIDE.md](BUILD_GUIDE.md#2-platform-support-matrix).
+
+| OS | one command | then |
+|---|---|---|
+| Linux / macOS | `bash scripts/install_tools.sh` | `run_dockflow.sh` / `run_dockflow.command` |
+| Windows | `powershell -ExecutionPolicy Bypass -File scripts\install_tools.ps1` | `run_dockflow.bat` |
+| any (minimal) | `pip install "dockflow-automator[prep]"` | `dockflow` / `dockflow-gui` |
+
 ```bash
 # core + ligand/receptor preparation (Meeko + RDKit)
 pip install "dockflow-automator[prep]"
 
-# + Vina python bindings, GUI, fallback renderer
+# + Vina python bindings (Linux), GUI, fallback renderer
 pip install "dockflow-automator[all]"
 
 # everything including OpenBabel wheels and the C++ accelerator
 pip install "dockflow-automator[all,obabel]" ./bindings
 ```
 
-Extras: `[prep]` Meeko+RDKit · `[obabel]` OpenBabel bindings · `[engine]` Vina
-python bindings · `[gui]` PyQt6 · `[viz]` matplotlib · `[test]` pytest/ruff ·
-`[dev]` all of the previous + build.
+Extras: `[prep]` Meeko+RDKit (+gemmi) · `[obabel]` OpenBabel bindings ·
+`[engine]` Vina python bindings · `[gui]` PyQt6 · `[viz]` matplotlib ·
+`[test]` pytest/ruff · `[dev]` all of the previous + build.
 
 PyMOL and the Vina CLI are best installed through conda-forge/bioconda
 (via `bash scripts/install_tools.sh`, which creates a complete `dockflow`
-environment, or see [Docker](#docker) for a pinned image).
+environment — on Windows use `scripts/install_tools.ps1`, which also fetches
+the official Vina 1.2.7 Windows executable — or see [Docker](#docker) for a
+pinned image).
 
 ```bash
 micromamba create -n dockflow -c conda-forge -c bioconda \
@@ -266,39 +293,45 @@ a working (if less accurate) fallback, never a crash.
 
 ```text
 DockFlow-Automator/
-├── .github/workflows/build.yml     # CI: lint, tests (3 OS), bindings, docker, release
-├── dockflow_core/                  # backend logic & workflow orchestration
-│   ├── cli.py                      # `dockflow` command line interface
-│   ├── downloader.py               # PDB/UniProt/AlphaFold + PubChem/ZINC/RCSB ligands
-│   ├── preparator.py               # MGLTools-equivalent receptor/ligand preparation
-│   ├── gridbox.py                  # search-space computation + Vina config I/O
-│   ├── docker_engine.py            # AutoDock Vina execution & scoring (3 backends)
-│   ├── analyzer.py                 # interactions, RMSD, clustering, efficiency
-│   ├── visualizer.py               # PyMOL (headless) + matplotlib rendering
-│   ├── pipeline.py                 # end-to-end automated pipeline
-│   ├── pdbio.py                    # dependency-free PDB/PDBQT reader/writer
-│   ├── models.py                   # data models (records, poses, contacts)
-│   ├── config.py                   # user configuration (~/.dockflow)
-│   └── utils.py                    # logging, subprocess, helpers
-├── dockflow_gui/                   # PyQt6 desktop application
-│   ├── main_window.py              # 6-step wizard, menus, docking workers
-│   ├── widgets.py                  # step bar, ligand table, grid-box editor + 3D preview
-│   ├── threads.py                  # QThread workers (progress, cancel, errors)
-│   ├── app.py / __main__.py        # application bootstrap
-│   └── resources.py                # stylesheet + programmatic icon
-├── bindings/                       # pybind11 C++ accelerator (scikit-build-core)
+├── .github/workflows/build.yml  # CI: lint, tests (3 OS), bindings, docker, release
+├── dockflow_core/                # backend logic & workflow orchestration
+│   ├── cli.py                    # `dockflow` command line interface
+│   ├── downloader.py             # PDB/UniProt/AlphaFold + PubChem/ZINC/RCSB ligands
+│   ├── preparator.py             # MGLTools-equivalent receptor/ligand preparation
+│   ├── gridbox.py                # search-space computation + Vina config I/O
+│   ├── docker_engine.py          # AutoDock Vina execution & scoring (3 backends)
+│   ├── analyzer.py               # interactions, RMSD, clustering, efficiency
+│   ├── visualizer.py             # PyMOL (headless) + matplotlib rendering
+│   ├── pipeline.py               # end-to-end automated pipeline
+│   ├── pdbio.py                  # dependency-free PDB/PDBQT reader/writer
+│   ├── models.py                 # data models (records, poses, contacts)
+│   ├── config.py                 # user configuration (~/.dockflow)
+│   └── utils.py                  # logging, subprocess, helpers
+├── dockflow_gui/                 # PyQt6 desktop application
+│   ├── main_window.py            # 6-step wizard, menus, docking workers
+│   ├── widgets.py                # step bar, ligand table, grid-box editor + 3D preview
+│   ├── threads.py                # QThread workers (progress, cancel, errors)
+│   ├── app.py / __main__.py      # application bootstrap
+│   └── resources.py              # stylesheet + programmatic icon
+├── bindings/                     # pybind11 C++ accelerator (scikit-build-core)
 │   ├── src/dockflow_bindings.cpp
 │   ├── CMakeLists.txt + pyproject.toml
 │   └── README.md
-├── scripts/                        # standalone utilities
-│   ├── dockflow_cli.py             # run the CLI from source, no install
-│   ├── batch_dock.py               # parallel virtual-screening batches
-│   └── install_tools.sh            # conda environment bootstrap
-├── docker/                         # Dockerfile, env.yaml, entrypoint, compose
-├── examples/                       # YAML pipeline + shell walkthrough
-├── tests/                          # pytest suite (11 modules, 133 tests)
-├── CMakeLists.txt                  # top-level superbuild
-├── pyproject.toml                  # packaging, extras, tooling config
+├── scripts/                      # standalone utilities
+│   ├── dockflow_cli.py           # run the CLI from source, no install
+│   ├── batch_dock.py             # parallel virtual-screening batches
+│   ├── install_tools.sh          # conda bootstrap (Linux / macOS)
+│   └── install_tools.ps1         # conda + vina.exe bootstrap (Windows)
+├── run_dockflow.bat              # double-click launchers: Windows / macOS / Linux
+├── run_dockflow.command          #   (find the conda env, start the GUI)
+├── run_dockflow.sh               #
+├── docker/                       # Dockerfile, env.yaml, entrypoint, compose
+├── examples/                     # YAML pipeline + shell walkthrough
+├── tests/                        # pytest suite (11 modules, 133 tests)
+├── CMakeLists.txt                # top-level superbuild (bindings + optional OpenBabel)
+├── pyproject.toml                # packaging, extras, tooling config
+├── BUILD_GUIDE.md                # compile & install manual (Linux/Windows/macOS)
+├── USER_GUIDE.md                 # full usage manual (GUI/CLI/YAML/API)
 ├── CHANGELOG.md · LICENSE · README.md
 ```
 

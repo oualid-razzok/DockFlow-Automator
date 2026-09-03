@@ -49,7 +49,7 @@ __all__ = [
     "resolve_target",
 ]
 
-USER_AGENT = "DockFlow-Automator/0.1.0 (github.com/dockflow/DockFlow-Automator)"
+USER_AGENT = "DockFlow-Automator/0.1.1 (github.com/oualid-razzok/DockFlow-Automator)"
 
 _UNIPROT_RE = re.compile(r"^[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}){2}[0-9]")
 # Syntax characters that essentially never occur in compound names but are
