@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+wheelhouse/
+.venv/
+venv/
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# App runtime artifacts
+data/
+*.pse
+*.pdbqt
+*.sdf
+!tests/**/*.pdbqt
+
+# Downloaded engines (vina.exe dropped next to the launcher)
+vina.exe
+vina
