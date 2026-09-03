@@ -124,6 +124,11 @@ automatically by the scripts below). Details in
 | Windows | `powershell -ExecutionPolicy Bypass -File scripts\install_tools.ps1` | `run_dockflow.bat` |
 | any (minimal) | `pip install "dockflow-automator[prep]"` | `dockflow` / `dockflow-gui` |
 
+> **No setup done yet?** Just double-click the launcher for your OS — it
+> detects the missing install and offers a one-keypress guided setup
+> (full conda stack, or quick pip install + automatic Vina engine
+> download).
+
 ```bash
 # core + ligand/receptor preparation (Meeko + RDKit)
 pip install "dockflow-automator[prep]"

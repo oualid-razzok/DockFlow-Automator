@@ -112,8 +112,11 @@ def run_command(
             cwd=str(cwd) if cwd else None,
             env=merged_env,
         )
-    except (FileNotFoundError, PermissionError) as exc:
-        raise ExternalToolError(f"executable not found: {command[0]} ({exc})") from exc
+    except OSError as exc:  # FileNotFoundError, PermissionError and Windows'
+        # "not a valid Win32 application" (WinError 193) are all OSError
+        # subclasses - a shebang script or wrong-architecture binary must not
+        # crash the caller, it must become a reportable tool error.
+        raise ExternalToolError(f"cannot execute {command[0]} ({exc})") from exc
 
     lines: list[str] = []
     try:
@@ -148,9 +151,25 @@ def run_command(
 def which(executable: str | os.PathLike) -> str | None:
     """shutil.which with extra explicit-path support."""
     exe = str(executable)
-    if os.path.isfile(exe) and os.access(exe, os.X_OK):
+    if os.path.isfile(exe) and (os.access(exe, os.X_OK) or _windows_executable(exe)):
         return exe
     return shutil.which(exe)
+
+
+_WINDOWS_EXECUTABLE_SUFFIXES = {".exe", ".bat", ".cmd", ".com"}
+
+
+def _windows_executable(path: str) -> bool:
+    """Windows defence-in-depth: PATHEXT-derived suffixes are always runnable.
+
+    ``os.access(path, os.X_OK)`` normally covers these, but a customised
+    ``PATHEXT`` on some CI runners or corporate machines can make it lie;
+    an explicit suffix check keeps ``vina.exe`` / ``vina.bat`` detection
+    reliable.  Always False on POSIX.
+    """
+    if sys.platform != "win32":
+        return False
+    return os.path.splitext(path)[1].lower() in _WINDOWS_EXECUTABLE_SUFFIXES
 
 
 # ---------------------------------------------------------------------------

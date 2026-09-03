@@ -111,6 +111,9 @@ On Windows/macOS, get the **CLI executable** instead:
   [`vina_1.2.7_win.exe`](https://github.com/ccsb-scripps/AutoDock-Vina/releases/download/v1.2.7/vina_1.2.7_win.exe)
   from the AutoDock-Vina releases, rename it to `vina.exe`, put it anywhere on
   `PATH` (or point the `DOCKFLOW_VINA` environment variable at it).
+  **Simplest:** just drop `vina.exe` in the repository root next to
+  `run_dockflow.bat` — the launcher detects it and points `DOCKFLOW_VINA` at
+  it automatically (and its quick setup downloads it for you).
 - **macOS** — `conda install -c bioconda autodock-vina` (see Path B), or
   build the CLI from source (see §7.4).
 
@@ -370,11 +373,14 @@ Red flags and fixes: see the next section.
 | GUI: `libEGL.so.1: cannot open shared object file` | `sudo apt install libegl1 libxkbcommon0 libxkbcommon-x11-0 libgl1` |
 | GUI on headless server | `QT_QPA_PLATFORM=offscreen dockflow-gui` (or use the CLI) |
 | vina python wheel install fails on non-x86_64 | use the CLI backend: `conda install -c bioconda autodock-vina` |
+| `run_dockflow.sh` → "Python found, but DockFlow is not installed in it" | expected on very first run — choose `[1]` (full conda setup) or `[2]` (quick pip setup + Vina download), or run `bash scripts/install_tools.sh` yourself |
+| quick setup pip fails with "externally-managed-environment" | the launcher retries automatically with `--break-system-packages`; if that also fails use the full conda setup (`[1]`) |
 
 ### Windows
 
 | symptom | fix |
 |---|---|
+| double-click `run_dockflow.bat` → `ModuleNotFoundError: No module named 'yaml'` | normal on very first run — nothing is installed yet. The launcher offers a guided setup: press `[1]` for the full conda setup or `[2]` for quick pip setup. Or run one of these yourself in the repo folder: `powershell -ExecutionPolicy Bypass -File scripts\install_tools.ps1` or `python -m pip install ".[prep,gui,viz]"` |
 | `pip install vina` tries to compile for minutes then fails | expected — no Windows wheels; use `vina.exe` (§4). The CLI backend is selected automatically |
 | PowerShell blocks `install_tools.ps1` | run `powershell -ExecutionPolicy Bypass -File scripts\install_tools.ps1` |
 | `cl.exe` not found when building bindings | install VS Build Tools with the C++ workload; run from "x64 Native Tools Command Prompt" |
@@ -387,9 +393,10 @@ Red flags and fixes: see the next section.
 |---|---|
 | `xcode-select: note: command line tools required` | `xcode-select --install` |
 | conda env created for wrong architecture | install the Miniforge matching your chip (arm64 vs x86_64); `file $(which python)` shows the arch |
-| vina python bindings fail to build | use the bioconda CLI: `conda install -c bioconda autodock-vina` |
+| vina python bindings fail to build | use the bioconda CLI: `conda install -c bioconda autodock-vina`, or let the launcher's quick setup download the official `vina_1.2.7_mac_*` binary |
 | "cannot be opened because the developer cannot be verified" (frozen app) | System Settings → Privacy & Security → Open Anyway, or `xattr -dr com.apple.quarantine DockFlow.app` |
 | `run_dockflow.command` does nothing on double-click | `chmod +x run_dockflow.command` once (zips strip the executable bit) |
+| `run_dockflow.command` → "Python found, but DockFlow is not installed in it" | expected on very first run — choose `[1]` (full conda setup) or `[2]` (quick pip setup + Vina download) |
 
 ## 11. What CI does
 

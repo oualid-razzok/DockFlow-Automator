@@ -11,7 +11,10 @@
 # GUI:    docker run --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 #             -v "$PWD:/data" dockflow-automator gui   (X11 forwarding)
 # =============================================================================
-FROM mambaorg/micromamba:jammy-1.5.10 AS base
+# NOTE on the base tag: micromamba tags are "<version>-<distro>", e.g.
+# "1.5.10-jammy" (NOT "jammy-1.5.10" - that image does not exist and the
+# build fails with "not found" while resolving the metadata).
+FROM mambaorg/micromamba:1.5.10-jammy AS base
 
 # System libraries: OpenGL/rendering for headless PyMOL ray tracing,
 # X11 client libs for optional GUI forwarding, compilers for the bindings.
@@ -28,7 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
-# Conda environment with the scientific stack
+# Conda environment with the scientific stack.
+# The application itself is pip-installed BELOW, after the sources are
+# copied - the build order matters: this layer must not reference
+# /opt/dockflow yet.
 # ---------------------------------------------------------------------------
 COPY --chown=${MAMBA_USER}:${MAMBA_USER} docker/env.yaml /tmp/env.yaml
 RUN micromamba create -y -n dockflow -c conda-forge -c bioconda -f /tmp/env.yaml \
@@ -43,8 +49,9 @@ RUN micromamba run -n dockflow pip install --no-cache-dir \
         "/opt/dockflow[prep,viz]" \
     && micromamba run -n dockflow pip install --no-cache-dir \
         "/opt/dockflow/bindings" \
-    && micromamba run -n dockflow python -c "import dockflow_core, dockflow_bindings" \
-    || echo "bindings optional - core still usable"
+        || echo "C++ bindings optional - core still usable"
+RUN micromamba run -n dockflow python -c "import dockflow_core; print('core OK')" \
+    && micromamba run -n dockflow dockflow --version
 
 # ---------------------------------------------------------------------------
 # Runtime image

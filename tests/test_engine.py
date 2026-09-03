@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import stat
+import sys
 from pathlib import Path
 
 import pytest
@@ -128,7 +129,7 @@ def test_detect_backends_fake_cli(monkeypatch, tmp_path: Path):
     reports = detect_backends(str(fake_vina), None)
     by_name = {r.name: r for r in reports}
     assert by_name["cli"].available
-    assert "exit 0" in by_name["cli"].version or by_name["cli"].version
+    assert "fake" in by_name["cli"].version
     assert not by_name["python"].available
 
 
@@ -142,9 +143,24 @@ def test_engine_no_backend_raises(monkeypatch, tmp_path: Path):
 
 
 def _make_fake_vina(tmp_path: Path) -> Path:
+    """A fake ``vina`` executable that prints a version line and exits 0.
+
+    POSIX: a shebang shell script.  Windows: a ``.bat`` file (batch files
+    are directly executable through ``CreateProcess``; a shebang script
+    would fail with WinError 193 "not a valid Win32 application").
+    Both go through the real single-executable code path on their OS.
+    """
+    if sys.platform == "win32":
+        fake_vina = tmp_path / "vina.bat"
+        fake_vina.write_text(
+            "@echo Vina v1.2.7_fake\r\n@exit /b 0\r\n", encoding="ascii"
+        )
+        return fake_vina
 
     fake_vina = tmp_path / "vina"
-    fake_vina.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    fake_vina.write_text(
+        "#!/bin/sh\necho 'Vina v1.2.7_fake'\nexit 0\n", encoding="utf-8"
+    )
     fake_vina.chmod(fake_vina.stat().st_mode | stat.S_IEXEC)
     return fake_vina
 

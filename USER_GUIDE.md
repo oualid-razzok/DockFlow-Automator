@@ -64,6 +64,21 @@ when it finishes.
 | Windows | double-click `run_dockflow.bat` |
 | Docker (Linux/X11) | see `docker/Dockerfile` header |
 
+> **First run — nothing installed yet?** On all three platforms the
+> launcher detects it and offers a **guided setup** instead of crashing
+> with a traceback:
+> - `[1]` full setup — conda environment with Vina + PyMOL (recommended,
+>   ~10 min; Windows runs `scripts\install_tools.ps1` for you, Linux/macOS
+>   run `scripts/install_tools.sh`),
+> - `[2]` quick setup — pip install into your Python plus automatic
+>   download of the Vina 1.2.7 engine (`vina.exe` on Windows,
+>   architecture-matched `vina` binary on Linux/macOS) into the repository
+>   folder, where it is auto-detected on every start.
+>
+> Pick `[1]` once and double-clicking just works from then on. On Linux or
+> macOS a quick note: if a `.zip` stripped the executable bit, run
+> `chmod +x run_dockflow.sh run_dockflow.command` once.
+
 The window is a **six-step wizard** with a progress bar of steps at the
 top — you can always go back to an earlier step; nothing is destroyed.
 

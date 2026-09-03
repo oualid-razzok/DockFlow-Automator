@@ -112,19 +112,25 @@ function Invoke-EnvPython { param([string[]]$Arguments)
 #    (the docking engine auto-selects the CLI backend when it finds vina.exe)
 # -----------------------------------------------------------------------------
 if (-not $SkipVinaDownload) {
-    $VinaUrl  = "https://github.com/ccsb-scripps/AutoDock-Vina/releases/download/v$VinaVersion/vina_$($VinaVersion -replace '\.', '_')_win.exe"
+    # NOTE: the release asset is literally named "vina_1.2.7_win.exe" (dots).
+    $VinaUrl  = "https://github.com/ccsb-scripps/AutoDock-Vina/releases/download/v${VinaVersion}/vina_${VinaVersion}_win.exe"
     $VinaDest = Join-Path $EnvScripts "vina.exe"
     if (Test-Path $VinaDest) {
         Write-Step "vina.exe already present ($VinaDest)"
     } else {
         Write-Step "downloading AutoDock Vina $VinaVersion for Windows"
         try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Invoke-WebRequest -Uri $VinaUrl -OutFile $VinaDest -UseBasicParsing
+            if ((Get-Item $VinaDest).Length -lt 1MB) {
+                throw "downloaded file looks too small to be the vina engine"
+            }
             Write-Ok "vina.exe -> $VinaDest"
         } catch {
             Write-Warn2 "could not download vina.exe ($($_.Exception.Message))"
             Write-Warn2 "download it manually from https://github.com/ccsb-scripps/AutoDock-Vina/releases"
             Write-Warn2 "rename to vina.exe, place it in $EnvScripts and re-run with -SkipVinaDownload"
+            if (Test-Path $VinaDest) { Remove-Item $VinaDest -Force -ErrorAction SilentlyContinue }
         }
     }
 } else {

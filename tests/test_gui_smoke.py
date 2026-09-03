@@ -3,12 +3,31 @@
 from __future__ import annotations
 
 import os
+import time
 
 import pytest
 
-pytest.importorskip("PyQt6.QtWidgets",
-                    reason="PyQt6 or its system GL libraries unavailable")
+try:
+    import PyQt6.QtWidgets  # noqa: F401
+except Exception as _exc:  # ImportError: package missing OR system GL libs broken
+    pytest.skip(f"PyQt6 or its system GL libraries unavailable ({_exc})",
+                allow_module_level=True)
 pytestmark = pytest.mark.gui
+
+
+def _wait_for_worker(qapp, worker, timeout_s: float = 5.0) -> None:
+    """Wait for a QThread while keeping the event loop alive.
+
+    Cross-thread Qt signals are queued into the receiving thread's event
+    loop; a plain ``worker.wait()`` blocks that loop and the connected
+    callbacks would never fire.  ``processEvents()`` between polls drains
+    the queue, exactly like ``app.exec()`` does in the running app.
+    """
+    deadline = time.monotonic() + timeout_s
+    while not worker.isFinished() and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.005)
+    qapp.processEvents()  # drain pending queued signal deliveries
 
 
 @pytest.fixture(scope="module")
@@ -94,7 +113,7 @@ def test_worker_thread_roundtrip(qapp):
     worker = Worker(lambda: 42)
     worker.signals.result.connect(results.append)
     worker.start()
-    worker.wait(5000)
+    _wait_for_worker(qapp, worker)
     assert results == [42]
 
 
@@ -105,5 +124,5 @@ def test_worker_thread_error(qapp):
     worker = Worker(lambda: 1 / 0)
     worker.signals.error.connect(lambda message, tb: errors.append(message))
     worker.start()
-    worker.wait(5000)
+    _wait_for_worker(qapp, worker)
     assert errors and "ZeroDivisionError" in errors[0]

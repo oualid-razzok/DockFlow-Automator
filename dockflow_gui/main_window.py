@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSettings, Qt
 from PyQt6.QtGui import QColor, QKeySequence
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -31,7 +31,6 @@ from PyQt6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QScrollArea,
-    QSettings,
     QSplitter,
     QStackedWidget,
     QTableWidget,
