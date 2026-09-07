@@ -1,0 +1,63 @@
+# =============================================================================
+# DockFlow-Automator pipeline configuration - CROSS-DOCKING example
+#
+# Dock the HIV-1 protease inhibitor XK2 (co-crystallized in 1HVR) into a
+# DIFFERENT HIV-1 protease structure (1HSG, PDB code MK1 / saquinavir
+# analog bound).  This demonstrates real cross-target use: the ligand was
+# never crystallized in this receptor, so no crystal RMSD exists and the
+# pipeline reports scores + contacts only (the banner is absent by
+# design - that is honest, not a failure).
+#
+# Compare with hiv1_protease_example.yaml (self-redocking validation).
+#
+# Run:
+#   dockflow run --config examples/configs/hiv1_cross_docking_1HSG.yaml
+# =============================================================================
+run_id: hiv1_cross_docking_1hsg
+
+workdir: runs
+
+target:
+  pdb_id: 1HSG              # different HIV-1 PR structure (2.7 A)
+
+ligands:
+  - id: xk2_cross           # ligand from the 1HVR co-crystal
+    pdb_ligand: XK2
+  - id: mk1_native          # the 1HSG native ligand, redocked control
+    pdb_ligand: MK1
+
+receptor:
+  chains: null
+  keep_water: false
+  keep_hetero: false
+  keep_resnames: []
+  altloc: best
+  add_hydrogens: true
+  merge_nonpolar_h: true
+  engine: auto
+
+gridbox:
+  source: ligand            # from the 1HSG co-crystallized ligand MK1
+  reference_ligand_resname: MK1
+  padding: 4.0
+
+docking:
+  backend: auto
+  scoring: vina
+  exhaustiveness: 16        # matches the validated example config
+  num_modes: 9
+  refine: 5
+  seed: 2026
+  cpu: 0
+  parallel: 1
+  timeout: 3600
+
+analysis:
+  top_poses: 3
+  contacts_cutoff: 5.0
+
+visualization:
+  enabled: true
+  engine: auto
+  session: true
+  top_poses: 5

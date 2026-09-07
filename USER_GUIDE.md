@@ -177,19 +177,33 @@ dockflow dock             --receptor runs/prepared/receptor.pdbqt \
                            --config runs/gridbox.txt --exhaustiveness 16 \
                            --out-dir runs/docking
 
-# 5. analyze (contacts, hotspots, clustering, efficiency)
-dockflow analyze          --docking runs/docking --receptor runs/prepared/receptor.pdbqt
+# 5. analyze (geometric contacts, hotspots, clustering, efficiency;
+#    pass the crystal ligand for redocking RMSD validation)
+dockflow analyze          --docking runs/docking --receptor runs/prepared/receptor.pdbqt \
+                           --crystal-ligand runs/raw/1hvr.pdb --crystal-resname XK2
 
 # 6. render
 dockflow visualize        --receptor runs/prepared/receptor.pdbqt \
                            --poses runs/docking/xk2_out.pdbqt --out runs/render.png
+
+# 7. enrichment metrics for an actives+decoys screening run
+dockflow enrich           --summary runs/docking/summary.csv \
+                           --actives actives.txt --roc-png roc.png
 ```
 
-Useful global flags: `--workdir`, `--verbose`, `--config-file` (persistent
-options), `--dry-run` where supported. `dockflow gui` launches the desktop
-app; `dockflow info` prints the environment report; `dockflow --version`
-the package version. `scripts/dockflow_cli.py` runs the CLI straight from
-source without installing (`python scripts/dockflow_cli.py …`).
+Useful global flags: `--workdir`, `--verbose`, `--log-format json`
+(structured one-event-per-line logs for HPC/batch aggregation).
+`dockflow gui` launches the desktop app; `dockflow info` prints the
+environment report (including the OpenBabel wheel detection);
+`dockflow --version` the package version. `scripts/dockflow_cli.py` runs
+the CLI straight from source without installing
+(`python scripts/dockflow_cli.py …`).
+
+The `dock` command also accepts `--backend gnina` with
+`--cnn-scoring rescore|all` and `--cnn <model>` for CNN scoring
+(GNINA is Apache-2.0; install it separately - see the README's backend
+table).  `dockflow run` accepts `--stage`, `--dry-run` and `--force`
+(see sections 4 and 7).
 
 Every stage is restartable: the downloader caches (`~/.dockflow/cache`), and
 each stage only rewrites its own outputs.
@@ -269,12 +283,17 @@ Each run produces a self-contained directory:
 
 ```text
 runs/<run_id>/
-├── manifest.json         # machine-readable summary (inputs, hashes, results)
-├── report.md             # human-readable report with result tables
+├── manifest.json         # machine-readable summary: stage audit trail,
+│                         #   preparation decisions, results, duration_s
+├── environment.json      # scientific-stack version fingerprint (diffable)
+├── report.md             # human-readable report: results, pose clustering,
+│                         #   warnings, "Assumptions this run made" footer
 ├── raw/                  # downloaded structures (as fetched)
 ├── prepared/             # receptor.pdbqt, ligand .pdbqt files, clean PDB
 ├── gridbox.txt           # Vina config file of the search space
-├── docking/              # <ligand>_out.pdbqt, .log, summary.csv
+├── progress.json         # docking checkpoint (crash-safe resume)
+├── docking/              # <ligand>_out.pdbqt, .log, summary.csv,
+│                         #   <ligand>_poses.sdf (one record per pose)
 ├── analysis/             # interactions.json, per-pose contact CSVs
 ├── visualization/        # rendered PNGs (+ .pse sessions)
 └── logs/pipeline.log     # everything the app did, command by command
@@ -285,36 +304,117 @@ Key files:
 - **`<ligand>_out.pdbqt`** — all poses, each preceded by
   `REMARK VINA RESULT: -11.2 0.000 0.000` (affinity, RMSD-lb, RMSD-ub).
   Load directly into PyMOL/ChimeraX if you want to explore by hand.
-- **`summary.csv`** — one row per pose across all ligands:
-  ligand, pose, affinity, RMSD, ligand efficiency.
-- **`interactions.json`** — per pose: H-bonds, hydrophobic contacts, ionic
-  contacts, metal coordination with residue/atom details, plus the residue
-  hotspot table.
+- **`<ligand>_poses.sdf`** — the same poses as SDF, one record per pose,
+  with SD fields `vina_affinity`, `vina_rmsd_lb`, `vina_rmsd_ub` and
+  `crystal_rmsd` (disable with `docking.export_sdf: false`).
+- **`summary.csv`** — one row per pose across all ligands: ligand, pose,
+  affinity, RMSD bounds, `crystal_rmsd` (redocking validation) and
+  `docking_score_efficiency`.
+- **`interactions.json`** — per pose: geometric H-bond contacts,
+  hydrophobic, ionic and metal contacts with residue/atom details, plus
+  the residue hotspot table.  Validates against
+  `docs/schemas/interactions.schema.json`.
+- **`manifest.json`** — every silent preparation decision made explicit
+  (`receptor.decisions`, `ligands[*].prep`, removed species, grid box
+  source/warnings) plus the per-stage audit trail (`stages`:
+  wall time, ISO start/stop, exit status, resolved engine/backend).
 - **`.pse` session** — opens in open-source PyMOL with receptor cartoon,
   poses, and the CGO grid-box wireframe already set up.
-- **`report.md`** — the run summarized for your lab notebook
-  (config + results tables + timings).
+- **`report.md`** — the run summarized for your lab notebook (results,
+  pose-cluster table, warnings and the assumptions footer).
 
 ## 6. Choosing & interpreting results
 
 - **Affinity (kcal/mol)** — Vina's predicted ΔG; more negative = better.
   Rough calibration: ≤ −7 plausible, ≤ −9 strong, ≤ −11 usually only for
   tight binders or artefacts (always sanity-check geometry).
-- **Redocking sanity check** — with a co-crystal ligand, the top pose
-  should land within ~2 Å RMSD of the crystal pose and contact the same
-  residues (the 1HVR example hits the canonical flap residues ILE47/50,
-  ALA28, ILE84 — that's what "correct" looks like).
-- **Ligand efficiency** — affinity divided by heavy-atom count; compare
-  across molecules of different sizes (values ≳ −0.3 are decent).
-- **Pose clustering** — poses are clustered by Kabsch RMSD; a single tight
-  cluster is more convincing than nine scattered poses.
-- **Interaction table** — check chemistry, not just scores: a −10 pose
-  clashing with the protein or making zero H-bonds in a polar pocket is
-  suspect.
-- **Decoys matter** — aspirin/caffeine in the example act as negative
-  controls; your real hit should clearly out-score them.
+- **Redocking validation (`crystal_rmsd`)** — when the search box came
+  from a co-crystallized ligand, every pose gets a symmetry-tolerant
+  heavy-atom RMSD to the crystal pose; the report banner states
+  *pose recovery* with the ≤ 2.0 Å success threshold (the 1HVR example
+  recovers XK2 at 1.08 Å).  Contacts hitting the canonical flap residues
+  ILE47/50, ALA28, ILE84 is the qualitative version of the same check.
+- **docking score efficiency** — affinity divided by heavy-atom count: a
+  **proxy derived from the Vina score**, useful to compare molecules of
+  different sizes *under the same scoring function*; it is **not**
+  experimental ligand efficiency (ΔG/heavy-atoms from assays).
+- **Pose clustering** — the report's cluster table shows whether the 9
+  poses are one converged binding mode or several distinct ones; a
+  single tight cluster is more convincing than nine scattered poses.
+- **Interaction table** — contacts are *geometric* classifications
+  (distance + atom type; see `docs/interaction_criteria.md`): check
+  chemistry, not just scores — a −10 pose clashing with the protein or
+  making zero H-bond contacts in a polar pocket is suspect.
+- **Warnings & assumptions** — read the report's Warnings section
+  (removed metals/cofactors, oversized boxes, engine fallbacks) and the
+  Assumptions footer before trusting any number.
+- **Decoys matter** — aspirin/caffeine in the example act as smoke-test
+  controls; for real enrichment evidence use a DUD-E panel with
+  `dockflow enrich` (see section 7).
 
 ## 7. Batch docking / virtual screening
+
+### Choosing `cpu` and `parallel` (they interact!)
+
+Two independent knobs, two different parallelisms:
+
+- **`docking.cpu`** — threads *inside* one Vina docking (Vina-internal).
+  `0` = all cores.  One ligand at a time, but that ligand's search uses
+  every core.
+- **`docking.parallel`** — how many ligands dock *simultaneously*
+  (DockFlow-external).  Each worker gets `cpu` threads.
+
+The product is what the machine feels: `cpu × parallel` must not exceed
+your cores, or everything slows down and runtimes become noise.
+DockFlow warns (stderr + manifest) when it does.  Recommended settings:
+
+| your cores | typical goal | `cpu` | `parallel` | notes |
+|---|---|---|---|---|
+| 2 | one careful docking | 2 (or 0) | 1 | the validated example setup |
+| 4 | screening throughput | 1 | 4 | CLI backend: 4 vina processes |
+| 8 | mixed | 2 | 4 | one ligand finished every ~2 cores |
+| 8 | one publication-grade docking | 8 (or 0) | 1 | max exhaustiveness per ligand |
+| cluster node | VS funnel | 1 | `os.cpu_count()` | then rescore top hits at high cpu |
+
+Python-backend users should prefer `parallel: 1` with a high `cpu`
+(Vina's own threading is the efficient path there); CLI/Smina/GNINA
+backends parallelise cleanly across ligands.
+
+### Checkpoints: interrupted screens resume where they stopped
+
+Every completed ligand is recorded in `progress.json` next to the
+`docking/` directory; re-running the same config + `--run-id` **skips
+already-docked ligands** automatically.  Use `--force` to re-dock
+everything:
+
+```bash
+dockflow run --config screen.yaml --run-id big_screen    # interrupted...
+dockflow run --config screen.yaml --run-id big_screen    # ...continues
+dockflow run --config screen.yaml --run-id big_screen --force   # start over
+```
+
+### Single-stage debugging runs
+
+```bash
+dockflow run --config screen.yaml --run-id big_screen --stage analyze
+dockflow run --config screen.yaml --run-id big_screen --stage visualize
+```
+
+`--stage` (repeatable: `--stage prep --stage dock`) runs only that
+stage, loading prerequisites from the existing run directory; the
+manifest records skipped stages.  `--dry-run` prints the resolved
+configuration (engines, backends, paths, grid box) and exits.
+
+### Enrichment metrics for actives + decoys panels
+
+```bash
+dockflow enrich --summary big_screen/docking/summary.csv \
+    --actives benchmarks/enrichment/data/actives.txt \
+    --roc-png roc.png --json
+```
+
+prints ROC AUC, EF@1%, EF@5% and BEDROC (α=20).  Build the panel with
+`benchmarks/enrichment/download_dude.py` (DUD-E; see its README).
 
 For libraries beyond GUI comfort (hundreds to thousands of ligands):
 

@@ -4,7 +4,7 @@ Configuration resolution order (highest priority first):
 
 1. Explicit values passed to :class:`AppConfig`.
 2. Environment variables: ``DOCKFLOW_HOME``, ``DOCKFLOW_WORKDIR``,
-   ``DOCKFLOW_VINA``, ``DOCKFLOW_SMINA``, ``DOCKFLOW_PYMOL``,
+   ``DOCKFLOW_VINA``, ``DOCKFLOW_SMINA``, ``DOCKFLOW_GNINA``, ``DOCKFLOW_PYMOL``,
    ``DOCKFLOW_OBABEL``, ``DOCKFLOW_CPU``.
 3. The YAML file ``$DOCKFLOW_HOME/config.yaml`` (created on first save).
 4. Built-in defaults.
@@ -51,6 +51,7 @@ class AppConfig:
     cache_dir: Path = field(default=None)  # type: ignore[assignment]
     vina_exec: str | None = None
     smina_exec: str | None = None
+    gnina_exec: str | None = None
     pymol_exec: str | None = None
     obabel_exec: str | None = None
     cpu: int = 0  # 0 -> use all cores
@@ -66,6 +67,7 @@ class AppConfig:
         # Environment overrides for tool executables.
         self.vina_exec = os.environ.get("DOCKFLOW_VINA", self.vina_exec)
         self.smina_exec = os.environ.get("DOCKFLOW_SMINA", self.smina_exec)
+        self.gnina_exec = os.environ.get("DOCKFLOW_GNINA", self.gnina_exec)
         self.pymol_exec = os.environ.get("DOCKFLOW_PYMOL", self.pymol_exec)
         self.obabel_exec = os.environ.get("DOCKFLOW_OBABEL", self.obabel_exec)
         env_cpu = os.environ.get("DOCKFLOW_CPU")

@@ -90,3 +90,57 @@ def test_render_matplotlib_no_poses(tmp_path: Path, receptor_pdb_path: Path):
     pytest.importorskip("matplotlib", reason="matplotlib not installed")
     out = render_matplotlib(receptor_pdb_path, [], None, tmp_path / "empty.png")
     assert out.is_file()
+
+
+# ---------------------------------------------------------------------------
+# Visual information smoke test (audit item 33)
+# ---------------------------------------------------------------------------
+def test_renders_of_distinct_poses_differ_in_pixels(
+    tmp_path: Path, receptor_pdb_path: Path, docked_pdbqt_path: Path
+):
+    """Distinct poses must render to visibly different PNGs.
+
+    The v0.1.1 audit found renders of different ligands/poses with near
+    identical byte sizes (~474 KB), suggesting templated output.  This test
+    asserts a real pixel difference between two genuinely different pose
+    sets so low-information renders fail CI.
+    """
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.image as mpimg
+        import numpy as np
+    except ImportError:  # pragma: no cover
+        pytest.skip("matplotlib not installed")
+
+    # pose set A: the docked fixture as-is
+    poses_a = tmp_path / "a_out.pdbqt"
+    poses_a.write_text(docked_pdbqt_path.read_text(encoding="utf-8"), encoding="utf-8")
+    # pose set B: same atoms, but translated by 8 A -> a disjoint pose
+    text = poses_a.read_text(encoding="utf-8")
+    shifted_lines = []
+    for line in text.splitlines():
+        if line.startswith(("ATOM", "HETATM")):
+            x = float(line[30:38]) + 8.0
+            shifted_lines.append(line[:30] + f"{x:8.3f}" + line[38:])
+        else:
+            shifted_lines.append(line)
+    poses_b = tmp_path / "b_out.pdbqt"
+    poses_b.write_text("\n".join(shifted_lines) + "\n", encoding="utf-8")
+
+    image_a = tmp_path / "render_a.png"
+    image_b = tmp_path / "render_b.png"
+    box = GridBox(center=(12.5, 9.7, 8.4), size=(16, 16, 16))
+    render_matplotlib(receptor_pdb_path, [poses_a], box, image_a, affinities=[-9.4])
+    render_matplotlib(receptor_pdb_path, [poses_b], box, image_b, affinities=[-9.4])
+    assert image_a.is_file() and image_b.is_file()
+
+    pixels_a = mpimg.imread(image_a).astype(float)
+    pixels_b = mpimg.imread(image_b).astype(float)
+    assert pixels_a.shape == pixels_b.shape
+    changed = float((np.abs(pixels_a - pixels_b) > 1.0 / 255.0).mean())
+    # an 8 A disjoint translation of the whole ligand must change a
+    # measurable fraction of pixels (observed on the mini fixture: ~0.1%;
+    # on real receptors: >1%; threshold an order of magnitude below)
+    assert changed > 2e-4, f"renders are near-identical ({changed:.2%} pixels)"

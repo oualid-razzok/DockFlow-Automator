@@ -335,7 +335,8 @@ After any install path, confirm in a terminal:
 
 ```bash
 dockflow info                       # environment report (see below)
-pytest -m "not network and not gui" # offline test suite (133 tests)
+pytest -m "not network and not gui and not scientific"  # software tests (209)
+pytest -m scientific                # real-docking validation (needs vina+network)
 python -c "import dockflow_bindings as b; assert callable(b.kabsch_rmsd)"  # accelerator
 dockflow-gui                        # GUI launches
 ```

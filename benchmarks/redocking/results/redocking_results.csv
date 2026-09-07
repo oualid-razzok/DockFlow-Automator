@@ -1,0 +1,2 @@
+pdb_id,ligand,target,status,num_poses,best_affinity_kcal_mol,best_crystal_rmsd_a,best_pose_rank,success,engine,docking_backend,runtime_s,run_dir
+1HVR,XK2,HIV-1 protease (cyclic urea inhibitor),ok,9,-11.129,1.078,1,True,openbabel,python,508.3,examples/results/1HVR

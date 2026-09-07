@@ -33,6 +33,12 @@ interchangeable "hydration engines", selected automatically:
 3. ``openbabel-cli``- the ``obabel`` executable via a MOL2 round-trip
 4. ``none``        - dependency-free fallback: no new hydrogens, zero
                      charges, distance-based bonds (for CI/testing only)
+
+With ``engine="auto"`` every engine failure (a broken/incompatible optional
+dependency such as an ``AttributeError`` inside the OpenBabel bindings, an
+``ImportError``, or a parse failure) is caught, reported as a WARNING naming
+the failed engine and the fallback chosen, and the next engine in the chain
+is tried instead - the run must degrade gracefully, never crash.
 """
 
 from __future__ import annotations
@@ -71,6 +77,8 @@ __all__ = [
     "LigandPrepResult",
     "LigandPreparator",
     "COVALENT_RADII",
+    "ELEMENT_SYMBOLS",
+    "element_symbol",
 ]
 
 class PreparationError(DockFlowError):
@@ -109,6 +117,7 @@ class ReceptorPrepResult:
     atoms_out: int = 0
     waters_removed: int = 0
     hetero_removed: int = 0
+    removed_resnames: dict[str, int] = field(default_factory=dict)
     hydrogens_added: int = 0
     warnings: list[str] = field(default_factory=list)
 
@@ -144,12 +153,46 @@ class LigandPrepResult:
     num_atoms: int | None = None
     charge_model: str = "gasteiger"
     engine: str = "meeko"
+    # Provenance of the scientific decisions (audit item 26):
+    input_had_explicit_hydrogens: bool | None = None
+    protonation_source: str = "input protonation state (no pH adjustment)"
+    num_protonation_variants: int = 1
     warnings: list[str] = field(default_factory=list)
     error: str | None = None
 
     @property
     def ok(self) -> bool:
         return self.error is None and self.pdbqt_path is not None
+
+
+# ---------------------------------------------------------------------------
+# Element table (Z -> symbol)
+# ---------------------------------------------------------------------------
+# Local periodic table so receptor preparation never depends on a toolkit
+# helper that optional wheels may not ship (modern openbabel wheels, e.g.
+# 3.1.1.23, removed the OBElementTable SWIG wrapper entirely).
+ELEMENT_SYMBOLS: dict[int, str] = {
+    1: "H", 2: "He", 3: "Li", 4: "Be", 5: "B", 6: "C", 7: "N", 8: "O",
+    9: "F", 10: "Ne", 11: "Na", 12: "Mg", 13: "Al", 14: "Si", 15: "P",
+    16: "S", 17: "Cl", 18: "Ar", 19: "K", 20: "Ca", 21: "Sc", 22: "Ti",
+    23: "V", 24: "Cr", 25: "Mn", 26: "Fe", 27: "Co", 28: "Ni", 29: "Cu",
+    30: "Zn", 31: "Ga", 32: "Ge", 33: "As", 34: "Se", 35: "Br", 36: "Kr",
+    37: "Rb", 38: "Sr", 39: "Y", 40: "Zr", 41: "Nb", 42: "Mo", 43: "Tc",
+    44: "Ru", 45: "Rh", 46: "Pd", 47: "Ag", 48: "Cd", 49: "In", 50: "Sn",
+    51: "Sb", 52: "Te", 53: "I", 54: "Xe", 55: "Cs", 56: "Ba", 57: "La",
+    58: "Ce", 59: "Pr", 60: "Nd", 61: "Pm", 62: "Sm", 63: "Eu", 64: "Gd",
+    65: "Tb", 66: "Dy", 67: "Ho", 68: "Er", 69: "Tm", 70: "Yb", 71: "Lu",
+    72: "Hf", 73: "Ta", 74: "W", 75: "Re", 76: "Os", 77: "Ir", 78: "Pt",
+    79: "Au", 80: "Hg", 81: "Tl", 82: "Pb", 83: "Bi", 84: "Po", 85: "At",
+    86: "Rn", 87: "Fr", 88: "Ra", 89: "Ac", 90: "Th", 91: "Pa", 92: "U",
+    93: "Np", 94: "Pu", 95: "Am", 96: "Cm", 97: "Bk", 98: "Cf", 99: "Es",
+    100: "Fm", 101: "Md", 102: "No", 103: "Lr",
+}
+
+
+def element_symbol(atomic_num: int) -> str:
+    """Element symbol for an atomic number from the local table ("X" if unknown)."""
+    return ELEMENT_SYMBOLS.get(int(atomic_num), "X")
 
 
 # ---------------------------------------------------------------------------
@@ -410,13 +453,15 @@ class OpenBabelPythonEngine(BaseEngine):
     def _graph_from_obmol(mol, charge_model: str) -> list[EngineAtom]:
         from openbabel import openbabel as ob
 
-        element_table = ob.OBElementTable()
         graph: list[EngineAtom] = []
         idx_map: dict[int, int] = {}
         for atom in ob.OBMolAtomIter(mol):
             index = atom.GetIdx() - 1  # OB is 1-based
             idx_map[atom.GetIdx()] = index
-            element = element_table.GetSymbol(atom.GetAtomicNum()).upper()
+            # Local Z -> symbol table: OBElementTable was removed from modern
+            # openbabel wheels (3.1.1.23+); module-level GetSymbol is not
+            # available in every distribution either.
+            element = element_symbol(atom.GetAtomicNum()).upper()
             res = atom.GetResidue()
             name = "UNK"
             resname, chain, resseq, icode = "UNK", "", 0, ""
@@ -426,8 +471,17 @@ class OpenBabelPythonEngine(BaseEngine):
                 except Exception:  # noqa: BLE001
                     name = f"{element}{index + 1}"
                 resname = (res.GetName() or "UNK").strip()
-                chain = (res.GetChainID() or "").strip()
+                # OBResidue.GetChainID() was dropped from the SWIG wrapper in
+                # modern wheels (3.1.1.23); GetChain() returns the same string
+                # id and exists in both old and new binding generations.
+                try:
+                    chain = (res.GetChain() or "").strip()
+                except AttributeError:
+                    chain = (res.GetChainID() or "").strip()
                 resseq = int(res.GetNum() or 0)
+                get_icode = getattr(res, "GetInsertionCode", None)
+                if callable(get_icode):
+                    icode = (get_icode() or "").strip()
             charge = 0.0
             if charge_model == "gasteiger":
                 try:
@@ -548,6 +602,27 @@ _ENGINES: dict[str, type[BaseEngine]] = {
     "openbabel-cli": OpenBabelCLIEngine,
     "none": PassThroughEngine,
 }
+
+_AUTO_ENGINE_ORDER = ("openbabel", "rdkit", "openbabel-cli", "none")
+
+
+def _engine_chain(preferred: str = "auto") -> list[BaseEngine]:
+    """Ordered engines to attempt for one preparation request.
+
+    ``auto`` returns every available engine in priority order, always ending
+    with the dependency-free ``none`` fallback.  An explicit engine returns
+    exactly that engine so a specific request fails loudly instead of
+    silently substituting a different chemistry.
+    """
+    if preferred != "auto":
+        return [select_engine(preferred)]
+    chain: list[BaseEngine] = []
+    for name in _AUTO_ENGINE_ORDER[:-1]:
+        engine_cls = _ENGINES[name]
+        if engine_cls.available():
+            chain.append(engine_cls())
+    chain.append(PassThroughEngine())  # always available last resort
+    return chain
 
 
 def select_engine(preferred: str = "auto") -> BaseEngine:
@@ -684,6 +759,22 @@ def merge_nonpolar_hydrogens(graph: list[EngineAtom]) -> tuple[list[EngineAtom],
 # ---------------------------------------------------------------------------
 # Receptor preparation
 # ---------------------------------------------------------------------------
+def removed_species_warning(removed: dict[str, int]) -> str | None:
+    """WARNING text for removed metals/cofactors, or None if only waters were removed."""
+    notable = sorted(
+        (name, count) for name, count in removed.items()
+        if name.upper() not in {"HOH", "DOD", "WAT", "H2O", "TIP", "TIP3", "SOL"}
+    )
+    if not notable:
+        return None
+    species = ", ".join(f"{count} {name}" for name, count in notable)
+    return (
+        f"removed hetero species: {species}. These may be structurally or "
+        "catalytically required (metals/cofactors); keep them with "
+        "receptor.keep_resnames or keep_hetero if they belong in the binding site"
+    )
+
+
 class ReceptorPreparator:
     """Prepare a receptor PDB -> PDBQT following prepare_receptor4.py logic."""
 
@@ -719,20 +810,44 @@ class ReceptorPreparator:
         result.waters_removed = stats["waters"]
         result.hetero_removed = stats["hetero"]
         result.warnings.extend(stats["warnings"])
+        result.removed_resnames = dict(stats["removed_resnames"])
 
-        engine = select_engine(options.engine)
-        result.engine = engine.name
-        if engine.name == "none":
+        engines = _engine_chain(options.engine) if options.add_hydrogens \
+            else [PassThroughEngine()]
+        graph: list[EngineAtom] | None = None
+        engine: BaseEngine | None = None
+        last_error: Exception | None = None
+        for position, candidate in enumerate(engines):
+            try:
+                graph = candidate.process(atoms, options.charge_model)
+            except Exception as exc:  # noqa: BLE001 - optional deps must never crash
+                # Broken optional dependency (AttributeError/ImportError inside
+                # the bindings, parse failure, ...): fall through to the next
+                # engine and record both the failure and the fallback.
+                last_error = exc
+                fallback = engines[position + 1].name if position + 1 < len(engines) else "none"
+                message = (
+                    f"preparation engine '{candidate.name}' failed "
+                    f"({type(exc).__name__}: {exc}); falling back to '{fallback}'"
+                )
+                logger.warning("%s", message)
+                result.warnings.append(message)
+                continue
+            engine = candidate
+            break
+        if engine is None or graph is None:
+            raise PreparationError(
+                f"receptor preparation failed on every engine "
+                f"(last error: {type(last_error).__name__}: {last_error})"
+            )
+        result.engine = engine.name if options.add_hydrogens else "none (hydrogens disabled)"
+        if engine.name == "none" and options.add_hydrogens:
             result.warnings.append(
                 "no chemistry toolkit available: hydrogens were NOT added and "
                 "partial charges are set to 0.0 (install openbabel-wheel or rdkit)"
             )
-        if not options.add_hydrogens:
-            engine = PassThroughEngine()
-            result.engine = "none (hydrogens disabled)"
 
         hydrogens_before = sum(1 for a in atoms if a.element.upper() == "H")
-        graph = engine.process(atoms, options.charge_model)
         hydrogens_after = sum(1 for g in graph if g.is_hydrogen)
         result.hydrogens_added = max(0, hydrogens_after - hydrogens_before)
 
@@ -773,7 +888,9 @@ class ReceptorPreparator:
     def _filter_atoms(self, atoms: Sequence[Atom]) -> tuple[list[Atom], dict[str, Any]]:
         options = self.options
         warnings: list[str] = []
-        stats = {"waters": 0, "hetero": 0, "warnings": warnings}
+        removed_resnames: dict[str, int] = {}
+        stats = {"waters": 0, "hetero": 0, "warnings": warnings,
+                 "removed_resnames": removed_resnames}
         selected: list[Atom] = []
         chain_set = {c.strip() for c in options.chains} if options.chains else None
         remove_res = {(c, int(r)) for c, r in options.remove_residues}
@@ -781,6 +898,11 @@ class ReceptorPreparator:
         keep_res = {n.strip().upper() for n in options.keep_resnames}
 
         atoms = self._resolve_altlocs(atoms, options.altloc)
+
+        def _drop(atom: Atom, bucket: str) -> None:
+            stats[bucket] += 1
+            resname = atom.resname.strip().upper()
+            removed_resnames[resname] = removed_resnames.get(resname, 0) + 1
 
         for atom in atoms:
             resname = atom.resname.strip().upper()
@@ -790,12 +912,13 @@ class ReceptorPreparator:
                 if options.keep_water:
                     selected.append(atom)
                 else:
-                    stats["waters"] += 1
+                    _drop(atom, "waters")
                 continue
             if (atom.chain, atom.resseq) in remove_res or resname in remove_names:
+                _drop(atom, "hetero")
                 continue
             if not atom.is_polymer and not options.keep_hetero and resname not in keep_res:
-                stats["hetero"] += 1
+                _drop(atom, "hetero")
                 continue
             selected.append(atom)
 
@@ -803,6 +926,12 @@ class ReceptorPreparator:
             logger.debug("removed %d water molecules", stats["waters"])
         if stats["hetero"]:
             logger.debug("removed %d hetero atoms (ligands/cofactors)", stats["hetero"])
+        removal_warning = removed_species_warning(removed_resnames)
+        if removal_warning is not None:
+            # Only warn about non-water species: waters are a routine removal,
+            # metals/cofactors are a scientific decision the user must see.
+            logger.warning("%s", removal_warning)
+            warnings.append(removal_warning)
         if not selected:
             warnings.append("all atoms were filtered out; check chains/remove options")
         return selected, stats
@@ -899,7 +1028,17 @@ class LigandPreparator:
             if not mols:
                 raise PreparationError(f"no valid molecules in {source!r}")
             mol = mols[0]
+            # Hydrogen provenance (audit item 26): was the input already
+            # protonated, or did preparation add all hydrogens (making the
+            # protonation state RDKit/Meeko's choice)?
+            try:
+                result.input_had_explicit_hydrogens = any(
+                    a.GetAtomicNum() == 1 for a in mol.GetAtoms()
+                )
+            except Exception:  # noqa: BLE001 - provenance must never fail a run
+                result.input_had_explicit_hydrogens = None
             variants = self._protonation_variants(mol, result)
+            result.num_protonation_variants = len(variants)
             outputs: list[Path] = []
             for index, variant in enumerate(variants):
                 suffix = "" if len(variants) == 1 else f"_v{index + 1}"
@@ -1006,8 +1145,12 @@ class LigandPreparator:
     def _protonation_variants(self, mol: Any, result: LigandPrepResult) -> list[Any]:
         """Optionally enumerate protonation states with dimorphite-dl."""
         if not self.options.protonate:
+            result.protonation_source = "input protonation state (no pH adjustment)"
             return [mol]
         if not is_importable("dimorphite_dl"):
+            result.protonation_source = (
+                "input protonation state (dimorphite-dl not installed)"
+            )
             result.warnings.append(
                 "protonate=True requested but dimorphite-dl is not installed; "
                 "using the input protonation state"
@@ -1022,10 +1165,13 @@ class LigandPreparator:
             mols = [Chem.MolFromSmiles(v) for v in variants]
             mols = [m for m in mols if m is not None]
             if mols:
+                result.protonation_source = "dimorphite-dl pH 7.4 enumeration"
                 return mols
+            result.protonation_source = "input state (dimorphite-dl returned nothing usable)"
             result.warnings.append("dimorphite-dl returned no usable states")
             return [mol]
         except Exception as exc:  # noqa: BLE001
+            result.protonation_source = f"input state (protonation failed: {exc})"
             result.warnings.append(f"protonation failed ({exc}); using input state")
             return [mol]
 

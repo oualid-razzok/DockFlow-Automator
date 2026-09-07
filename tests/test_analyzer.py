@@ -16,6 +16,7 @@ from dockflow_core.analyzer import (
     cluster_poses,
     contact_summary,
     direct_rmsd,
+    docking_score_efficiency,
     kabsch_rmsd,
     ligand_efficiency,
     write_analysis_json,
@@ -159,6 +160,10 @@ def test_cluster_poses_empty():
 
 
 def test_ligand_efficiency():
+    # renamed to docking_score_efficiency in 0.2.0 (audit item 14); the old
+    # name stays as a deprecated alias for one release
+    assert docking_score_efficiency(-9.0, 30) == pytest.approx(-0.3)
+    assert docking_score_efficiency(-9.0, 0) is None
     assert ligand_efficiency(-9.0, 30) == pytest.approx(-0.3)
     assert ligand_efficiency(-9.0, 0) is None
 
@@ -179,7 +184,7 @@ def test_contact_summary():
     ]
     rows = contact_summary(contacts)
     assert rows[0].resname == "ASP" and rows[0].total == 2
-    assert rows[0].hbonds == 1 and rows[0].ionic == 1
+    assert rows[0].geom_hbond == 1 and rows[0].ionic == 1
     assert rows[1].resname == "LEU"
 
 
@@ -233,6 +238,266 @@ def test_analyze_docking_result(tmp_path: Path, receptor_pdb_path: Path,
 
 def test_residue_contact_row_totals():
     row = ResidueContactRow(chain="A", resname="GLU", resseq=12,
-                            hbonds=2, hydrophobic=3, ionic=1, metal=1,
+                            geom_hbond=2, hydrophobic=3, ionic=1, metal=1,
                             closest=2.8)
     assert row.total == 7
+
+
+# ---------------------------------------------------------------------------
+# Analytic RMSD cases with known values (peer item 15)
+# ---------------------------------------------------------------------------
+def _atoms_from_coords(coords, element="C"):
+    return [
+        Atom(name=f"{element}{i + 1}", resname="LIG", chain="A", resseq=1,
+             x=x, y=y, z=z, element=element)
+        for i, (x, y, z) in enumerate(coords)
+    ]
+
+
+def test_kabsch_rmsd_identity_is_zero():
+    coords = [(0.0, 0.0, 0.0), (1.5, 0.2, 0.0), (0.3, 1.4, 0.7), (2.1, 1.1, -0.4)]
+    a = np.array(coords)
+    assert kabsch_rmsd(a, a.copy()) == pytest.approx(0.0, abs=1e-12)
+
+
+def test_kabsch_rmsd_translation_invariant():
+    coords = [(0.0, 0.0, 0.0), (1.5, 0.2, 0.0), (0.3, 1.4, 0.7)]
+    a = np.array(coords)
+    b = a + np.array([10.0, -20.0, 30.0])
+    assert kabsch_rmsd(a, b) == pytest.approx(0.0, abs=1e-9)
+
+
+def test_kabsch_rmsd_rotation_invariant():
+    # rigid rotation of the whole set: optimal superposition removes it
+    coords = [(0.0, 0.0, 0.0), (1.5, 0.2, 0.0), (0.3, 1.4, 0.7), (2.1, 1.1, -0.4)]
+    a = np.array(coords)
+    theta = 0.9  # radians
+    rotation = np.array([
+        [np.cos(theta), -np.sin(theta), 0.0],
+        [np.sin(theta), np.cos(theta), 0.0],
+        [0.0, 0.0, 1.0],
+    ])
+    b = a @ rotation.T + np.array([5.0, 5.0, -3.0])
+    # 1e-6: the C++ accelerated path computes in single-precision territory
+    assert kabsch_rmsd(a, b) == pytest.approx(0.0, abs=1e-6)
+
+
+def test_kabsch_rmsd_known_translation_without_superposition():
+    # direct RMSD of a uniform 1 A displacement over 4 atoms = 1 A
+    coords = np.array([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+                       (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)])
+    shifted = coords + np.array([1.0, 0.0, 0.0])
+    assert direct_rmsd(coords, shifted) == pytest.approx(1.0)
+
+
+def test_kabsch_rmsd_scales_with_separation():
+    # stretching a 4-point set: optimal superposition cannot absorb a
+    # centroid-preserving stretch, and a bigger stretch must give a bigger
+    # RMSD (monotonicity under a rigid superposition)
+    a = np.array([(0.0, 0.0, 0.0), (1.0, 0.2, 0.0), (2.0, 0.1, 0.3), (3.0, 0.4, 0.1)])
+    centroid = a.mean(axis=0)
+    small = centroid + (a - centroid) * 1.05
+    large = centroid + (a - centroid) * 1.5
+    r_small = kabsch_rmsd(a, small)
+    r_large = kabsch_rmsd(a, large)
+    assert 0.0 < r_small < r_large
+    # upper bound: RMSD cannot exceed the direct (unsuperposed) value
+    assert r_large <= direct_rmsd(a, large) + 1e-9
+
+
+def test_symmetry_tolerant_rmsd_identity_and_translation():
+    coords = [(0.0, 0.0, 0.0), (1.5, 0.2, 0.0), (0.3, 1.4, 0.7)]
+    from dockflow_core.analyzer import symmetry_tolerant_rmsd
+
+    a = _atoms_from_coords(coords)
+    assert symmetry_tolerant_rmsd(a, a) == pytest.approx(0.0, abs=1e-9)
+    moved = _atoms_from_coords([(x + 4.0, y - 2.0, z + 1.0) for x, y, z in coords])
+    assert symmetry_tolerant_rmsd(a, moved) == pytest.approx(0.0, abs=1e-9)
+
+
+def test_symmetry_tolerant_rmsd_symmetric_pair_180_rotation():
+    """180-degree flip of a symmetric two-atom group must cost 0 RMSD.
+
+    Plain Kabsch with fixed correspondence would report 2.0 A (each atom
+    swapped position); the symmetry-aware matcher must find the equivalent
+    permutation and report 0.  This is the carboxylate-flip case.
+    """
+    from dockflow_core.analyzer import symmetry_tolerant_rmsd
+
+    reference = _atoms_from_coords(
+        [(-1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 0.0, 3.0)],
+        element="O",
+    )
+    reference += _atoms_from_coords([(0.0, 0.0, 4.0)], element="C")
+    # same geometry, oxygens swapped (a 180-degree rotation of the O-O pair
+    # around the C axis is achieved by permuting the two equivalent atoms)
+    pose = _atoms_from_coords(
+        [(1.0, 0.0, 0.0), (-1.0, 0.0, 0.0), (0.0, 0.0, 3.0)],
+        element="O",
+    )
+    pose += _atoms_from_coords([(0.0, 0.0, 4.0)], element="C")
+    assert symmetry_tolerant_rmsd(pose, reference) == pytest.approx(0.0, abs=1e-6)
+
+
+def test_symmetry_tolerant_rmsd_displacement_bounds():
+    """One atom displaced by 1 A over 4: bounded and monotone in the shift.
+
+    The exact value is not analytic (the optimal superposition absorbs part
+    of the displacement), but it must be positive, at most the
+    no-superposition value (0.5 A) and larger for a bigger displacement.
+    """
+    from dockflow_core.analyzer import symmetry_tolerant_rmsd
+
+    coords = [(0.0, 0.0, 0.0), (1.5, 0.0, 0.0), (3.0, 0.0, 0.0), (4.5, 0.0, 0.0)]
+    reference = _atoms_from_coords(coords)
+
+    def _displaced(shift: float) -> list:
+        return _atoms_from_coords(
+            [(x, y + (shift if i == 0 else 0.0), z) for i, (x, y, z) in enumerate(coords)]
+        )
+
+    small = symmetry_tolerant_rmsd(_displaced(1.0), reference)
+    large = symmetry_tolerant_rmsd(_displaced(2.0), reference)
+    direct_small = (1.0 ** 2 / 4) ** 0.5
+    assert 0.0 < small <= direct_small + 1e-9
+    assert small < large
+
+
+def test_symmetry_tolerant_rmsd_rejects_different_atom_sets():
+    from dockflow_core.analyzer import symmetry_tolerant_rmsd
+
+    with pytest.raises(ValueError, match="different atom sets"):
+        symmetry_tolerant_rmsd(_atoms_from_coords([(0, 0, 0), (1, 0, 0)], "C"),
+                               _atoms_from_coords([(0, 0, 0)], "C"))
+
+
+def test_crystal_rmsd_returns_none_on_mismatch():
+    from dockflow_core.analyzer import crystal_rmsd
+
+    assert crystal_rmsd(_atoms_from_coords([(0, 0, 0)], "C"),
+                        _atoms_from_coords([(0, 0, 0)], "N")) is None
+
+
+def test_extract_reference_atoms(receptor_pdb_path: Path):
+    from dockflow_core.analyzer import extract_reference_atoms
+
+    atoms = extract_reference_atoms(receptor_pdb_path, "XK2" if False else "BEN")
+    assert len(atoms) == 7
+    assert all(a.resname.strip().upper() == "BEN" for a in atoms)
+    with pytest.raises(ValueError, match="not found"):
+        extract_reference_atoms(receptor_pdb_path, "ZZZ")
+
+
+def test_analyze_docking_result_with_crystal_reference(
+    docked_pdbqt_path: Path, receptor_pdb_path: Path, tmp_path: Path
+):
+    """Redocking validation end to end: crystal_rmsd lands on every pose."""
+    from dockflow_core.analyzer import analyze_docking_result
+    from dockflow_core.models import DockingResult, PoseRecord
+
+    prep = ReceptorPreparator(
+        ReceptorPrepOptions(engine="none", charge_model="zero", keep_resnames=["BEN"])
+    ).prepare(receptor_pdb_path, tmp_path)
+    # reference = the crystal pose of the same C+O fragment as the fixture
+    # ligand (pose 1 coordinates == the crystal pose -> RMSD 0)
+    reference = _atoms_from_coords([(12.5, 9.1, 8.1)], element="C")
+    reference += _atoms_from_coords([(13.1, 9.8, 8.7)], element="O")
+    result = DockingResult(
+        ligand_name="lig",
+        poses=[
+            PoseRecord(model=1, affinity=-9.423),
+            PoseRecord(model=2, affinity=-8.711),
+            PoseRecord(model=3, affinity=-7.905),
+        ],
+        out_path=docked_pdbqt_path,
+    )
+    analyses = analyze_docking_result(
+        result, prep.pdbqt_path, top_poses=3, reference_atoms=reference
+    )
+    assert result.poses[0].crystal_rmsd == pytest.approx(0.0, abs=1e-9)
+    assert all(pose.crystal_rmsd is not None for pose in result.poses)
+    # the fixture poses 2 and 3 are rigid copies (same C-O bond geometry),
+    # so superposition-invariant RMSD is ~0 for them too - which is exactly
+    # what a pose-recovery metric must report for pure rigid displacement
+    assert result.poses[1].crystal_rmsd == pytest.approx(0.0, abs=1e-6)
+    assert result.poses[2].crystal_rmsd == pytest.approx(0.0, abs=1e-6)
+    assert analyses[0].crystal_rmsd == pytest.approx(result.poses[0].crystal_rmsd)
+
+
+def test_analyze_docking_result_reference_mismatch_is_not_fatal(
+    docked_pdbqt_path: Path, receptor_pdb_path: Path, tmp_path: Path
+):
+    """A non-comparable reference (decoys) leaves crystal_rmsd None."""
+    from dockflow_core.analyzer import analyze_docking_result, extract_reference_atoms
+    from dockflow_core.models import DockingResult, PoseRecord
+
+    prep = ReceptorPreparator(
+        ReceptorPrepOptions(engine="none", charge_model="zero", keep_resnames=["BEN"])
+    ).prepare(receptor_pdb_path, tmp_path)
+    benzene = extract_reference_atoms(receptor_pdb_path, "BEN")  # C6O vs C,O
+    result = DockingResult(
+        ligand_name="lig",
+        poses=[PoseRecord(model=1, affinity=-9.423)],
+        out_path=docked_pdbqt_path,
+    )
+    analyses = analyze_docking_result(
+        result, prep.pdbqt_path, top_poses=3, reference_atoms=benzene
+    )
+    assert analyses  # analysis itself still works
+    assert all(pose.crystal_rmsd is None for pose in result.poses)
+
+
+def test_pose_cluster_summary_known_structure():
+    """Two tight groups + one outlier = three clusters with known members."""
+    from dockflow_core.analyzer import pose_cluster_summary
+
+    poses = [
+        np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),   # group A
+        np.array([[0.1, 0.0, 0.0], [1.1, 0.0, 0.0]]),   # group A
+        np.array([[5.0, 0.0, 0.0], [6.0, 0.0, 0.0]]),   # group B
+        np.array([[5.2, 0.0, 0.0], [6.2, 0.0, 0.0]]),   # group B
+        np.array([[50.0, 0.0, 0.0], [51.0, 0.0, 0.0]]), # outlier
+    ]
+    affinities = [-9.0, -8.9, -8.0, -7.9, -6.0]
+    clusters = pose_cluster_summary(poses, affinities, cutoff=2.0)
+    assert len(clusters) == 3
+    assert clusters[0]["poses"] == [1, 2]
+    assert clusters[1]["poses"] == [3, 4]
+    assert clusters[2]["poses"] == [5]
+    assert clusters[0]["representative_pose"] == 1
+    assert clusters[0]["mean_affinity"] == pytest.approx(-8.95)
+    assert clusters[2]["intra_cluster_rmsd_spread"] == pytest.approx(0.0)
+
+
+def test_kabsch_rmsd_matches_bindings_both_paths():
+    """NumPy and C++ Kabsch agree on an analytic rotation (item 15/35)."""
+    coords = np.array([
+        [0.0, 0.0, 0.0], [1.5, 0.2, 0.0], [0.3, 1.4, 0.7],
+        [2.1, 1.1, -0.4], [-0.7, 0.5, 1.2],
+    ])
+    theta = 0.7
+    rotation = np.array([
+        [np.cos(theta), -np.sin(theta), 0.0],
+        [np.sin(theta), np.cos(theta), 0.0],
+        [0.0, 0.0, 1.0],
+    ])
+    b = coords @ rotation.T + np.array([3.0, -2.0, 1.0])
+    # the pure-numpy path (bindings temporarily hidden) and the accelerated
+    # path must both report superposition-invariance
+    assert kabsch_rmsd(coords, b) == pytest.approx(0.0, abs=1e-9)
+    import builtins
+
+    real_import = builtins.__import__
+
+    def _no_bindings(name, *args, **kwargs):
+        if name == "dockflow_bindings":
+            raise ImportError("hidden for test")
+        return real_import(name, *args, **kwargs)
+
+    import dockflow_bindings  # noqa: F401  (present in dev/CI builds)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(builtins, "__import__", _no_bindings)
+        # force the pure-numpy fallback path
+        from dockflow_core import analyzer as _analyzer
+
+        assert _analyzer.kabsch_rmsd(coords, b) == pytest.approx(0.0, abs=1e-9)

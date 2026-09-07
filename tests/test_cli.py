@@ -171,3 +171,99 @@ def test_prep_ligand_requires_source():
     parser = build_parser()
     args = parser.parse_args(["prep", "ligand", "--out-dir", "x"])
     assert args.smiles is None and args.input is None
+
+
+# ---------------------------------------------------------------------------
+# New CLI surface (audit items 23, 27, 31)
+# ---------------------------------------------------------------------------
+def test_run_dry_run_prints_resolved_config(tmp_path: Path, capsys):
+    config = tmp_path / "run.yaml"
+    config.write_text(
+        "run_id: dry\nworkdir: dryruns\ntarget:\n  pdb_id: 1HVR\n"
+        "ligands:\n  - id: l1\n    smiles: CCO\n"
+        "gridbox:\n  source: ligand\n  reference_ligand_resname: XK2\n"
+        "docking:\n  backend: auto\n  scoring: vina\n  exhaustiveness: 16\n",
+        encoding="utf-8",
+    )
+    code = main(["run", "--config", str(config), "--dry-run"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "dry run" in out
+    assert "resolved_engine_chain" in out
+    assert "dryruns" in out
+    # nothing was executed: no run directory beyond config parsing
+    assert not (tmp_path / "dryruns" / "dry" / "manifest.json").exists()
+
+
+def test_run_parser_accepts_stage_and_force():
+    parser = build_parser()
+    args = parser.parse_args(
+        ["run", "--config", "c.yaml", "--stage", "dock", "--stage", "analyze",
+         "--force", "--dry-run"]
+    )
+    assert args.stage == ["dock", "analyze"]
+    assert args.force and args.dry_run
+
+
+def test_run_rejects_unknown_stage():
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["run", "--config", "c.yaml", "--stage", "explode"])
+
+
+def test_enrich_cli(tmp_path: Path, capsys):
+    summary = tmp_path / "summary.csv"
+    summary.write_text(
+        "ligand,pose,affinity_kcal_mol,rmsd_lb,rmsd_ub,crystal_rmsd,"
+        "docking_score_efficiency,num_heavy_atoms,runtime_s,backend,error\n"
+        "active1,1,-9.0,0,0,, ,30,1,python,\n"
+        "active2,1,-8.5,0,0,, ,30,1,python,\n"
+        "decoy1,1,-5.0,0,0,, ,30,1,python,\n"
+        "decoy2,1,-4.5,0,0,, ,30,1,python,\n",
+        encoding="utf-8",
+    )
+    actives = tmp_path / "actives.txt"
+    actives.write_text("active1\nactive2\n", encoding="utf-8")
+    code = main(["enrich", "--summary", str(summary), "--actives", str(actives)])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "roc_auc" in out and "bedroc" in out
+    assert "2 actives / 2 decoys" in out
+    # comma-separated actives also work
+    code = main(["enrich", "--summary", str(summary), "--actives", "active1,active2",
+                 "--json"])
+    out = capsys.readouterr().out
+    assert code == 0 and '"roc_auc": 1.0' in out
+
+
+def test_enrich_cli_missing_actives(tmp_path: Path):
+    summary = tmp_path / "summary.csv"
+    summary.write_text(
+        "ligand,pose,affinity_kcal_mol\nx,1,-9.0\n", encoding="utf-8"
+    )
+    code = main(["enrich", "--summary", str(summary), "--actives", "ghost"])
+    assert code == 2
+
+
+def test_log_format_json_flag():
+    parser = build_parser()
+    args = parser.parse_args(["--log-format", "json", "info"])
+    assert args.log_format == "json"
+
+
+def test_json_log_formatter_emits_events():
+    import json
+    import logging
+
+    from dockflow_core.utils import JsonLogFormatter
+
+    record = logging.LogRecord(
+        name="dockflow.pipeline", level=logging.WARNING, pathname=__file__,
+        lineno=1, msg="engine %s failed", args=("openbabel",), exc_info=None,
+    )
+    record.run_id = "run_1"
+    event = json.loads(JsonLogFormatter().format(record))
+    assert event["level"] == "WARNING"
+    assert event["message"] == "engine openbabel failed"
+    assert event["logger"] == "dockflow.pipeline"
+    assert event["run_id"] == "run_1"
+    assert "timestamp" in event

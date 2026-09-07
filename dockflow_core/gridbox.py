@@ -318,3 +318,54 @@ def distance_to_box(box: GridBox, point: Sequence[float]) -> float:
     lo, hi = box.min_corner, box.max_corner
     deltas = np.maximum(np.maximum(lo - p, p - hi), 0.0)
     return float(math.sqrt(float(np.sum(deltas**2))))
+
+
+# ---------------------------------------------------------------------------
+# Search-space sanity checks
+# ---------------------------------------------------------------------------
+VINA_MAX_BOX_VOLUME = 27000.0  # A^3 - AutoDock Vina hard cap (30 x 30 x 30)
+LARGE_BOX_VOLUME = 8000.0      # A^3 - above this, warn for small ligands
+LARGE_BOX_DIMENSION = 30.0     # A per axis - above this, warn
+SMALL_LIGAND_HEAVY_ATOMS = 30  # heavy atoms below which a large box is suspicious
+
+
+def validate_box(box: GridBox, ligand_heavy_atoms: int | None = None) -> list[str]:
+    """Bounds checks on the search space (audit item 12).
+
+    Returns the list of warnings (also expected to be surfaced in
+    ``manifest["gridbox"]["warnings"]`` and on stderr).  Raises
+    :class:`ValueError` when the box exceeds Vina's hard volume cap so the
+    run is refused *before* wasted compute.
+
+    * volume > 27000 A^3 : refused (Vina cannot run this box at all);
+    * volume > 8000 A^3 with a ligand < 30 heavy atoms : the box is likely
+      oversized for the ligand - docking score inflation risk;
+    * any dimension > 30 A : unusual search space, usually a whole-domain
+      box - check the intended pocket.
+    """
+    warnings: list[str] = []
+    volume = box.volume
+    sx, sy, sz = (float(v) for v in box.size)
+    if volume > VINA_MAX_BOX_VOLUME:
+        raise ValueError(
+            f"grid box volume {volume:.0f} A^3 exceeds AutoDock Vina's hard "
+            f"cap of {VINA_MAX_BOX_VOLUME:.0f} A^3 (30 x 30 x 30 A); refusing "
+            "to run - shrink the box (gridbox.padding) or set an explicit "
+            "center/size"
+        )
+    if volume > LARGE_BOX_VOLUME and ligand_heavy_atoms is not None \
+            and ligand_heavy_atoms < SMALL_LIGAND_HEAVY_ATOMS:
+        warnings.append(
+            f"grid box volume {volume:.0f} A^3 is large for a ligand of "
+            f"{ligand_heavy_atoms} heavy atoms (< 30): scores may be "
+            "artificially favourable; consider a tighter pocket box"
+        )
+    oversize_dims = [axis for axis, value in zip("xyz", (sx, sy, sz), strict=True)
+                     if value > LARGE_BOX_DIMENSION]
+    if oversize_dims:
+        warnings.append(
+            f"grid box dimension(s) exceed {LARGE_BOX_DIMENSION:.0f} A "
+            f"on axes {', '.join(oversize_dims)} (size = {sx:.1f} x {sy:.1f} "
+            f"x {sz:.1f} A); verify this is the intended search space"
+        )
+    return warnings

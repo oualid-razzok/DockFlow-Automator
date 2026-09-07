@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
 import shutil
@@ -11,7 +12,24 @@ import sys
 import time
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
+
+__all__ = [
+    "DockFlowError",
+    "ExternalToolError",
+    "setup_logging",
+    "get_logger",
+    "run_command",
+    "which",
+    "ensure_dir",
+    "sha256_file",
+    "module_version",
+    "openbabel_version",
+    "is_importable",
+    "VersionReport",
+    "CommandResult",
+]
 
 log = logging.getLogger("dockflow")
 
@@ -33,21 +51,69 @@ class ExternalToolError(DockFlowError):
 _LOG_FORMAT = "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
 
 
-def setup_logging(level: str | int = "INFO", logfile: str | os.PathLike | None = None) -> None:
-    """Configure the root ``dockflow`` logger (idempotent)."""
+class JsonLogFormatter(logging.Formatter):
+    """One JSON event per line for log aggregation on HPC/batch systems.
+
+    Emits ``timestamp, level, logger, message`` plus optional ``stage``,
+    ``run_id`` and ``ligand`` fields (attached via ``extra=``) and the
+    exception traceback when present.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload: dict[str, object] = {
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(timespec="milliseconds"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        for key in ("stage", "run_id", "ligand"):
+            value = getattr(record, key, None)
+            if value:
+                payload[key] = value
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False)
+
+
+def setup_logging(
+    level: str | int = "INFO",
+    logfile: str | os.PathLike | None = None,
+    log_format: str = "text",
+) -> None:
+    """Configure the root ``dockflow`` logger.
+
+    Idempotent: re-invocations (e.g. the pipeline adding a log file after
+    the CLI configured the console) replace the handler set so exactly one
+    console handler and one optional file handler exist, and keep the most
+    verbose level requested so far.
+
+    ``log_format="json"`` switches every handler to
+    :class:`JsonLogFormatter` (one JSON event per line - audit item 31).
+    """
     logger = logging.getLogger("dockflow")
-    logger.setLevel(logging.getLevelName(level) if isinstance(level, str) else level)
-    if logger.handlers:  # already configured
-        return
-    formatter = logging.Formatter(_LOG_FORMAT)
+    requested = logging.getLevelName(level) if isinstance(level, str) else level
+    current = logger.level
+    if not isinstance(current, int) or current == 0 or requested < current:
+        logger.setLevel(requested)
+    formatter: logging.Formatter
+    if log_format == "json":
+        formatter = JsonLogFormatter()
+    else:
+        formatter = logging.Formatter(_LOG_FORMAT)
     console = logging.StreamHandler(sys.stderr)
     console.setFormatter(formatter)
-    logger.addHandler(console)
+    handlers: list[logging.Handler] = [console]
     if logfile:
         Path(logfile).parent.mkdir(parents=True, exist_ok=True)
         filehandler = logging.FileHandler(logfile, encoding="utf-8")
         filehandler.setFormatter(formatter)
-        logger.addHandler(filehandler)
+        handlers.append(filehandler)
+    for existing in list(logger.handlers):
+        logger.removeHandler(existing)
+    for handler in handlers:
+        logger.addHandler(handler)
 
 
 def get_logger(name: str = "dockflow") -> logging.Logger:
@@ -251,6 +317,28 @@ def module_version(module_name: str) -> str | None:
         return metadata.version(module_name)
     except Exception:  # pragma: no cover - not installed / metadata issues
         return None
+
+
+def openbabel_version() -> str | None:
+    """Version of the OpenBabel Python bindings, ``None`` when unusable.
+
+    Detection is based on the actual import (the PyPI distribution is named
+    ``openbabel-wheel`` while the import name is ``openbabel``, so a plain
+    metadata lookup reports ``not installed`` even when the bindings work).
+    A binding that imports but lacks the core ``OBMol`` class is treated as
+    unusable rather than reporting a misleading version.
+    """
+    try:
+        from openbabel import openbabel as ob  # noqa: F401
+    except Exception:  # noqa: BLE001 - ImportError or wheel-specific breakage
+        return None
+    if not hasattr(ob, "OBMol"):
+        return None
+    for distribution in ("openbabel-wheel", "openbabel"):
+        version = module_version(distribution)
+        if version:
+            return version
+    return "importable (version unknown)"
 
 
 def is_importable(module_name: str) -> bool:

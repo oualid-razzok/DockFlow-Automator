@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import importlib.util
+import logging
+import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -18,6 +22,7 @@ from dockflow_core.preparator import (
     merge_nonpolar_hydrogens,
     select_engine,
 )
+from tests.conftest import RECEPTOR_PDB
 
 
 # ---------------------------------------------------------------------------
@@ -204,3 +209,147 @@ def test_prepare_library(methanol_sdf_path: Path, tmp_path: Path):
     results = LigandPreparator().prepare_library(library_sdf, tmp_path / "lib")
     assert len(results) == 2
     assert all(r.ok for r in results), [r.error for r in results]
+
+
+# ---------------------------------------------------------------------------
+# Auto-engine graceful degradation (regression: openbabel-wheel 3.1.1.23
+# removed OBElementTable/OBResidue.GetChainID and used to crash `engine=auto`)
+# ---------------------------------------------------------------------------
+def test_element_symbol_table():
+    from dockflow_core.preparator import element_symbol
+
+    assert element_symbol(6) == "C"
+    assert element_symbol(30) == "Zn"
+    assert element_symbol(1) == "H"
+    assert element_symbol(999) == "X"
+    # the table covers every element Vina can type
+    for z in (1, 6, 7, 8, 15, 16, 11, 12, 20, 25, 26, 30, 34, 47, 53):
+        assert element_symbol(z) != "X"
+
+
+def test_engine_chain_auto_ends_with_none():
+    from dockflow_core.preparator import _engine_chain
+
+    chain = _engine_chain("auto")
+    assert chain[-1].name == "none"  # always-available last resort
+    names = [e.name for e in chain]
+    # priority order preserved, no duplicates
+    assert len(names) == len(set(names))
+    # an explicit engine returns exactly that engine (fails loudly)
+    assert [e.name for e in _engine_chain("none")] == ["none"]
+
+
+class _BrokenOBModule(types.ModuleType):
+    """Simulates a broken openbabel binding (the v0.1.1 audit crash)."""
+
+    def __getattr__(self, name: str):
+        raise AttributeError(f"module 'openbabel.openbabel' has no attribute '{name}'")
+
+
+@pytest.fixture
+def broken_openbabel(monkeypatch):
+    """Make the openbabel bindings importable but unusable at attribute level."""
+    broken = _BrokenOBModule("openbabel.openbabel")
+    import openbabel as package
+
+    monkeypatch.setattr(package, "openbabel", broken, raising=False)
+    monkeypatch.setitem(sys.modules, "openbabel.openbabel", broken)
+    return broken
+
+
+def test_auto_engine_falls_through_broken_optional_dependency(
+    receptor_pdb_path: Path, tmp_path: Path, broken_openbabel, caplog
+):
+    """engine='auto' must never crash on a broken optional dependency.
+
+    Regression for the v0.1.1 audit crash:
+    ``AttributeError: module 'openbabel.openbabel' has no attribute
+    'OBElementTable'`` in ``ReceptorPreparator.prepare``.  The run must fall
+    through to the next engine in the chain and log a WARNING naming both the
+    failed engine and the fallback.
+    """
+    caplog.set_level(logging.WARNING, logger="dockflow")
+    with caplog.at_level(logging.WARNING, logger="dockflow"):
+        result = ReceptorPreparator(ReceptorPrepOptions(engine="auto")).prepare(
+            receptor_pdb_path, tmp_path
+        )
+    assert result.ok, f"preparation must still succeed via fallback: {result.warnings}"
+    assert result.engine != "openbabel"
+    assert result.engine in ("rdkit", "openbabel-cli", "none")
+    if result.engine == "rdkit":
+        # on a full install the next engine in the chain is RDKit
+        assert any(
+            "preparation engine 'openbabel' failed" in record.getMessage()
+            and "falling back to 'rdkit'" in record.getMessage()
+            for record in caplog.records
+            if record.levelno == logging.WARNING
+        ), "expected a WARNING naming the failed engine and the fallback"
+        assert any("falling back to 'rdkit'" in warning for warning in result.warnings)
+    else:
+        assert any("falling back to" in warning for warning in result.warnings)
+    # and the produced PDBQT is valid
+    atoms = parse_pdbqt(result.pdbqt_path).atoms
+    assert atoms and all(a.atom_type for a in atoms)
+
+
+@pytest.mark.skipif(
+    not importlib.util.find_spec("openbabel"),
+    reason="openbabel bindings not installed (Linux: pip install openbabel-wheel)",
+)
+def test_openbabel_engine_works_on_current_wheel(
+    receptor_pdb_path: Path, tmp_path: Path
+):
+    """The OB engine itself must work on modern openbabel wheels.
+
+    Regression for OBElementTable (removed in 3.1.1.23) and
+    OBResidue.GetChainID (replaced by GetChain in the same generation).
+    """
+    result = ReceptorPreparator(ReceptorPrepOptions(engine="openbabel")).prepare(
+        receptor_pdb_path, tmp_path
+    )
+    assert result.ok
+    assert result.engine == "openbabel"
+    atoms = parse_pdbqt(result.pdbqt_path).atoms
+    heavy = [a for a in atoms if a.element.upper() != "H"]
+    assert len(heavy) == 40  # polymer heavy atoms (ZN/BEN/waters filtered)
+    assert len(atoms) > len(heavy)  # polar hydrogens were added
+    assert any(a.atom_type == "HD" for a in atoms)  # donor hydrogens typed
+    assert all(a.atom_type for a in atoms)
+    assert atoms[0].chain == "A"  # chain ids survive the round trip
+    # Gasteiger charges were actually computed (not all zero)
+    assert any(abs(a.charge) > 1e-6 for a in atoms)
+
+
+def test_removed_species_recorded_and_warned(
+    receptor_pdb_path: Path, tmp_path: Path, caplog
+):
+    """Removed metals/cofactors must be visible, not silent (audit item 11)."""
+    caplog.set_level(logging.WARNING, logger="dockflow")
+    result = ReceptorPreparator(ReceptorPrepOptions(engine="none")).prepare(
+        receptor_pdb_path, tmp_path
+    )
+    assert result.removed_resnames.get("ZN2") == 1
+    assert result.removed_resnames.get("BEN") == 7
+    assert result.removed_resnames.get("HOH") == 2
+    assert any("removed hetero species" in w for w in result.warnings)
+    assert any(
+        "structurally or catalytically required" in r.getMessage()
+        and "ZN2" in r.getMessage()
+        for r in caplog.records
+        if r.levelno == logging.WARNING
+    )
+
+
+def test_water_only_removal_is_not_warned(tmp_path: Path):
+    """Routine water removal must not raise the metals/cofactors warning."""
+    pdb = "\n".join(
+        line
+        for line in RECEPTOR_PDB.splitlines()
+        if not (line.startswith("HETATM") and " ZN2 " in line and " BEN " not in line)
+        and " BEN " not in line
+    )
+    path = tmp_path / "waters_only.pdb"
+    path.write_text(pdb, encoding="utf-8")
+    result = ReceptorPreparator(ReceptorPrepOptions(engine="none")).prepare(path, tmp_path)
+    assert result.removed_resnames.get("HOH") == 2
+    assert not any("structurally or catalytically required" in w for w in result.warnings)

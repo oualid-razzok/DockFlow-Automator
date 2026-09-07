@@ -1,0 +1,40 @@
+# =============================================================================
+# DockFlow redocking benchmark set (audit item 7)
+#
+# Classic protein-ligand complexes used for redocking validation.  All
+# entries verified against RCSB (single organic ligand after excluding
+# waters, ions and sugars).  Sources: the PDBbind core set / Astex diverse
+# set literature, plus HIV-1 protease inhibitors used by the DockFlow
+# example configs.
+#
+# Columns:
+#   pdb_id          RCSB entry
+#   ligand_resname  co-crystallized ligand code (excluded: HOH, ions, ...)
+#   target          protein name (from the PDB TITLE)
+#   note            benchmark-family note
+# =============================================================================
+pdb_id,ligand_resname,target,note
+1HVR,XK2,HIV-1 protease (cyclic urea inhibitor),DockFlow example / PDBbind
+1HSG,MK1,HIV-1 protease (L-735,524 saquinavir analog),classic PR redocking
+1HTG,G37,HIV-1 protease (penicillin-derived inhibitor),classic PR redocking
+1HPV,478,HIV-1 protease (VX-478 amprenavir),classic PR redocking
+1MUI,AB1,HIV-1 protease (lopinavir),classic PR redocking
+1DWD,MID,HIV-1 protease,classic PR redocking
+1AZM,AZM,human carbonic anhydrase II (acetazolamide),PDBbind core classic
+1E66,HUX,acetylcholinesterase (huprine X),PDBbind core classic
+1F0R,815,human coagulation factor Xa (RPR208815),PDBbind core classic
+1Q41,IXM,GSK-3 beta (indirubin-3'-monoxime),PDBbind core classic
+1SNC,THP,staphylococcal nuclease (thymidine 3'5'-diphosphate),PDBbind core classic
+3ERT,OHT,human estrogen receptor alpha (4-hydroxytamoxifen),PDBbind core classic
+1XLZ,FIL,human phosphodiesterase 4B (filaminast),PDBbind core classic
+1STP,BTN,streptavidin (biotin),ultra-high-affinity classic
+1CBX,BZS,carboxypeptidase A (benzylsuccinate),classic metalloprotease
+1TNG,AMC,serine protease (benzamidine derivative),trypsin family
+1BTY,BEN,beta-trypsin (benzamidine),trypsin family
+1MQ6,XLD,3-chloro-pyridyl inhibitor complex,synthetic inhibitor
+1N8Q,DHB,lipoxygenase (protocatechuic acid),small natural product
+1NVQ,UCN,checkpoint kinase Chk1 (UCN-01),kinase inhibitor
+1JAP,HOA,pro-leu-gly-hydroxylamine complex,hydroxamic inhibitor
+1YGC,905,factor VIIa (small molecule inhibitor),serine protease
+1N46,PFA,thyroid hormone receptor beta,nuclear receptor
+1SL3,170,thrombin (P1 heteroaryl inhibitor),serine protease

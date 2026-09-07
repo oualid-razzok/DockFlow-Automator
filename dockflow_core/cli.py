@@ -26,7 +26,14 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from . import __version__
-from .utils import DockFlowError, VersionReport, get_logger, module_version, setup_logging
+from .utils import (
+    DockFlowError,
+    VersionReport,
+    get_logger,
+    module_version,
+    setup_logging,
+    timestamped_run_id,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -36,6 +43,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--version", action="version", version=f"dockflow {__version__}")
     parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
+    parser.add_argument(
+        "--log-format", default="text", choices=["text", "json"],
+        help="log format; json emits one JSON event per line for "
+             "HPC/batch log aggregation (audit item 31)",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     common = argparse.ArgumentParser(add_help=False)
@@ -113,7 +125,8 @@ def build_parser() -> argparse.ArgumentParser:
     dock.add_argument("--center", default=None, help="center x,y,z (overrides config)")
     dock.add_argument("--size", default=None, help="size x,y,z")
     dock.add_argument("--out-dir", default="docking")
-    dock.add_argument("--backend", default="auto", choices=["auto", "python", "cli", "smina"])
+    dock.add_argument("--backend", default="auto",
+                      choices=["auto", "python", "cli", "smina", "gnina"])
     dock.add_argument("--scoring", default="vina", choices=["vina", "vinardo", "ad4"])
     dock.add_argument("--exhaustiveness", type=int, default=8)
     dock.add_argument("--num-modes", type=int, default=9)
@@ -124,6 +137,12 @@ def build_parser() -> argparse.ArgumentParser:
     dock.add_argument("--timeout", type=float, default=3600)
     dock.add_argument("--score-only", action="store_true")
     dock.add_argument("--local-only", action="store_true")
+    dock.add_argument("--cnn-scoring", default=None,
+                      choices=["rescore", "all", "none"],
+                      help="gnina only: use CNN scoring for rescoring (rescore), "
+                           "the full search (all) or not at all (audit item 32)")
+    dock.add_argument("--cnn", default=None,
+                      help="gnina only: CNN model name (default, dense, ...)")
 
     # ------------------------------------------------------------------ analyze
     analyze = subparsers.add_parser("analyze", parents=[common], help="analyze results")
@@ -132,6 +151,11 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--top-poses", type=int, default=3)
     analyze.add_argument("--cutoff", type=float, default=5.0)
     analyze.add_argument("--out-dir", default=None, help="analysis output directory")
+    analyze.add_argument("--crystal-ligand", default=None,
+                         help="reference ligand for redocking RMSD: PDBQT file, or a "
+                              "PDB structure combined with --crystal-resname")
+    analyze.add_argument("--crystal-resname", default=None,
+                         help="3-letter ligand code inside --crystal-ligand (PDB)")
 
     # ---------------------------------------------------------------- visualize
     visualize = subparsers.add_parser(
@@ -149,6 +173,35 @@ def build_parser() -> argparse.ArgumentParser:
     run = subparsers.add_parser("run", parents=[common], help="full automated pipeline")
     run.add_argument("--config", required=True, help="pipeline YAML config")
     run.add_argument("--run-id", default=None)
+    run.add_argument("--stage", action="append",
+                     choices=["download", "prep", "gridbox", "dock", "analyze",
+                              "visualize"],
+                     help="run a single stage for debugging (repeatable); "
+                          "prerequisites are loaded from the existing run "
+                          "directory (audit item 27)")
+    run.add_argument("--dry-run", action="store_true",
+                     help="print the resolved configuration (engines, paths, "
+                          "grid box) and exit without docking (audit item 27)")
+    run.add_argument("--force", action="store_true",
+                     help="ignore the progress.json checkpoint and re-dock "
+                          "every ligand (audit item 28)")
+
+    # ------------------------------------------------------------------ enrich
+    enrich = subparsers.add_parser(
+        "enrich", parents=[common],
+        help="enrichment metrics for an actives + decoys ranking",
+    )
+    enrich.add_argument("--summary", required=True,
+                        help="docking summary.csv (from run or dock)")
+    enrich.add_argument("--actives", required=True,
+                        help="actives list: a file with one ligand id per line, "
+                             "or a comma-separated list")
+    enrich.add_argument("--alpha", type=float, default=20.0,
+                        help="BEDROC alpha (default 20)")
+    enrich.add_argument("--roc-png", default=None,
+                        help="optional matplotlib ROC curve PNG output")
+    enrich.add_argument("--json", action="store_true",
+                        help="also print the metrics as JSON")
 
     # --------------------------------------------------------------------- info
     subparsers.add_parser("info", help="print an environment report")
@@ -379,10 +432,10 @@ def _print_progress(fraction: float, message: str) -> None:
 def cmd_analyze(args: argparse.Namespace) -> int:
     import json
 
-    from .analyzer import analyze_docking_result
+    from .analyzer import analyze_docking_result, extract_reference_atoms
     from .docker_engine import rank_results
     from .models import DockingResult
-    from .pdbio import parse_pdbqt_results
+    from .pdbio import parse_pdb, parse_pdbqt, parse_pdbqt_results
 
     target = Path(args.docking)
     if not target.exists():
@@ -396,6 +449,24 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         target.parent / "analysis" if target.is_dir() else target.with_suffix("")
     )
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Optional redocking validation: --crystal-ligand (+ --crystal-resname).
+    reference_atoms = None
+    if args.crystal_ligand:
+        reference_path = Path(args.crystal_ligand)
+        if not reference_path.is_file():
+            raise SystemExit(f"crystal ligand file not found: {reference_path}")
+        if args.crystal_resname:
+            try:
+                reference_atoms = extract_reference_atoms(
+                    reference_path, args.crystal_resname
+                )
+            except ValueError as exc:
+                raise SystemExit(str(exc)) from exc
+        elif reference_path.suffix.lower() in (".pdbqt", ".qt"):
+            reference_atoms = parse_pdbqt(reference_path).atoms
+        else:
+            reference_atoms = [a for a in parse_pdb(reference_path).atoms
+                               if not a.is_hydrogen]
     results: list[DockingResult] = []
     for pdbqt in pdbqts:
         poses = parse_pdbqt_results(pdbqt)
@@ -405,19 +476,26 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     for result in rank_results(results):
         analyses = analyze_docking_result(result, args.receptor,
                                           top_poses=args.top_poses,
-                                          cutoff=args.cutoff)
+                                          cutoff=args.cutoff,
+                                          reference_atoms=reference_atoms)
         payload[result.ligand_name] = [a.to_dict() for a in analyses]
         for analysis in analyses:
-            hbonds = analysis.num_hbonds
             print(f"{result.ligand_name} pose {analysis.pose_index}: "
                   f"{analysis.affinity:.2f} kcal/mol, {analysis.num_contacts} contacts "
-                  f"({hbonds} hbonds)")
+                  f"({analysis.num_geom_hbond} geometric H-bond contacts)")
+            if analysis.crystal_rmsd is not None:
+                print(f"    crystal RMSD: {analysis.crystal_rmsd:.2f} A "
+                      "(symmetry-tolerant heavy-atom Kabsch)")
             if analysis.residue_rows:
                 top = analysis.residue_rows[0]
                 print(f"    hotspot: {top.resname}{top.resseq} chain {top.chain or '-'} "
                       f"({top.total} contacts, closest {top.closest:.1f} A)")
     (out_dir / "interactions.json").write_text(json.dumps(payload, indent=2),
                                                encoding="utf-8")
+    # summary.csv gains crystal_rmsd once the reference has been analysed
+    from .docker_engine import write_summary_csv
+
+    write_summary_csv(results, out_dir / "summary.csv")
     print(f"analysis: {out_dir / 'interactions.json'}")
     return 0
 
@@ -448,34 +526,144 @@ def cmd_run(args: argparse.Namespace) -> int:
     config = PipelineConfig.from_yaml(config_path)
     if args.run_id:
         config.run_id = args.run_id
+    if args.dry_run:
+        return _dry_run(config)
     events = PipelineEvents(
         on_step=lambda step, status, detail: print(f"[{step}] {status} {detail or ''}"),
         on_log=lambda message: print(f"    {message}"),
         on_progress=lambda fraction, message: _print_progress(fraction, message),
     )
     pipeline = DockingPipeline(config, events=events)
-    report = pipeline.run()
+    report = pipeline.run(stages=args.stage, force=args.force)
     print()
     if report.ok:
         print(f"run {report.run_id} completed -> {report.run_dir}")
         print(f"report  : {report.run_dir / 'report.md'}")
         print(f"manifest: {report.run_dir / 'manifest.json'}")
+        print(f"env     : {report.run_dir / 'environment.json'}")
         return 0
     print(f"run {report.run_id} failed: {report.error}")
     print(f"logs: {report.run_dir / 'logs' / 'pipeline.log'}")
     return 2
 
 
+def _dry_run(config) -> int:
+    """Print the resolved configuration and exit (audit item 27)."""
+    import json as _json
+
+    from .docker_engine import detect_backends
+    from .preparator import _engine_chain
+    from .utils import openbabel_version
+
+    run_id = config.run_id or timestamped_run_id("run")
+    run_dir = Path(config.workdir) / run_id
+    engines = [engine.name for engine in _engine_chain(config.receptor.get("engine", "auto"))]
+    backends = detect_backends()
+    available_backends = [b.name for b in backends if b.available]
+    docking = config.docking or {}
+    resolved = {
+        "run_id": run_id,
+        "run_dir": str(run_dir),
+        "target": config.target,
+        "ligands": [
+            {key: value for key, value in entry.items() if key != "smiles"} | (
+                {"smiles": "..."} if entry.get("smiles") else {}
+            )
+            for entry in config.ligands
+        ],
+        "receptor": {
+            **(config.receptor or {}),
+            "resolved_engine_chain": engines,
+        },
+        "gridbox": {
+            **(config.gridbox or {}),
+            "note": "center/size resolved at runtime when source is ligand/residues",
+        },
+        "docking": {
+            **docking,
+            "resolved_backends_available": available_backends,
+        },
+        "analysis": config.analysis,
+        "visualization": config.visualization,
+        "environment": {
+            "openbabel": openbabel_version(),
+        },
+    }
+    print("# dockflow dry-run - resolved configuration")
+    print(_json.dumps(resolved, indent=2))
+    if not available_backends:
+        print("warning: no docking backend available in this environment", file=sys.stderr)
+    print("dry run: nothing executed (remove --dry-run to run the pipeline)")
+    return 0
+
+
+def cmd_enrich(args: argparse.Namespace) -> int:
+    import json
+
+    from .enrichment import enrichment_table, load_summary_scores, plot_roc
+
+    summary = Path(args.summary)
+    if not summary.is_file():
+        print(f"error: summary csv not found: {summary}", file=sys.stderr)
+        return 2
+    actives_arg = args.actives
+    actives_path = Path(actives_arg)
+    if actives_path.is_file():
+        actives = [
+            line.strip()
+            for line in actives_path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+    else:
+        actives = [item.strip() for item in actives_arg.split(",") if item.strip()]
+    if not actives:
+        print("error: no actives given", file=sys.stderr)
+        return 2
+    try:
+        scores, labels, ligands = load_summary_scores(summary, actives)
+        table = enrichment_table(scores, labels, alpha=args.alpha)
+    except DockFlowError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"enrichment: {table['n_actives']} actives / {table['n_decoys']} decoys"
+          f" from {summary.name} (best pose per ligand)")
+    print()
+    width = max(len(key) for key in table)
+    for key, value in table.items():
+        print(f"  {key.ljust(width)} : {value}")
+    print()
+    print("  ROC AUC  : 1.0 = perfect ranking, 0.5 = random, 0.0 = inverted")
+    print("  EF@x%    : actives-fold enrichment in the top x% vs. random")
+    print(f"  BEDROC   : early-recognition weighted (alpha={args.alpha:g}); "
+          "random baseline is alpha- and actives-fraction-dependent")
+    if args.json:
+        print(json.dumps(table, indent=2))
+    if args.roc_png:
+        path = plot_roc(scores, labels, args.roc_png)
+        if path:
+            print(f"\nROC curve: {path}")
+        else:
+            print("\nwarning: matplotlib unavailable; no ROC PNG written",
+                  file=sys.stderr)
+    return 0
+
+
 def cmd_info(_args: argparse.Namespace) -> int:
     import platform
+
+    from .utils import openbabel_version
 
     report = VersionReport()
     report.add("dockflow-automator", __version__)
     report.add("python", platform.python_version(), sys.executable)
     report.add("platform", f"{platform.system()} {platform.release()}")
-    for module in ("requests", "numpy", "PyYAML", "rdkit", "meeko", "openbabel",
-                   "vina", "PyQt6", "matplotlib", "dimorphite_dl"):
+    for module in ("requests", "numpy", "PyYAML", "rdkit", "meeko", "vina",
+                   "PyQt6", "matplotlib", "dimorphite_dl"):
         report.add(module, module_version(module.lower()))
+    # OpenBabel needs an import-based probe: the PyPI distribution is
+    # 'openbabel-wheel' while the import name is 'openbabel', so a plain
+    # metadata lookup would print "not installed" for a working install.
+    report.add("openbabel", openbabel_version(), "python bindings")
     try:
         import dockflow_bindings  # type: ignore
 
@@ -512,6 +700,7 @@ _COMMANDS = {
     "analyze": cmd_analyze,
     "visualize": cmd_visualize,
     "run": cmd_run,
+    "enrich": cmd_enrich,
     "info": cmd_info,
     "gui": cmd_gui,
 }
@@ -521,7 +710,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Console entry point (``dockflow``)."""
     parser = build_parser()
     args = parser.parse_args(argv)
-    setup_logging("DEBUG" if args.verbose else "WARNING")
+    setup_logging("DEBUG" if args.verbose else "WARNING",
+                  log_format=getattr(args, "log_format", "text"))
     workdir = getattr(args, "workdir", None)
     if workdir:
         import os

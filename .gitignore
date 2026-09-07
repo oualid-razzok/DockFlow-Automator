@@ -31,3 +31,6 @@ data/
 # Downloaded engines (vina.exe dropped next to the launcher)
 vina.exe
 vina
+runs/
+dockflow_runs/
+examples/results/*/

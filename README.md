@@ -8,13 +8,32 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230.svg)](https://github.com/astral-sh/ruff)
 
-DockFlow-Automator wraps the modern scientific-docking stack
+**In one sentence:** DockFlow-Automator takes a PDB id and a ligand,
+and does everything needed to dock that ligand into that protein with
+AutoDock Vina — fetches the structures, prepares them for docking,
+defines the search space, runs the docking, analyses the poses against
+the crystal structure, renders pictures, and writes a report you can
+show a reviewer — without you hand-driving five separate tools.
+
+```text
+        +---------+     +----------+     +---------+     +--------+     +----------+     +-----------+
+        | download | --> | prepare  | --> | grid    | --> | dock   | --> | analyze  | --> | visualize |
+        | target + |     | receptor |     | box     |     | Vina/  |     | contacts |     | PyMOL /   |
+        | ligands  |     | + ligand |     |         |     | Smina/ |     | + RMSD + |     | matplotlib|
+        |          |     | (Meeko)  |     |         |     | GNINA  |     | clusters |     |           |
+        +---------+     +----------+     +---------+     +--------+     +----------+     +-----------+
+             RCSB/PubChem  OpenBabel/RDKit   ligand/      PDBQT poses   geometric      PNG + .pse
+             ZINC/UniProt  PDBQT + charges   residues                   contacts,      + report.md
+                           + provenance      or explicit                crystal RMSD   + manifest.json
+```
+
+Under the hood it wraps the modern scientific-docking stack
 ([AutoDock Vina](https://github.com/ccsb-scripps/AutoDock-Vina),
 [Meeko](https://github.com/forlilab/Meeko),
 [RDKit](https://www.rdkit.org),
 [OpenBabel](https://github.com/openbabel/openbabel) and
 [open-source PyMOL](https://github.com/schrodinger/pymol-open-source))
-into one reproducible workflow with three interchangeable front ends:
+into one reproducible workflow with interchangeable front ends:
 
 | front end | audience | entry point |
 |---|---|---|
@@ -44,30 +63,21 @@ double-click launchers are included for all three
 
 1. [Features](#features)
 2. [Quick start](#quick-start)
-   - [Install](#install)
-   - [GUI in 6 steps](#gui-in-6-steps)
-   - [CLI in 6 commands](#cli-in-6-commands)
-   - [One-file automated run](#one-file-automated-run)
-3. [Pipeline stages explained](#pipeline-stages-explained)
-4. [Architecture](#architecture)
-5. [Repository layout](#repository-layout)
-6. [C++ accelerator bindings](#c-accelerator-bindings)
-7. [Docker](#docker)
-8. [Python API examples](#python-api-examples)
-9. [Configuration reference](#configuration-reference)
-10. [Testing & development](#testing--development)
-11. [Validated example: 1HVR redocking](#validated-example-1hvr-redocking)
-12. [Licenses & third-party components](#licenses--third-party-components)
-13. [Troubleshooting](#troubleshooting)
-14. [Roadmap](#roadmap)
-
-> Full manuals: **[BUILD_GUIDE.md](BUILD_GUIDE.md)** (compile & install on
-> Linux/Windows/macOS, C++ bindings, Docker, standalone executables) and
-> **[USER_GUIDE.md](USER_GUIDE.md)** (GUI walkthrough, CLI reference, YAML
-> reference, result interpretation, virtual screening, FAQ).
-
----
-
+3. [Validated example: 1HVR redocking](#validated-example-1hvr-redocking)
+4. [Scientific validation vs software tests (item: what "tested" means)](#scientific-validation-vs-software-tests-item-what-tested-means)
+5. [Scientific limitations and assumptions](#scientific-limitations-and-assumptions)
+6. [Known scientific differences per preparation engine](#known-scientific-differences-per-preparation-engine)
+7. [Pipeline stages explained](#pipeline-stages-explained)
+8. [Architecture](#architecture)
+9. [Repository layout](#repository-layout)
+10. [C++ accelerator bindings](#c-accelerator-bindings)
+11. [Docker](#docker)
+12. [Python API examples](#python-api-examples)
+13. [Configuration reference](#configuration-reference)
+14. [Testing & development](#testing--development)
+15. [Licenses & third-party components](#licenses--third-party-components)
+16. [Troubleshooting](#troubleshooting)
+17. [Roadmap](#roadmap)
 ## Features
 
 **Automated end-to-end workflow** — one YAML file (or one GUI session) drives
@@ -93,24 +103,67 @@ definition, AutoDock Vina docking, interaction analysis, rendering and reporting
 - **Grid box**: derived from the co-crystallized ligand, from active-site
   residues, or explicit; exported/imported as Vina config files; live 3D
   preview in the GUI (rotate/zoom, no OpenGL required).
-- **Docking**: official Vina **python bindings**, the **vina CLI**, or
-  **Smina** — selected automatically. Batch docking across ligands with
-  progress callbacks and cancellation, `--score-only` / `--local-only` modes,
+- **Docking**: official Vina **python bindings**, the **vina CLI**,
+  **Smina**, or **GNINA** (CNN scoring, Apache-2.0) — selected
+  automatically. Batch docking across ligands with progress callbacks,
+  cancellation and **crash-safe checkpoint/resume** (`progress.json`,
+  `--force` to re-dock), `--score-only` / `--local-only` modes,
   vina / vinardo / ad4 scoring.
 - **Analysis**: pose parsing, per-pose binding affinities and RMSD tables,
-  geometric interaction detection (hydrogen bonds, hydrophobic contacts,
-  ionic contacts, metal coordination), residue "hotspot" tables, pose
-  clustering by Kabsch RMSD, ligand efficiency, CSV/JSON export.
+  geometric contact classification (H-bond contacts, hydrophobic, ionic,
+  metal — distance+type criteria, documented in
+  `docs/interaction_criteria.md`), residue "hotspot" tables, pose
+  clustering summaries, **redocking validation** (symmetry-tolerant
+  heavy-atom `crystal_rmsd` to the co-crystallized pose with a
+  PASS/FAIL banner), `docking_score_efficiency` (score-per-heavy-atom
+  proxy, explicitly not experimental ligand efficiency), CSV/JSON export
+  with a JSON Schema (`docs/schemas/`), and docked poses exported to SDF
+  with score SD fields.
+- **Enrichment metrics**: `dockflow enrich` computes ROC AUC, EF@1%,
+  EF@5% and BEDROC (α=20, RDKit-verified) for actives+decoys panels
+  straight from `summary.csv`, with an optional ROC PNG.
 - **Visualization**: headless PyMOL (ray-traced PNG + `.pse` sessions + CGO
   wire-frame grid box, in-process or subprocess) with an automatic matplotlib
   fallback renderer for minimal installs; "Open in PyMOL" from the GUI.
-- **Reproducibility**: every run writes a `manifest.json` + markdown
-  `report.md` + logs; Docker image pins the whole scientific stack;
-  seeds are configurable.
+- **Reproducibility & provenance**: every run writes a `manifest.json`
+  (per-stage audit trail: wall time, ISO start/stop, exit status,
+  resolved engine/backend; total `duration_s`), an
+  **`environment.json` fingerprint** of the full scientific stack, a
+  markdown `report.md` (results, pose clustering, warnings, and an
+  "Assumptions this run made" footer), structured `--log-format json`
+  logs; Docker image pins the whole stack; seeds are configurable and
+  the CI `reproducibility` workflow asserts same-seed byte-identical
+  `summary.csv`.
 
 ## Quick start
 
 ### Install
+
+> **Reproducible science: use Docker or conda.** The plain-pip install
+> below works for a *quick smoke test*, but it does not pin the
+> scientific stack (Vina/Meeko/RDKit/OpenBabel versions shift
+> independently) — for results you intend to trust or publish, use the
+> pinned image/environment.  Every run records its exact stack in
+> `environment.json` either way.
+
+**Recommended: pinned Docker image** (Linux; image tags map to DockFlow
+releases):
+
+```bash
+docker build -f docker/Dockerfile -t dockflow-automator:0.2.0 .
+docker run --rm -v "$PWD:/data" dockflow-automator:0.2.0 \
+    run --config /data/examples/configs/hiv1_protease_example.yaml
+```
+
+**Recommended: pinned conda environment** (Linux / macOS / Windows):
+
+```bash
+micromamba create -n dockflow -c conda-forge -c bioconda \
+    python=3.12 openbabel pymol-open-source autodock-vina
+micromamba run -n dockflow pip install "dockflow-automator[prep,engine,gui,viz]"
+```
+
+**Quick smoke test (pip only — not for reproducible science):**
 
 Platform support (verified): everything installs from pip on all three OS;
 the Vina *python bindings* ship wheels for Linux (cp38–cp312) only, so on
@@ -155,6 +208,8 @@ micromamba create -n dockflow -c conda-forge -c bioconda \
     python=3.10 openbabel pymol-open-source autodock-vina
 micromamba run -n dockflow pip install "dockflow-automator[prep,engine,gui,viz]"
 ```
+
+![DockFlow-Automator desktop application](docs/gui_screenshot.png)
 
 ### GUI in 6 steps
 
@@ -239,6 +294,107 @@ runs/<run_id>/
 ```
 
 ---
+
+## Validated example: 1HVR redocking
+
+A real validation run (Vina 1.2.7 python bindings, exhaustiveness 16,
+seed 2026; artifacts committed under `examples/results/1HVR/`):
+
+```text
+[1] target    1HVR downloaded from RCSB (co-crystal ligand XK2)
+[2] receptor  1890 -> 1846 atoms (OpenBabel engine, +1292 hydrogens)
+[3] ligand    XK2 prepared with Meeko (46 heavy atoms, 10 rotatable bonds)
+[4] grid box  center (-8.7, 15.5, 27.9), volume 6974 A^3 (pocket:XK2 + 4 A)
+[5] docking   9 poses; best -11.13 kcal/mol
+[6] analysis  9 poses in 4 clusters; best crystal RMSD 1.08 A (PASS,
+              threshold <= 2.0 A) - the co-crystal pose is recovered
+[7] contacts  ILE47, ILE50, ALA28, ILE84, ASP25/30 - the canonical
+              HIV-1 protease flap/active-site residues
+[8] report    report.md + manifest.json + environment.json
+```
+
+The example is a *validation*, not a smoke test: the report banner states
+the redocking pose recovery, `summary.csv` carries a `crystal_rmsd`
+column for every pose, and the CI `reproducibility` workflow re-runs this
+config twice with the same seed and byte-compares `summary.csv`.  A
+cross-docking example (XK2 docked into a different HIV-1 PR structure,
+1HSG) lives at `examples/configs/hiv1_cross_docking_1HSG.yaml`.
+
+## Scientific validation vs software tests (item: what "tested" means)
+
+Two different claims must not be conflated:
+
+* **Software tests** — `~210` fast, offline, no network, no real
+  docking (`pytest -m "not network and not gui and not scientific"`).
+  They pin parsing, typing, CLI contracts, the GUI smoke surface and the
+  analytic RMSD/clustering/enrichment maths.  Run on every push, 3 OS ×
+  2 Python versions.
+* **Scientific validation** — tests that would fail if the *science*
+  were wrong, not the code:
+  * `pytest -m scientific`: real 1HVR redocking must recover the crystal
+    pose within 2.0 A; the same seed must reproduce identical scores;
+  * the `reproducibility` workflow: the full example config runs twice,
+    `summary.csv` must be byte-identical (documented 1e-6 fallback);
+  * `benchmarks/redocking/`: a 24-complex redocking benchmark suite
+    (PDBbind/Astex classics) with success-rate reporting;
+  * `benchmarks/mgltools_comparison/`: protocol comparing DockFlow to
+    the conventional MGLTools workflow on the same set;
+  * `docs/preparation_validation.md`: cross-engine preparation numbers
+    (atom counts, charges, typing) computed, not asserted.
+
+## Scientific limitations and assumptions
+
+DockFlow-Automator automates a *conventional rigid-receptor Vina
+workflow*; every run of that workflow inherits these limitations, and
+the run report makes the resolved choices explicit ("Assumptions this
+run made" footer in `report.md`):
+
+* **Rigid receptor** — no side-chain or backbone flexibility; induced
+  fit is invisible.  Cross-docking into a different conformation can
+  fail for this reason.
+* **Implicit solvent, no entropy** — Vina scores are empirical
+  enthalpy-ish estimates, not free energies; absolute values are not
+  comparable across targets, only rankings within one target.
+* **Geometric contacts only** — interaction detection uses distance +
+  atom type (no angle criterion); see
+  [docs/interaction_criteria.md](docs/interaction_criteria.md).  "H-bond
+  contact" means donor-acceptor within 3.5 A, not a verified bond.
+* **Default protonation** — receptors keep their deposited protonation
+  plus toolkit hydrogen addition (pH 7.4 convention); ligands use the
+  input state unless `protonate: true` (dimorphite-dl).  Tautomers are
+  *not* enumerated; one tautomer in, one tautomer docked.
+* **Single reference geometry** — one PDB conformation per target;
+  no ensemble averaging.
+* **Waters/metals removed by default** — with a recorded warning per
+  species (`manifest.receptor.removed`); keep them with
+  `receptor.keep_resnames` when they matter (metal-dependent sites).
+* **Search space is a box** — pocket-derived with padding, or your
+  explicit choice; a bad box is the most common cause of bad docking.
+* **Scoring function limits** — Vina 1.2.x empirically parameterised;
+  Vinardo/AD4/GNINA-CNN options each shift absolute scores.
+
+Every per-run assumption (engine, charge model, waters, metals, box
+source/padding, scoring, ligand protonation source) is recorded in
+`manifest.json` under `receptor.decisions`, `ligands[*].prep` and
+`gridbox`, because "automatic preparation" must never mean "hidden
+preparation".
+
+## Known scientific differences per preparation engine
+
+The `auto` chain is **OpenBabel → RDKit → `obabel` CLI → `none`**, each
+falling through with a logged WARNING on failure (a broken optional
+dependency never crashes a run).  The engines make *different scientific
+decisions* — the outputs are not interchangeable:
+
+| Engine | Hydrogens | Charges | Aromaticity | Notes |
+|---|---|---|---|---|
+| OpenBabel | added at pH 7.4 | Gasteiger, near-neutral sum | perceived (`A` types) | default on Linux (`openbabel-wheel`) / conda |
+| RDKit | added (`AddHs`) | Gasteiger **including residue formal charges** (net ≠ 0) | perceived | default where OpenBabel is unavailable; charge difference is irrelevant for Vina/Vinardo scoring (types+geometry), relevant for AD4 maps |
+| `obabel` CLI | same as OpenBabel | same | same | chain ids not carried through MOL2 |
+| `none` | **not added** | **0.0 (skipped entirely)** | **not perceived** | dependency-free fallback for CI/testing — geometry-only receptor, scientifically degraded |
+
+Measured numbers for all engines on the 1HVR example live in
+[docs/preparation_validation.md](docs/preparation_validation.md).
 
 ## Pipeline stages explained
 
@@ -331,8 +487,13 @@ DockFlow-Automator/
 ├── run_dockflow.command          #   (find the conda env, start the GUI)
 ├── run_dockflow.sh               #
 ├── docker/                       # Dockerfile, env.yaml, entrypoint, compose
-├── examples/                     # YAML pipeline + shell walkthrough
-├── tests/                        # pytest suite (11 modules, 133 tests)
+├── examples/                     # YAML pipeline + shell walkthrough + committed
+│                                 #   artifacts of the validated 1HVR run
+├── benchmarks/                   # redocking benchmark suite, DUD-E enrichment
+│                                 #   panel, MGLTools comparison, license audit
+├── docs/                         # interaction criteria, JSON schemas,
+│                                 #   preparation validation, ADRs
+├── tests/                        # pytest suite (software + scientific tests)
 ├── CMakeLists.txt                # top-level superbuild (bindings + optional OpenBabel)
 ├── pyproject.toml                # packaging, extras, tooling config
 ├── BUILD_GUIDE.md                # compile & install manual (Linux/Windows/macOS)
@@ -421,35 +582,21 @@ All pipeline options with their defaults are documented in
 
 ```bash
 pip install -e ".[test,prep]"
-pytest -m "not network and not gui"     # offline suite (133 tests)
-pytest -m gui                           # PyQt6 offscreen smoke tests
-pytest -m network                       # live-API tests (opt-in)
-ruff check .                            # lint
+pytest -m "not network and not gui and not scientific"  # software tests (unit)
+pytest -m gui                                           # PyQt6 offscreen smoke tests
+pytest -m scientific         # real-docking validation (see Scientific validation above)
+pytest -m network            # live-API tests (opt-in)
+ruff check .                 # lint
 ```
 
-CI (`.github/workflows/build.yml`) runs the lint job, the offline test matrix
-(Linux/macOS/Windows × Python 3.10/3.12), the GUI smoke job, builds the C++
-binding wheels for all three platforms, builds the Docker image, and publishes
-sdist + wheels on `v*` tags.
-
-## Validated example: 1HVR redocking
-
-A fully real validation run (performed during development with the Vina python
-bindings, exhaustiveness 8, seed 2026):
-
-```text
-[1] target    1HVR downloaded from RCSB (co-crystal ligand XK2)
-[2] receptor  1890 -> 1848 atoms (RDKit engine, +1296 hydrogens)
-[3] ligand    XK2 prepared with Meeko (84 atoms, 10 rotatable bonds)
-[4] grid box  center (-8.7, 15.5, 27.9), volume ~7000 A^3
-[5] docking   9 poses; best -11.20 kcal/mol
-[6] analysis  contacts dominated by ILE47, ILE50, ALA28, ILE84 -
-              the canonical HIV-1 protease flap/active-site residues
-[7] render    xk2_render_01.png
-```
-
-The interaction profile matching the known active site is exactly the sanity
-check you want from a redocking experiment.
+CI (`.github/workflows/build.yml`) runs the lint job, the software test
+matrix (Linux/macOS/Windows × Python 3.10/3.12), the GUI smoke job, an
+explicit interactions.json schema-conformance step, the C++ binding
+wheels for all three platforms plus a C++/NumPy equivalence job
+(delta published as an artifact), builds the Docker image, and publishes
+sdist + wheels on `v*` tags.  A separate `reproducibility` workflow runs
+the 1HVR example twice with the same seed and byte-compares
+`summary.csv`.
 
 ## Licenses & third-party components
 
@@ -487,11 +634,25 @@ its terms; the dependency-free and RDKit engines avoid it entirely):
 
 ## Roadmap
 
-- Flexible side chains (Meeko reactive/flex preparation)
+**Track 1 — scientific validation (current priority; the feature set is
+frozen until this track is complete):**
+
+- execute the full 24-complex redocking benchmark
+  (`benchmarks/redocking/`) and publish the success-rate table;
+- run the MGLTools cross-comparison on a python2 environment and extend
+  `docs/preparation_validation.md`;
+- expand `benchmarks/enrichment/` with a full DUD-E HIV-PR panel and
+  publish ROC/EF/BEDROC numbers (`dockflow enrich`);
+- add cross-Vina-version scoring comparisons to the reproducibility
+  workflow.
+
+**Track 2 — deferred until Track 1 is complete:**
+
+- flexible side chains (Meeko reactive/flex preparation)
 - AD4 maps (`autogrid`) as a first-class scoring path
-- Multi-receptor / ensemble docking and consensus scoring
+- multi-receptor / ensemble docking and consensus scoring
 - 2D ligand-interaction diagrams
-- Plugin API for custom scoring functions (Smina custom scores)
+- plugin API for custom scoring functions (Smina custom scores)
 
 ---
 

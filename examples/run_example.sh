@@ -33,15 +33,20 @@ $CLI gridbox --structure "${WORKDIR}/raw/1hvr.pdb" --resname XK2 \
     --padding 4 --out "${WORKDIR}/gridbox.txt"
 
 say "6/6 docking (AutoDock Vina)"
+# exhaustiveness 16 matches the validated example config
+# (examples/configs/hiv1_protease_example.yaml); the analysis stage
+# reports the redocking crystal RMSD against the XK2 crystal pose.
 $CLI dock \
     --receptor "${WORKDIR}/prepared/receptor.pdbqt" \
     --ligands "${WORKDIR}/prepared/xk2.pdbqt" \
     --config "${WORKDIR}/gridbox.txt" \
-    --exhaustiveness 8 --num-modes 9 \
+    --exhaustiveness 16 --num-modes 9 --seed 2026 \
     --out-dir "${WORKDIR}/docking"
 
-say "analysis"
+say "analysis (includes redocking crystal RMSD)"
 $CLI analyze --docking "${WORKDIR}/docking" \
-    --receptor "${WORKDIR}/prepared/receptor.pdbqt" --out-dir "${WORKDIR}/analysis"
+    --receptor "${WORKDIR}/prepared/receptor.pdbqt" \
+    --crystal-ligand "${WORKDIR}/raw/1hvr.pdb" --crystal-resname XK2 \
+    --out-dir "${WORKDIR}/analysis"
 
 say "done - inspect ${WORKDIR}/docking/summary.csv and ${WORKDIR}/analysis/"

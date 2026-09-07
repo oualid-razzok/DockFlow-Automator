@@ -45,12 +45,12 @@ def _mock_docking(monkeypatch, tmp_path: Path, docked_pdbqt_text: str):
         backend = "mocked"
 
         def __init__(self, config, backend="auto", workdir=None,
-                     vina_exec=None, smina_exec=None):
+                     vina_exec=None, smina_exec=None, gnina_exec=None):
             pass
 
         def dock_batch(self, receptor, ligand_pdbqts, out_dir=None,
                        ligand_records=None, parallel=1, progress=None,
-                       stop_event=None):
+                       stop_event=None, on_result=None):
             out_dir = Path(out_dir)
             out_dir.mkdir(parents=True, exist_ok=True)
             results = []
@@ -59,7 +59,7 @@ def _mock_docking(monkeypatch, tmp_path: Path, docked_pdbqt_text: str):
                 out_path.write_text(docked_pdbqt_text, encoding="utf-8")
                 record = (ligand_records[index] if ligand_records else None) or \
                     LigandRecord(identifier=Path(ligand_path).stem)
-                results.append(DockingResult(
+                result = DockingResult(
                     ligand=record,
                     ligand_name=record.identifier,
                     poses=[
@@ -71,7 +71,10 @@ def _mock_docking(monkeypatch, tmp_path: Path, docked_pdbqt_text: str):
                     log_text="fake",
                     runtime=0.01,
                     backend="mocked",
-                ))
+                )
+                results.append(result)
+                if on_result is not None:
+                    on_result(result)
                 if progress:
                     progress((index + 1) / len(ligand_pdbqts), "mocked")
             return results
@@ -181,3 +184,145 @@ def test_pipeline_reports_failures(config, tmp_path, monkeypatch):
     assert "network down" in report.error
     assert report.run_dir is not None
     assert (report.run_dir / "manifest.json").is_file()
+
+
+# ---------------------------------------------------------------------------
+# Stage selection, checkpoint/resume and provenance (items 4, 5, 27, 28)
+# ---------------------------------------------------------------------------
+def test_pipeline_records_stages_and_duration(config, monkeypatch,
+                                              docked_pdbqt_text):
+    _mock_docking(monkeypatch, config.workdir, docked_pdbqt_text)
+    pipeline = DockingPipeline(config)
+    report = pipeline.run()
+    assert report.ok, report.error
+    manifest = json.loads((report.run_dir / "manifest.json").read_text(encoding="utf-8"))
+    # audit item 4: duration + per-stage audit trail
+    assert manifest["duration_s"] is not None and manifest["duration_s"] >= 0.0
+    names = [stage["name"] for stage in manifest["stages"]]
+    for expected in ("download", "prepare_receptor", "prepare_ligands", "gridbox",
+                     "docking", "analysis", "report"):
+        assert expected in names
+    statuses = {stage["name"]: stage["status"] for stage in manifest["stages"]}
+    assert all(status == "done" for name, status in statuses.items()
+               if name != "visualization")
+    assert statuses.get("visualization") == "skipped"
+    for stage in manifest["stages"]:
+        assert stage["started_at"] and stage["ended_at"]
+        assert stage["duration_s"] is not None
+    # audit item 5: environment fingerprint + sidecar file
+    assert manifest["environment"]["dockflow"]
+    sidecar = report.run_dir / "environment.json"
+    assert sidecar.is_file()
+    environment = json.loads(sidecar.read_text(encoding="utf-8"))
+    assert environment["dockflow"] == manifest["environment"]["dockflow"]
+
+
+def test_pipeline_manifest_records_receptor_decisions(config, monkeypatch,
+                                                       docked_pdbqt_text):
+    _mock_docking(monkeypatch, config.workdir, docked_pdbqt_text)
+    report = DockingPipeline(config).run()
+    assert report.ok
+    manifest = json.loads((report.run_dir / "manifest.json").read_text(encoding="utf-8"))
+    receptor = manifest["receptor"]
+    # audit item 10: every silent preparation decision, explicit
+    decisions = receptor["decisions"]
+    for key in ("rigid_receptor", "protonation", "tautomer", "hydrogen_addition",
+                "charge_model", "waters", "metals_cofactors",
+                "alternate_conformations", "chains"):
+        assert key in decisions, f"missing decision: {key}"
+    # audit item 11: removed species recorded (ZN2 + BEN + waters)
+    assert receptor["removed"].get("HOH") == 2
+    assert receptor["removed"].get("ZN2") == 1
+
+
+def test_pipeline_single_stage_run_skips_others(config, monkeypatch,
+                                                docked_pdbqt_text):
+    _mock_docking(monkeypatch, config.workdir, docked_pdbqt_text)
+    pipeline = DockingPipeline(config)
+    report = pipeline.run()
+    assert report.ok
+    # now re-run only the analysis stage from the same run directory
+    calls = {"docking": 0}
+
+    class CountingEngine:
+        backend = "mocked"
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def dock_batch(self, *args, **kwargs):
+            calls["docking"] += 1
+            raise AssertionError("docking must not re-run for --stage analyze")
+
+    monkeypatch.setattr(pipeline_mod, "VinaEngine", CountingEngine)
+    pipeline2 = DockingPipeline(config)
+    report2 = pipeline2.run(stages=["analyze"])
+    assert report2.ok, report2.error
+    assert calls["docking"] == 0
+    manifest = json.loads(
+        (report2.run_dir / "manifest.json").read_text(encoding="utf-8")
+    )
+    stages = {stage["name"]: stage["status"] for stage in manifest["stages"]}
+    assert stages["docking"] == "skipped"
+    assert stages["analysis"] == "done"
+    assert (report2.run_dir / "report.md").is_file()  # report always written
+
+
+def test_pipeline_checkpoint_resume_skips_completed(config, monkeypatch,
+                                                     docked_pdbqt_text,
+                                                     ligand_pdbqt_path):
+    _mock_docking(monkeypatch, config.workdir, docked_pdbqt_text)
+    report = DockingPipeline(config).run()
+    assert report.ok
+    progress = json.loads((report.run_dir / "progress.json").read_text(encoding="utf-8"))
+    assert "ligand" in progress["completed"]  # keyed by pdbqt stem
+    assert progress["completed"]["ligand"]["status"] == "ok"
+    assert (report.run_dir / "docking" / "ligand_out.pdbqt").is_file()
+
+    # second invocation: completed ligands must be skipped (no re-docking)
+    dock_calls = {"n": 0}
+
+    class NoDockEngine:
+        backend = "mocked"
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def dock_batch(self, receptor, ligand_pdbqts, **kwargs):
+            dock_calls["n"] += len(ligand_pdbqts)
+            return []
+
+    monkeypatch.setattr(pipeline_mod, "VinaEngine", NoDockEngine)
+    config2 = PipelineConfig(**{**config.to_dict()})
+    report2 = DockingPipeline(config2).run()
+    assert report2.ok, report2.error
+    assert dock_calls["n"] == 0  # lig already checkpointed
+    manifest = json.loads(
+        (report2.run_dir / "manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["docking"]["resumed"] == 1
+
+    # force re-docks everything (audit item 28: --force)
+    _mock_docking(monkeypatch, config.workdir, docked_pdbqt_text)
+    report3 = DockingPipeline(config2).run(force=True)
+    assert report3.ok
+    assert json.loads((report3.run_dir / "progress.json").read_text(
+        encoding="utf-8"))["completed"]["ligand"]["status"] == "ok"
+
+
+def test_pipeline_rejects_unknown_stage(config):
+    with pytest.raises(Exception, match="unknown stage"):
+        DockingPipeline(config).run(stages=["explode"])
+
+
+def test_pipeline_gridbox_warnings_in_manifest(config, monkeypatch,
+                                               docked_pdbqt_text):
+    _mock_docking(monkeypatch, config.workdir, docked_pdbqt_text)
+    # a huge explicit box must be refused (audit item 12)
+    huge = PipelineConfig(**{**config.to_dict()})
+    huge.gridbox = {"source": "explicit", "center": [0, 0, 0],
+                    "size": [40, 40, 40]}
+    pipeline = DockingPipeline(huge)
+    report = pipeline.run()
+    assert not report.ok
+    assert "exceeds AutoDock Vina's hard cap" in report.error

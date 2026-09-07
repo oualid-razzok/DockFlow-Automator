@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dockflow-automator"
-version = "0.1.1"
+version = "0.2.0"
 description = "Unified, automated molecular docking: download, prepare, dock and visualize - end to end."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -139,10 +139,12 @@ include = [
 [tool.pytest.ini_options]
 minversion = "7.4"
 testpaths = ["tests"]
-addopts = "-ra --strict-markers -m 'not network'"
+addopts = "-ra --strict-markers -m 'not network and not scientific'"
 markers = [
     "network: tests that require live internet access (deselected by default)",
     "gui: tests that require PyQt6 with a working (offscreen) display",
+    "unit: fast offline software tests, no real docking (the default suite)",
+    "scientific: performs real docking against real structures (slow; run by the reproducibility workflow)",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:rdkit.*",

@@ -1,0 +1,106 @@
+# =============================================================================
+# DockFlow-Automator - scientific reproducibility & validation workflow.
+#
+# The minimal "we actually are reproducible" test (audit item 6): the 1HVR
+# example config is executed TWICE with the same seed and the resulting
+# summary.csv files must be byte-identical (strong outcome).  If Vina ever
+# becomes non-deterministic on a platform, the comparison degrades to a
+# documented 1e-6 float tolerance (scripts/compare_summaries.py) instead of
+# failing silently - the tolerance is asserted, never assumed.
+#
+# Also runs the scientific test module (real docking, real structures).
+# =============================================================================
+name: reproducibility
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "dockflow_core/**"
+      - "examples/configs/**"
+      - "tests/test_scientific.py"
+      - "scripts/compare_summaries.py"
+      - ".github/workflows/reproducibility.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  seed-determinism:
+    name: 1HVR run twice, same seed (byte-compare)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install full scientific stack
+        run: python -m pip install -e ".[prep,engine,viz,test]"
+
+      - name: Environment fingerprint
+        run: python -m dockflow_core.cli info
+
+      - name: Run 1 (seed 2026, exhaustiveness 16)
+        run: |
+          python -m dockflow_core.cli run \
+            --config examples/configs/hiv1_protease_example.yaml \
+            --run-id repro-1
+
+      - name: Run 2 (identical configuration)
+        run: |
+          python -m dockflow_core.cli run \
+            --config examples/configs/hiv1_protease_example.yaml \
+            --run-id repro-2
+
+      - name: Compare summary.csv (byte-identical or <= 1e-6)
+        run: |
+          python scripts/compare_summaries.py \
+            runs/repro-1/docking/summary.csv \
+            runs/repro-2/docking/summary.csv \
+            --tolerance 1e-6
+
+      - name: Assert redocking pose recovery is reported
+        run: |
+          grep -q "Redocking pose recovery" runs/repro-1/report.md
+          grep -qE "best pose RMSD = [0-9.]+ A" runs/repro-1/report.md
+
+      - name: Upload both run directories
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reproducibility-runs
+          path: |
+            runs/repro-1/report.md
+            runs/repro-1/manifest.json
+            runs/repro-1/environment.json
+            runs/repro-1/docking/summary.csv
+            runs/repro-2/report.md
+            runs/repro-2/manifest.json
+            runs/repro-2/environment.json
+            runs/repro-2/docking/summary.csv
+          retention-days: 30
+
+  scientific-tests:
+    name: scientific tests (real docking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install full scientific stack
+        run: python -m pip install -e ".[prep,engine,viz,test]"
+
+      - name: Scientific test suite (pose recovery + seed determinism)
+        run: python -m pytest tests/test_scientific.py -m scientific -v

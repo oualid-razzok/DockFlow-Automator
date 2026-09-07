@@ -6,7 +6,9 @@
 #   test      - offline pytest matrix: Linux / macOS / Windows x Python 3.10 & 3.12
 #   gui       - PyQt6 offscreen GUI smoke tests (all three OS)
 #   bindings  - C++ accelerator wheels via cibuildwheel (all three OS)
+#   bindings-equivalence - C++/NumPy numeric delta, published as artifact
 #   docker    - build the pinned reproducibility image (Linux only)
+# (scientific validation and seed-determinism live in reproducibility.yml)
 #   release   - on v* tags: sdist + wheels + C++ wheels uploaded to the release
 # =============================================================================
 name: build
@@ -35,9 +37,9 @@ jobs:
     name: lint (ruff)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -62,9 +64,9 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.10", "3.12"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
 
@@ -76,9 +78,13 @@ jobs:
         shell: bash
         run: python -m dockflow_core.cli info || true
 
-      - name: Offline test suite
+      - name: Offline software test suite (unit; no real docking)
         shell: bash
-        run: python -m pytest -m "not network and not gui" --cov=dockflow_core --cov-report=term
+        run: python -m pytest -m "not network and not gui and not scientific" --cov=dockflow_core --cov-report=term
+
+      - name: interactions.json schema conformance (item 21)
+        shell: bash
+        run: python -m pytest tests/test_schema.py -q
 
   # -------------------------------------------------------------------------
   # GUI smoke tests (offscreen Qt, no display needed)
@@ -91,9 +97,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -126,14 +132,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.1.2
         with:
           package-dir: bindings
           output-dir: wheelhouse
@@ -147,11 +153,44 @@ jobs:
           CIBW_TEST_COMMAND: python -c "import dockflow_bindings as b; assert callable(b.kabsch_rmsd)"
 
       - name: Upload wheel artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bindings-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
           retention-days: 14
+
+  # -------------------------------------------------------------------------
+  # C++/NumPy equivalence: build the accelerator, run the equivalence
+  # tests and publish the numeric delta as an artifact (audit item 35).
+  # -------------------------------------------------------------------------
+  bindings-equivalence:
+    name: C++ vs NumPy equivalence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install package, tests and build the C++ accelerator
+        run: |
+          python -m pip install -e ".[test]"
+          python -m pip install ./bindings
+
+      - name: Equivalence test suite (tests/test_bindings.py)
+        run: python -m pytest tests/test_bindings.py -v
+
+      - name: Randomised delta report (scripts/bindings_equivalence.py)
+        run: python scripts/bindings_equivalence.py --out bindings_deltas.json
+
+      - name: Publish C++ vs NumPy delta artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bindings-numpy-deltas
+          path: bindings_deltas.json
+          retention-days: 30
 
   # -------------------------------------------------------------------------
   # Docker image (Linux)
@@ -160,7 +199,7 @@ jobs:
     name: docker image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build the image
         run: docker build -f docker/Dockerfile -t dockflow-automator:ci .
@@ -168,7 +207,9 @@ jobs:
       - name: Smoke test the image
         run: |
           docker run --rm dockflow-automator:ci info
-          docker run --rm dockflow-automator:ci --help || true
+          docker run --rm dockflow-automator:ci --help >/dev/null
+          docker run --rm dockflow-automator:ci shell -c "command -v vina" >/dev/null
+          docker run --rm dockflow-automator:ci shell -c "python -c 'import meeko, openbabel; print(\"prep stack OK\")'"
 
   # -------------------------------------------------------------------------
   # Release: sdist + pure-python wheel + C++ wheels, on v* tags
@@ -181,14 +222,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Download C++ binding wheels
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: bindings-wheels-*
           path: dist

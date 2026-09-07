@@ -1,5 +1,83 @@
 # Changelog
 
+## [0.2.0] - 2026-09-07
+
+Audit/peer-review release: *correctness of the "auto" machinery,
+reproducibility provenance and scientific transparency*.  The feature set
+is otherwise frozen behind the scientific-validation track (README).
+
+### Fixed (P0)
+- **`auto` receptor-prep engine selection now actually falls through**:
+  a broken optional dependency (e.g. openbabel-wheel 3.1.1.23, which
+  removed `OBElementTable`) produced `AttributeError` crashes; every
+  engine failure is now caught, reported as a WARNING naming the failed
+  engine and the fallback, and the next engine is tried.  The OpenBabel
+  engine itself works on current wheels again (local Z->symbol table,
+  `OBResidue.GetChain` for the removed `GetChainID`).
+- **`dockflow info` detects the OpenBabel wheel** via the actual import
+  and reports the installed `openbabel-wheel` version (it printed "not
+  installed" before).
+- Grid boxes above Vina's 27000 A^3 hard cap are refused; large boxes
+  (> 8000 A^3 with small ligands, any axis > 30 A) warn and are recorded
+  in `manifest.gridbox.warnings`.
+- `--stage` resumes keep the grid-box derivation and ligand heavy-atom
+  counts; ligand `id`s from YAML are honoured for all ligand sources.
+
+### Added - provenance & reproducibility (P1)
+- `manifest.json`: `duration_s`, per-stage audit trail `stages[]` (wall
+  time, ISO-8601 start/stop, exit status, resolved engine/backend),
+  `environment` scientific-stack fingerprint; sidecar `environment.json`
+  for cross-run diffing.
+- **Redocking validation**: symmetry-tolerant heavy-atom Kabsch
+  `crystal_rmsd` for every pose vs the co-crystallized ligand; emitted in
+  `summary.csv`, `interactions.json` and a PASS/FAIL banner in
+  `report.md` (threshold <= 2.0 A).  The 1HVR example recovers XK2 at
+  **1.08 A**.
+- Every silent preparation decision is now explicit: receptor
+  `decisions` (protonation, hydrogens, charge model, waters,
+  metals/cofactors removed+kept, altlocs) and per-ligand `prep` notes
+  (input-hydrogen provenance, protonation source); removed species are
+  counted and warned (metals/cofactors) and surfaced in `report.md`.
+- `report.md`: pose-clustering summary table, Warnings section, and an
+  "Assumptions this run made" footer.
+- **GNINA backend** (`docking.backend: gnina`, CNN scoring via
+  `cnn_scoring`/`cnn`; ADR-0001).
+- **`dockflow enrich`**: ROC AUC, EF@1%/EF@5%, BEDROC (alpha=20,
+  RDKit-verified) from summary.csv + actives list, optional ROC PNG.
+- `dockflow run --stage {download,prep,gridbox,dock,analyze,visualize}`
+  and `--dry-run` (resolved-config preview).
+- **Checkpoint/resume**: `progress.json` written after every ligand;
+  interrupted batch runs resume automatically, `--force` re-docks.
+- Docked poses exported to `<ligand>_poses.sdf` (one record per pose,
+  SD fields incl. `crystal_rmsd`; ADR-0002, `export_sdf` config key).
+- `--log-format json`: structured one-event-per-line logs.
+- CPU oversubscription warning (`cpu x parallel > cores`).
+- `docs/interaction_criteria.md` (exact contact criteria + limitations),
+  `docs/schemas/interactions.schema.json` (validated in CI),
+  `docs/preparation_validation.md` (real cross-engine numbers),
+  `benchmarks/redocking/` (24-complex suite + runner),
+  `benchmarks/enrichment/` (DUD-E panel), `benchmarks/mgltools_comparison/`,
+  `THIRD_PARTY_LICENSES.md` + `licenses.json`, ADRs, CONTRIBUTING.
+- CI: `reproducibility` workflow (same-seed run twice, byte-compare
+  summary.csv), C++/NumPy equivalence job with published delta artifact,
+  `scientific` pytest marker, explicit schema-conformance step.
+
+### Changed (scientific honesty)
+- Interactions are now labelled **geometric contacts** everywhere
+  (report headings, CSV/JSON keys `num_geom_hbond_contacts`,
+  `geom_hbond_contacts`); documented distance-only criteria (no angle
+  criterion).
+- `ligand_efficiency` renamed to **`docking_score_efficiency`** (a
+  Vina-score proxy, not experimental ligand efficiency); old name kept
+  as a deprecated alias.
+- aspirin/caffeine demoted to smoke-test controls (enrichment now uses
+  DUD-E panels + `dockflow enrich`).
+- Docker/conda are the documented reproducible installs; plain pip is
+  labelled "quick smoke test".
+- README restructured (intro-first), with *Scientific limitations and
+  assumptions*, per-engine *Known scientific differences* and the
+  software-tests vs scientific-validation split.
+
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/oualid-razzok/DockFlow-Automator/docs/schemas/interactions.schema.json",
+  "title": "DockFlow interactions.json",
+  "description": "Per-pose ligand-receptor contact analysis produced by the analysis stage. Top-level keys are ligand names; each value is the list of analysed poses (best first). All contact classifications are geometric (distance + atom type only, no angle criterion) - see docs/interaction_criteria.md.",
+  "type": "object",
+  "additionalProperties": {
+    "type": "array",
+    "items": { "$ref": "#/definitions/poseAnalysis" },
+    "minItems": 1
+  },
+  "definitions": {
+    "poseAnalysis": {
+      "type": "object",
+      "required": ["pose_index", "affinity", "num_contacts", "contacts", "residues"],
+      "properties": {
+        "pose_index": { "type": "integer", "minimum": 1 },
+        "affinity": { "type": "number", "description": "Vina predicted affinity (kcal/mol)" },
+        "num_contacts": { "type": "integer", "minimum": 0 },
+        "num_geom_hbond_contacts": { "type": "integer", "minimum": 0, "description": "Geometric H-bond contacts (donor-acceptor distance <= 3.5 A; no angle criterion)" },
+        "num_hydrophobic_contacts": { "type": "integer", "minimum": 0 },
+        "num_ionic_contacts": { "type": "integer", "minimum": 0 },
+        "num_metal_contacts": { "type": "integer", "minimum": 0 },
+        "docking_score_efficiency": {
+          "description": "affinity / heavy-atom count. A Vina-score-derived proxy, NOT experimental ligand efficiency.",
+          "anyOf": [{ "type": "number" }, { "type": "null" }]
+        },
+        "crystal_rmsd": {
+          "description": "Symmetry-tolerant heavy-atom Kabsch RMSD to the co-crystallized pose (A); null when no comparable reference exists.",
+          "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }]
+        },
+        "contacts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/contact" }
+        },
+        "residues": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/residueRow" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "contact": {
+      "type": "object",
+      "required": ["ligand_atom_index", "ligand_atom_name", "ligand_atom_type", "receptor_atom_name", "receptor_resname", "receptor_chain", "receptor_resseq", "receptor_atom_type", "distance", "kind"],
+      "properties": {
+        "ligand_atom_index": { "type": "integer", "minimum": 0 },
+        "ligand_atom_name": { "type": "string" },
+        "ligand_atom_type": { "type": "string" },
+        "receptor_atom_name": { "type": "string" },
+        "receptor_resname": { "type": "string" },
+        "receptor_chain": { "type": "string" },
+        "receptor_resseq": { "type": "integer" },
+        "receptor_atom_type": { "type": "string" },
+        "distance": { "type": "number", "minimum": 0, "description": "A" },
+        "kind": {
+          "type": "string",
+          "enum": ["hbond", "hydrophobic", "ionic", "metal", "close"],
+          "description": "Geometric contact classification tag; see docs/interaction_criteria.md"
+        }
+      },
+      "additionalProperties": false
+    },
+    "residueRow": {
+      "type": "object",
+      "required": ["chain", "resname", "resseq", "geom_hbond_contacts", "hydrophobic_contacts", "ionic_contacts", "metal_contacts", "closest"],
+      "properties": {
+        "chain": { "type": "string" },
+        "resname": { "type": "string" },
+        "resseq": { "type": "integer" },
+        "geom_hbond_contacts": { "type": "integer", "minimum": 0 },
+        "hydrophobic_contacts": { "type": "integer", "minimum": 0 },
+        "ionic_contacts": { "type": "integer", "minimum": 0 },
+        "metal_contacts": { "type": "integer", "minimum": 0 },
+        "closest": { "type": "number", "minimum": 0, "description": "Closest contact distance (A)" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

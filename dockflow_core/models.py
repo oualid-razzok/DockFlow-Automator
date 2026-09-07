@@ -37,6 +37,11 @@ class LigandRecord:
     status: str = "pending"  # pending | downloaded | prepared | docked | error
     error: str | None = None
     num_rotatable_bonds: int | None = None
+    num_heavy_atoms: int | None = None
+    # Preparation provenance (audit items 10/26): which scientific decisions
+    # were made for this ligand - input hydrogen provenance, protonation
+    # source, charge model, engine.  Kept inspectable in the manifest.
+    prep: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -53,6 +58,9 @@ class PoseRecord:
     affinity: float = 0.0  # kcal/mol
     rmsd_lb: float = 0.0  # lower-bound RMSD to best mode
     rmsd_ub: float = 0.0  # upper-bound RMSD to best mode
+    # Symmetry-tolerant heavy-atom Kabsch RMSD to the co-crystallized
+    # reference pose (redocking validation; None when no reference exists).
+    crystal_rmsd: float | None = None
     remarks: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:

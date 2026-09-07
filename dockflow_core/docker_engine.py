@@ -4,11 +4,16 @@ Despite the historical module name, this has nothing to do with *Docker
 containers* - "docking engine" refers to the molecular docking engine
 (AutoDock Vina / Smina).
 
-Three interchangeable backends are supported:
+Four interchangeable backends are supported:
 
 * ``python`` - the official ``vina`` Python bindings (``pip install vina``);
 * ``cli``    - the ``vina`` command line executable;
-* ``smina``  - the popular Smina fork (CLI-compatible arguments).
+* ``smina``  - the popular Smina fork (CLI-compatible arguments);
+* ``gnina``  - GNINA, the CNN-augmented docking/scoring engine (Apache-2.0;
+  install via ``conda install -c conda-forge gnina`` or from
+  https://github.com/gnina/gnina).  GNINA accepts Vina-style arguments;
+  CNN scoring is enabled with ``docking.cnn_scoring: rescore|all`` and an
+  optional ``docking.cnn`` model name (``default``, ``dense``, ...).
 
 All backends produce the same artefacts (multi-pose PDBQT with
 ``REMARK VINA RESULT`` records + a log file), which are parsed back through
@@ -71,6 +76,9 @@ class VinaConfig:
     spacing: float = 0.375
     weight_terms: dict[str, float] = field(default_factory=dict)
     timeout: float = 3600.0
+    # GNINA-only options (audit item 32): CNN scoring mode + model.
+    cnn_scoring: str | None = None  # "rescore" | "all" | "none" (gnina only)
+    cnn: str | None = None          # CNN model name (default, dense, ...)
 
     @classmethod
     def from_gridbox(cls, box: GridBox, **kwargs) -> VinaConfig:
@@ -145,6 +153,45 @@ class VinaConfig:
             args += [f"--weight_{key}", str(value)]
         return args
 
+    def gnina_args(
+        self, receptor: Path, ligand: Path, out: Path, mode: str = "dock"
+    ) -> list[str]:
+        """Build the argument vector for the gnina backend.
+
+        GNINA shares Vina's long options for the search space but has no
+        ``--log`` (output goes to stdout) and no ``--refine``; CNN scoring
+        is selected with ``--cnn_scoring`` / ``--cnn``.
+        """
+        args = [
+            "--receptor", str(receptor),
+            "--ligand", str(ligand),
+            "--out", str(out),
+            "--center_x", f"{self.center[0]:.4f}",
+            "--center_y", f"{self.center[1]:.4f}",
+            "--center_z", f"{self.center[2]:.4f}",
+            "--size_x", f"{self.size[0]:.4f}",
+            "--size_y", f"{self.size[1]:.4f}",
+            "--size_z", f"{self.size[2]:.4f}",
+            "--num_modes", str(self.num_modes),
+        ]
+        if self.scoring and self.scoring != "vina":
+            args += ["--scoring", self.scoring]
+        if mode == "dock":
+            args += ["--exhaustiveness", str(self.exhaustiveness)]
+        if mode == "score_only":
+            args.append("--score_only")
+        if mode == "local_only":
+            args.append("--local_only")
+        if self.seed is not None:
+            args += ["--seed", str(self.seed)]
+        if self.cpu:
+            args += ["--cpu", str(self.cpu)]
+        if self.cnn_scoring:
+            args += ["--cnn_scoring", self.cnn_scoring]
+        if self.cnn:
+            args += ["--cnn", self.cnn]
+        return args
+
 
 # ---------------------------------------------------------------------------
 # Backend detection
@@ -157,7 +204,11 @@ class BackendReport:
     detail: str = ""
 
 
-def detect_backends(vina_exec: str | None = None, smina_exec: str | None = None) -> list[BackendReport]:
+def detect_backends(
+    vina_exec: str | None = None,
+    smina_exec: str | None = None,
+    gnina_exec: str | None = None,
+) -> list[BackendReport]:
     """Probe every backend and return availability + version info."""
     reports: list[BackendReport] = []
     try:
@@ -167,7 +218,12 @@ def detect_backends(vina_exec: str | None = None, smina_exec: str | None = None)
         reports.append(BackendReport("python", True, str(version), "vina python bindings"))
     except ImportError:
         reports.append(BackendReport("python", False, "", "pip install vina"))
-    for name, executable in (("cli", vina_exec or "vina"), ("smina", smina_exec or "smina")):
+    probes = (
+        ("cli", vina_exec or "vina"),
+        ("smina", smina_exec or "smina"),
+        ("gnina", gnina_exec or "gnina"),
+    )
+    for name, executable in probes:
         path = which(executable)
         if path:
             version = _probe_cli_version(path)
@@ -242,16 +298,24 @@ class VinaEngine:
         workdir: str | Path = ".",
         vina_exec: str | None = None,
         smina_exec: str | None = None,
+        gnina_exec: str | None = None,
     ) -> None:
         self.config = config
-        self.backend_name = self._select_backend(backend, vina_exec, smina_exec)
+        self.backend_name = self._select_backend(backend, vina_exec, smina_exec,
+                                                 gnina_exec)
         self.workdir = ensure_dir(workdir)
         self._vina_exec = vina_exec
         self._smina_exec = smina_exec
+        self._gnina_exec = gnina_exec
 
     # -- backend selection ----------------------------------------------------
     @staticmethod
-    def _select_backend(preferred: str, vina_exec: str | None, smina_exec: str | None) -> str:
+    def _select_backend(
+        preferred: str,
+        vina_exec: str | None,
+        smina_exec: str | None,
+        gnina_exec: str | None = None,
+    ) -> str:
         if preferred != "auto":
             if preferred == "python":
                 try:
@@ -262,8 +326,9 @@ class VinaEngine:
                         "python backend requested but the vina package is not "
                         "installed (pip install vina)"
                     ) from exc
-            executable = vina_exec if preferred == "cli" else smina_exec
-            if which(executable or preferred):
+            executable = {"cli": vina_exec, "smina": smina_exec, "gnina": gnina_exec}
+            candidate = executable.get(preferred, preferred)
+            if which(candidate or preferred):
                 return preferred
             raise DockingEngineError(
                 f"backend {preferred!r} requested but its executable was not found"
@@ -277,10 +342,12 @@ class VinaEngine:
             return "cli"
         if which(smina_exec or "smina"):
             return "smina"
+        if which(gnina_exec or "gnina"):
+            return "gnina"
         raise DockingEngineError(
             "no Vina backend available: install the python bindings "
-            "(pip install 'dockflow-automator[engine]') or the vina/smina "
-            "executable (conda install -c bioconda autodock-vina)"
+            "(pip install 'dockflow-automator[engine]') or the vina/smina/gnina "
+            "executable (conda install -c bioconda autodock-vina / -c conda-forge gnina)"
         )
 
     @property
@@ -354,12 +421,17 @@ class VinaEngine:
         parallel: int = 1,
         progress: _PROGRESS | None = None,
         stop_event=None,
+        on_result: Callable[[DockingResult], None] | None = None,
     ) -> list[DockingResult]:
         """Dock a library of ligands, optionally in parallel threads.
 
         CLI/subprocess backends parallelise cleanly across ligands; the
         python backend is usually best run with ``parallel=1`` and a higher
         ``cpu`` setting (Vina itself is multithreaded).
+
+        ``on_result`` is invoked with every finished :class:`DockingResult`
+        (also on failure) so callers can persist progress checkpoints
+        incrementally (audit item 28).
         """
         out_dir = ensure_dir(out_dir or self.workdir / "docking")
         records = list(ligand_records) if ligand_records is not None else [None] * len(ligand_pdbqts)
@@ -384,14 +456,23 @@ class VinaEngine:
                 return DockingResult(ligand=record, ligand_name=lig_path.stem,
                                      error=str(exc), backend=self.backend_name)
 
+        def _finish(index: int, result: DockingResult) -> None:
+            nonlocal completed
+            results[index] = result
+            completed += 1
+            if on_result is not None:
+                try:
+                    on_result(result)
+                except Exception:  # noqa: BLE001 - checkpointing must not kill docking
+                    logger.debug("on_result callback failed", exc_info=True)
+            if progress:
+                progress(completed / total, f"docked {completed}/{total} ligands")
+
         if workers == 1:
             for index, (lig_path, record) in enumerate(jobs):
                 if stop_event is not None and stop_event.is_set():
                     break
-                results[index] = _run(index, lig_path, record)
-                completed += 1
-                if progress:
-                    progress(completed / total, f"docked {completed}/{total} ligands")
+                _finish(index, _run(index, lig_path, record))
         else:
             with ThreadPoolExecutor(max_workers=workers) as pool:
                 futures = {
@@ -400,10 +481,7 @@ class VinaEngine:
                 }
                 for future in as_completed(futures):
                     index = futures[future]
-                    results[index] = future.result()
-                    completed += 1
-                    if progress:
-                        progress(completed / total, f"docked {completed}/{total} ligands")
+                    _finish(index, future.result())
                     if stop_event is not None and stop_event.is_set():
                         for pending in futures:
                             pending.cancel()
@@ -496,13 +574,19 @@ class VinaEngine:
         executable = which(self._vina_exec or "vina")
         if self.backend_name == "smina":
             executable = which(self._smina_exec or "smina")
+        if self.backend_name == "gnina":
+            executable = which(self._gnina_exec or "gnina")
         if executable is None:
             raise DockingEngineError(
                 f"{self.backend_name} executable disappeared (was available at init)"
             )
-        args = [executable] + self.config.cli_args(receptor, ligand, out, log_path, mode)
-        if self.backend_name == "smina" and mode == "score_only":
-            args = [a for a in args if a != "--score_only"] + ["--score_only"]
+        if self.backend_name == "gnina":
+            # GNINA: vina-style long options, no --log (stdout is the log).
+            args = [executable] + self.config.gnina_args(receptor, ligand, out, mode)
+        else:
+            args = [executable] + self.config.cli_args(receptor, ligand, out, log_path, mode)
+            if self.backend_name == "smina" and mode == "score_only":
+                args = [a for a in args if a != "--score_only"] + ["--score_only"]
         result = run_command(
             args,
             timeout=self.config.timeout,
@@ -516,7 +600,7 @@ class VinaEngine:
         if not result.ok and not out.is_file():
             tail = "\n".join(result.stdout.splitlines()[-12:])
             raise DockingEngineError(
-                f"vina failed with exit code {result.returncode}:\n{tail}"
+                f"{self.backend_name} failed with exit code {result.returncode}:\n{tail}"
             )
         return log_text
 
@@ -543,7 +627,13 @@ def rank_results(results: Sequence[DockingResult]) -> list[DockingResult]:
 
 
 def write_summary_csv(results: Sequence[DockingResult], path: str | Path) -> Path:
-    """Write a CSV summary (ligand, pose, affinity, RMSDs) for a batch run."""
+    """Write a CSV summary (ligand, pose, affinity, RMSDs) for a batch run.
+
+    ``crystal_rmsd`` (symmetry-tolerant heavy-atom RMSD to the co-crystal
+    pose, populated by the analysis stage for redocking runs) and
+    ``docking_score_efficiency`` (a score-per-heavy-atom *proxy*, not
+    experimental ligand efficiency) are emitted whenever available.
+    """
     import csv
 
     target = Path(path)
@@ -551,20 +641,27 @@ def write_summary_csv(results: Sequence[DockingResult], path: str | Path) -> Pat
     with open(target, "w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh)
         writer.writerow(
-            ["ligand", "pose", "affinity_kcal_mol", "rmsd_lb", "rmsd_ub", "runtime_s",
-             "backend", "error"]
+            ["ligand", "pose", "affinity_kcal_mol", "rmsd_lb", "rmsd_ub",
+             "crystal_rmsd", "docking_score_efficiency", "num_heavy_atoms",
+             "runtime_s", "backend", "error"]
         )
         for result in results:
+            heavy = result.ligand.num_heavy_atoms if result.ligand else None
             if not result.poses:
                 writer.writerow(
-                    [result.ligand_name, "", "", "", "", f"{result.runtime:.1f}",
-                     result.backend, result.error or ""]
+                    [result.ligand_name, "", "", "", "", "", "", heavy or "",
+                     f"{result.runtime:.1f}", result.backend, result.error or ""]
                 )
                 continue
             for pose in result.poses:
+                efficiency = ""
+                if heavy:
+                    efficiency = f"{pose.affinity / heavy:.4f}"
                 writer.writerow(
                     [result.ligand_name, pose.model, f"{pose.affinity:.3f}",
                      f"{pose.rmsd_lb:.3f}", f"{pose.rmsd_ub:.3f}",
-                     f"{result.runtime:.1f}", result.backend, ""]
+                     f"{pose.crystal_rmsd:.3f}" if pose.crystal_rmsd is not None else "",
+                     efficiency, heavy or "", f"{result.runtime:.1f}",
+                     result.backend, ""]
                 )
     return target
