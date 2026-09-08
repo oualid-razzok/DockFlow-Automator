@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.3.1] - 2026-09-08
+
+CI-stability release: fixes both failing GitHub Actions jobs
+(windows tests + scientific tests) and adds the upstream-reuse
+assessment requested for roadmap planning.
+
+### Fixed - CI (the two red jobs)
+- **windows-latest tests (1 failure)**: the sbatch bash-syntax test
+  invoked `bash` on PATH, which on Windows resolves to the WSL
+  launcher stub that prints a UTF-16 "no distro" error and exits 1.
+  `scripts/generate_sbatch.py` now writes LF-only templates
+  (`newline="\n"` - sbatch targets Linux clusters; CRLF would break
+  bash/slurm anyway), the test writes bytes + asserts LF endings +
+  shebang on every OS, and `bash -n` runs only where a real POSIX
+  bash exists (Git-for-Windows bash on Windows, skip otherwise).
+  New always-on test `test_template_is_lf_only`.
+- **scientific tests (RMSD 2.54 A > 2.0 A on a 4-vCPU runner)**: the
+  1HVR pose-recovery assertion was machine-dependent.  Vina results
+  depend on thread count (same seed, different cpu count -> different
+  search trajectory), and `receptor.engine: auto` resolved to rdkit
+  in CI (no openbabel there) but openbabel locally - two silent
+  divergences.  The test config is now fully pinned: `engine=rdkit`
+  (available on every platform via the prep extra), `cpu=1`
+  (deterministic on any core count), exhaustiveness 2 -> 8 (default
+  search effort).  Validated locally: best pose crystal RMSD 0.54 A,
+  best affinity -11.20 kcal/mol; the misleading "deterministic
+  regardless of thread count" docstring is corrected.  The CI job
+  pins vina/meeko/rdkit versions (validation job = known-good env).
+- Corrupted branch filters (`branches: ain]` -> `branches: [main]`)
+  fixed in build.yml and reproducibility.yml (the corruption had
+  been fixed before in 0.2.0 and regressed in the v0.3.0 upload).
+
+### Added - upstream-reuse assessment (ADR evidence)
+- `docs/PORTING_ASSESSMENT.md`: twelve proposed upstream projects
+  (WatVina, RxDock, OpenPharmacophore, PharmacoNet, OpenDock,
+  PandaDock, ProLIF, PLIP, 3Dmol.js, NGLview, Molecular Nodes,
+  Avogadro) reviewed for portable functions/features with verified
+  licenses, integration routes (dep / external binary / vendored /
+  ideas-only) and a recommended sequence.
+- `ADR-0009` (proposed): ProLIF optional IFP backend - richer
+  interaction vocabulary + per-pose LigNetwork 2D diagrams (the new
+  Track 2), homegrown IFP stays the zero-dependency default.
+- `ADR-0010` (proposed): WatVina external-binary backend - explicit
+  water (FHFT+GCMC hydration sites, displacement bias) docking with
+  comparability caveats, same pattern as the GNINA backend.
+
 ## [0.3.0] - 2026-09-08
 
 Validation-track release: the second-round work order (31 items).  The

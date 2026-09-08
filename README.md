@@ -376,6 +376,9 @@ Two different claims must not be conflated:
     **run in full**;
   * `docs/preparation_validation.md`: cross-engine preparation numbers
     (atom counts, charges, typing) computed, not asserted.
+  * `docs/PORTING_ASSESSMENT.md`: twelve upstream projects reviewed for
+    portable functions/features (licenses verified, integration routes,
+    ADR-0009/ADR-0010 evidence).
 
 ## Scientific limitations and assumptions
 

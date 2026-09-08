@@ -151,7 +151,10 @@ def chunk_count(n_ligands: int, chunk_size: int) -> int:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     template = build_template(args)
-    Path(args.out).write_text(template, encoding="utf-8")
+    # newline="\n": the sbatch targets Linux clusters.  Without this, a
+    # Windows checkout writes CRLF and slurm/bash choke on the '\r' bytes
+    # (found by CI: test_generated_file_is_valid_bash_text).
+    Path(args.out).write_text(template, encoding="utf-8", newline="\n")
     tasks = args.array.split(",")[0]
     print(f"template : {args.out}")
     print(f"array    : {args.array} (task 0 = ligands 1..{args.chunk_size}; "

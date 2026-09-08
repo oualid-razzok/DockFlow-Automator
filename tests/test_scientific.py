@@ -6,7 +6,9 @@ and assert scientific outcomes, not just software behaviour:
 
 * 1HVR redocking pose recovery: the co-crystallized ligand XK2 must be
   recovered within 2.0 A of its crystal pose (conventional redocking
-  success criterion);
+  success criterion), using a fully pinned configuration (rdkit receptor
+  engine, single-threaded docking, seed 2026, exhaustiveness 8) so the
+  assertion is reproducible on any machine;
 * seed determinism: the same seed must reproduce the same scores.
 
 They are excluded from the default run (``-m 'not network and not
@@ -32,6 +34,20 @@ for _module, _dist in (("vina", "vina"), ("meeko", "meeko"), ("rdkit", "rdkit"))
 
 
 def _config(workdir: Path, exhaustiveness: int):
+    """Pinned, machine-independent validation configuration.
+
+    Every knob that changes the *science* is pinned here so the assertion
+    means the same thing on a laptop, a 4-vCPU GitHub runner and a 64-core
+    workstation:
+
+    * ``receptor.engine="rdkit"``: the one hydration engine available on
+      every platform via the ``prep`` extra (openbabel-wheel is Linux-only,
+      so ``auto`` would silently resolve differently per machine - the
+      CI failure that motivated this pin).
+    * ``docking.cpu=1``: Vina results depend on the number of threads
+      (same seed + different cpu counts -> different search trajectories).
+      Single-threaded docking is deterministic on every machine.
+    """
     from dockflow_core.pipeline import PipelineConfig
 
     return PipelineConfig(
@@ -39,12 +55,12 @@ def _config(workdir: Path, exhaustiveness: int):
         run_id="scientific_1hvr",
         target={"pdb_id": "1HVR"},
         ligands=[{"id": "xk2", "pdb_ligand": "XK2"}],
-        receptor={"engine": "auto", "charge_model": "gasteiger"},
+        receptor={"engine": "rdkit", "charge_model": "gasteiger"},
         gridbox={"source": "ligand", "reference_ligand_resname": "XK2",
                  "padding": 4.0},
         docking={"backend": "auto", "scoring": "vina",
                  "exhaustiveness": exhaustiveness, "num_modes": 9,
-                 "seed": 2026, "cpu": 0, "timeout": 1200},
+                 "seed": 2026, "cpu": 1, "timeout": 1200},
         analysis={"top_poses": 3},
         visualization={"enabled": False},
     )
@@ -58,7 +74,7 @@ def test_1hvr_redocking_pose_recovery(tmp_path: Path):
     """
     from dockflow_core.pipeline import DockingPipeline
 
-    report = DockingPipeline(_config(tmp_path, exhaustiveness=2)).run()
+    report = DockingPipeline(_config(tmp_path, exhaustiveness=8)).run()
     assert report.ok, report.error
     results = report.docking["results"]
     assert results and results[0]["poses"]
@@ -78,10 +94,12 @@ def test_1hvr_redocking_pose_recovery(tmp_path: Path):
 def test_vina_seed_determinism(tmp_path: Path):
     """Same seed + same box + same ligand -> identical scores (item 6).
 
-    Vina is deterministic under a fixed seed regardless of thread count;
-    this test pins that property for the versions in the environment
-    fingerprint, and is the local counterpart of the CI
-    reproducibility workflow (byte-compare of two full runs).
+    Vina is reproducible when the seed AND the cpu/thread count are held
+    fixed (the test config pins cpu=1, which additionally makes the result
+    independent of the machine's core count).  This test pins that property
+    for the versions in the environment fingerprint, and is the local
+    counterpart of the CI reproducibility workflow (byte-compare of two
+    full runs).
     """
     import csv
     import io

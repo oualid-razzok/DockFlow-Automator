@@ -100,7 +100,14 @@ jobs:
           python-version: "3.12"
 
       - name: Install full scientific stack
-        run: python -m pip install -e ".[prep,engine,viz,test]"
+        # Pinned: this is a *validation* job - the pose-recovery assertion
+        # is only meaningful against known-good, reproducible versions.
+        # Bump pins deliberately (re-run + refresh expected artifacts then).
+        run: |
+          python -m pip install -e ".[prep,engine,viz,test]" \
+            "vina==1.2.7" "meeko==0.8.0" "rdkit==2026.03.6"
 
       - name: Scientific test suite (pose recovery + seed determinism)
+        # The test config pins receptor.engine=rdkit and cpu=1 so results
+        # are machine-independent (identical bytes on any runner/core).
         run: python -m pytest tests/test_scientific.py -m scientific -v

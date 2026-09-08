@@ -6,8 +6,11 @@ no stray format braces, correct batch_dock flags) without a scheduler.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
@@ -68,13 +71,52 @@ def test_chunk_count_math():
     assert chunk_count(0, 500) == 1  # degenerate but safe
 
 
+def test_template_is_lf_only():
+    """The sbatch targets Linux clusters: no CR bytes anywhere (a Windows
+    text-mode write would inject CRLF and break bash/slurm - CI found this
+    on windows-latest)."""
+    text = build_template(_args())
+    assert "\r" not in text, "sbatch template must not contain CR bytes"
+    assert text.startswith("#!/bin/bash\n"), "missing bash shebang"
+
+
+def _bash_exe() -> str | None:
+    """A real POSIX bash for ``bash -n`` syntax checks, or None.
+
+    On Windows the ``bash`` found on PATH is usually the WSL launcher stub
+    (``C:\\Windows\\System32\\bash.exe``) which, with no distribution
+    installed, prints a UTF-16 error and exits 1 - that stub made this test
+    fail on windows-latest CI.  Git-for-Windows ships a real bash; GH
+    runners have it installed.  Anything else -> skip the syntax check.
+    """
+    import shutil
+
+    if os.name != "nt":
+        return shutil.which("bash")
+    for candidate in (
+        r"C:\Program Files\Git\bin\bash.exe",
+        r"C:\Program Files (x86)\Git\bin\bash.exe",
+    ):
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
 def test_generated_file_is_valid_bash_text(tmp_path):
     import subprocess
 
     out = tmp_path / "job.sbatch"
     args = _args(out=str(out), dockflow_home=str(REPO_ROOT))
-    out.write_text(build_template(args), encoding="utf-8")
+    text = build_template(args)
+    # LF endings on every platform: sbatch targets Linux clusters.
+    out.write_bytes(text.encode("utf-8"))
+
+    bash = _bash_exe()
+    if bash is None:
+        pytest.skip("no POSIX bash available (Windows without Git-for-Windows)")
+    # Git-bash opens mixed-separator paths; POSIX needs no translation.
+    bash_path = str(out).replace("\\", "/") if os.name == "nt" else str(out)
     # bash -n: syntax check only (no scheduler needed)
-    proc = subprocess.run(["bash", "-n", str(out)],
+    proc = subprocess.run([bash, "-n", bash_path],
                           capture_output=True, text=True, timeout=30)
     assert proc.returncode == 0, proc.stderr
