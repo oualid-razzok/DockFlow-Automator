@@ -9,6 +9,28 @@ makes a published claim more honest, adds a missing statistic, or makes
 a published number regenerable.  The post-freeze roadmap lives in
 `ROADMAP_POST_V1.md`.
 
+### Fixed - CI (all three gui jobs red on the rc1 push)
+- **The `qapp` fixture was module-private.**  The new final-pass test
+  `test_confirm_degraded_engine_persists_acknowledgement` (item 8, GUI
+  modal persistence) requested the `qapp` fixture, which was defined
+  inside `test_gui_smoke.py` only - invisible to every other module, so
+  the test errored at setup ("fixture 'qapp' not found") and took the
+  gui job down on all three operating systems.  The fixture now lives
+  in `tests/conftest.py` (session-scoped; imports PyQt6 lazily so
+  non-GUI runs never need it; skips gracefully when the binding or its
+  system GL runtime is unavailable), and `test_gui_smoke.py` consumes
+  the shared fixture instead of defining its own.
+- **Two analyzer tests failed in RDKit-less environments.**
+  `test_crystal_rmsd_with_method_prefers_rdkit_path` and
+  `test_crystal_rmsd_getbestrms_benzoate_symmetry` assert that the
+  RDKit `GetBestRMS` graph-automorphism path is chosen; in minimal
+  environments (the gui CI job installs `[test,gui,viz]` without the
+  `prep` extra) RDKit is absent and the analyzer legitimately falls
+  back to element-greedy Kabsch, so the assertions failed instead of
+  skipping.  Both tests now carry an explicit `requires_rdkit` skipif
+  guard, matching the established pattern in test_batch_dock and
+  test_preparator.
+
 ### Fixed - scientific correctness (found BY the new validation)
 - **Symmetry-aware crystal RMSD was atom-order dependent.**  The
   analyzer seeded the pose-to-reference correspondence geometrically and

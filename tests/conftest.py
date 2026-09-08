@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -11,6 +12,30 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+
+# ---------------------------------------------------------------------------
+# GUI tests: one offscreen QApplication for the whole session
+# ---------------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def qapp():
+    """Session-wide offscreen QApplication shared by every ``gui`` test.
+
+    The fixture used to live in test_gui_smoke.py, which made it invisible
+    to gui-marked tests in other modules (they failed at setup with
+    "fixture 'qapp' not found").  It lives here so any test module can
+    request ``qapp``.  PyQt6 is imported lazily so non-GUI test runs never
+    need it; when the binding or its system GL runtime is unavailable the
+    requesting tests SKIP instead of erroring (mirroring the module-level
+    guard in test_gui_smoke.py).
+    """
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    try:
+        from PyQt6.QtWidgets import QApplication
+    except Exception as exc:  # ImportError: package missing OR GL libs broken
+        pytest.skip(f"PyQt6 or its system GL libraries unavailable ({exc})")
+    app = QApplication.instance() or QApplication([])
+    yield app
 
 
 # ---------------------------------------------------------------------------

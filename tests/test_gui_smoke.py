@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import time
 
 import pytest
@@ -30,13 +29,8 @@ def _wait_for_worker(qapp, worker, timeout_s: float = 5.0) -> None:
     qapp.processEvents()  # drain pending queued signal deliveries
 
 
-@pytest.fixture(scope="module")
-def qapp():
-    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PyQt6.QtWidgets import QApplication
-
-    app = QApplication.instance() or QApplication([])
-    yield app
+# NOTE: the ``qapp`` fixture is session-scoped and lives in tests/conftest.py
+# so that gui-marked tests in ANY module (e.g. test_final_pass.py) can use it.
 
 
 def test_widgets_instantiate(qapp):

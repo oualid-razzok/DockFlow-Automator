@@ -26,6 +26,22 @@ from dockflow_core.models import DockingResult
 from dockflow_core.pdbio import Atom
 from dockflow_core.preparator import ReceptorPreparator, ReceptorPrepOptions
 
+# The two crystal_rmsd tests below assert the real RDKit GetBestRMS path
+# itself and therefore need RDKit installed (the ``prep`` extra).  Without
+# it the analyzer falls back to element-greedy Kabsch BY DESIGN - that
+# fallback is covered by test_crystal_rmsd_falls_back_when_rdkit_unavailable
+# - so the rdkit-path assertions SKIP instead of failing in minimal
+# environments (e.g. the CI gui job, which installs only [test,gui,viz]).
+try:
+    import rdkit  # noqa: F401  (imported only to detect availability)
+except ImportError:
+    _RDKIT_ABSENT = True
+else:
+    _RDKIT_ABSENT = False
+
+requires_rdkit = pytest.mark.skipif(
+    _RDKIT_ABSENT, reason="rdkit not installed (prep extra)")
+
 
 def _atom(name, resname, chain, resseq, x, y, z, element, atom_type):
     return Atom(name=name, resname=resname, chain=chain, resseq=resseq,
@@ -528,6 +544,7 @@ def test_kabsch_rmsd_matches_bindings_both_paths():
 
 
 # -- Symmetry-aware RMSD via RDKit GetBestRMS (peer item 17) ---------------
+@requires_rdkit
 def test_crystal_rmsd_with_method_prefers_rdkit_path():
     """With RDKit importable the graph-automorphism method must be used."""
     import math
@@ -562,6 +579,7 @@ def test_crystal_rmsd_falls_back_when_rdkit_unavailable(monkeypatch):
     assert value == pytest.approx(0.0, abs=1e-9)
 
 
+@requires_rdkit
 def test_crystal_rmsd_getbestrms_benzoate_symmetry():
     """Benzoate-like ligand: swapped carboxylate oxygens cost ~0 RMSD.
 
