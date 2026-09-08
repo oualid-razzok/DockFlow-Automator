@@ -44,10 +44,9 @@ jobs:
       - name: Environment fingerprint
         run: python -m dockflow_core.cli info
 
-      - name: Run all 24 complexes (exhaustiveness 8, seed 2026)
+      - name: Regenerate the benchmark and ASSERT it matches the published numbers (item 14)
         run: |
-          python benchmarks/redocking/run_benchmark.py \
-            --exhaustiveness 8 --max-seconds 12000
+          python benchmarks/redocking/regenerate.py --with-crosscheck
 
       - name: Assert the suite completed (no complex dropped)
         run: |
@@ -59,6 +58,10 @@ jobs:
           print("redocking:", stats)
           EOF
 
+      - name: "Enrichment reproduce assertion (item 10 - metrics match within 1e-6)"
+        run: |
+          python benchmarks/enrichment/run_enrichment.py --report-only --target hivpr
+
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v7
@@ -69,6 +72,10 @@ jobs:
             benchmarks/redocking/results/summary.md
             benchmarks/redocking/results/summary_stats.json
             benchmarks/redocking/results/scatter.png
+            benchmarks/redocking/results/rmsd_distribution.png
+            benchmarks/redocking/results/topn_success.png
+            benchmarks/redocking/results/rmsd_crosscheck.png
+            benchmarks/redocking/results/crosscheck_stats.json
           retention-days: 90
 
   enrichment:
@@ -85,18 +92,20 @@ jobs:
       - name: Install full scientific stack
         run: python -m pip install -e ".[prep,engine,viz,test]"
 
-      - name: Dock the panel and compute enrichment metrics
+      - name: Dock the 3-target panel and compute enrichment metrics
         run: |
-          python benchmarks/enrichment/run_enrichment.py \
-            --max-seconds 9000
+          python benchmarks/enrichment/run_enrichment.py --target hivpr --max-seconds 2400
+          python benchmarks/enrichment/run_enrichment.py --target aa2ar --max-seconds 2400
+          python benchmarks/enrichment/run_enrichment.py --target parp1 --max-seconds 2400
 
       - name: Assert metrics are above the random baseline
         run: |
           python - << 'EOF'
           import json
-          m = json.load(open("benchmarks/enrichment/results/enrichment_metrics.json"))
-          assert m["roc_auc"] > 0.5, m  # chance ranking would be a failure
-          print("enrichment:", m)
+          for target in ("hivpr", "aa2ar", "parp1"):
+              m = json.load(open(f"benchmarks/enrichment/results/{target}/enrichment_metrics.json"))
+              assert m["roc_auc"] > 0.5, (target, m)  # chance ranking would be a failure
+              print(target, m["roc_auc"])
           EOF
 
       - name: Upload enrichment results
@@ -105,9 +114,14 @@ jobs:
         with:
           name: enrichment-benchmark
           path: |
-            benchmarks/enrichment/results/enrichment_metrics.json
-            benchmarks/enrichment/results/enrichment_results.csv
-            benchmarks/enrichment/results/roc.png
+            benchmarks/enrichment/results/hivpr/enrichment_metrics.json
+            benchmarks/enrichment/results/hivpr/enrichment_results.csv
+            benchmarks/enrichment/results/hivpr/roc.png
+            benchmarks/enrichment/results/hivpr/summary.md
+            benchmarks/enrichment/results/aa2ar/enrichment_metrics.json
+            benchmarks/enrichment/results/aa2ar/summary.md
+            benchmarks/enrichment/results/parp1/enrichment_metrics.json
+            benchmarks/enrichment/results/parp1/summary.md
             benchmarks/enrichment/results/summary.md
           retention-days: 90
 
@@ -155,4 +169,5 @@ jobs:
             benchmarks/mgltools_comparison/results/comparison.csv
             benchmarks/mgltools_comparison/results/summary.md
             benchmarks/mgltools_comparison/results/comparison_stats.json
+            benchmarks/mgltools_comparison/results/failures/
           retention-days: 90

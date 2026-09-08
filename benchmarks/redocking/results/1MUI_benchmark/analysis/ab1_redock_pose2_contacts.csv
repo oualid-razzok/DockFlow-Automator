@@ -10,8 +10,8 @@ hbond,3.14,O,OA,A,ILE,50,H,HD
 hbond,3.24,O,OA,B,ILE,50,H,HD
 hbond,3.32,H,HD,B,ASP,29,OD2,OA
 hbond,3.33,N,N,B,ASP,29,H,HD
-hbond,3.35,N,N,B,ASP,29,H,HD
 ionic,3.35,N,N,B,ASP,29,OD1,OA
+hbond,3.35,N,N,B,ASP,29,H,HD
 hbond,3.46,O,OA,B,ASP,25,H,HD
 hbond,3.47,H,HD,B,ALA,28,N,N
 hydrophobic,3.53,C,C,A,VAL,32,CG1,C
@@ -44,8 +44,8 @@ hydrophobic,3.86,C,A,B,ILE,84,CD1,C
 hydrophobic,3.91,C,C,B,ASP,29,CG,C
 hydrophobic,3.91,C,C,A,ILE,50,CG1,C
 hydrophobic,3.92,C,C,A,ALA,28,CB,C
-hydrophobic,3.93,C,A,B,VAL,82,CG2,C
 hydrophobic,3.93,C,A,B,PRO,81,CD,C
+hydrophobic,3.93,C,A,B,VAL,82,CG2,C
 hydrophobic,3.94,C,C,A,ILE,84,CG2,C
 hydrophobic,3.95,C,C,B,GLY,48,C,C
 hydrophobic,3.95,C,A,A,ILE,50,CG1,C

@@ -544,7 +544,7 @@
           "ligand_atom_index": 0,
           "ligand_atom_name": "C",
           "ligand_atom_type": "C",
-          "receptor_atom_name": "CH2",
+          "receptor_atom_name": "CZ3",
           "receptor_resname": "TRP",
           "receptor_chain": "A",
           "receptor_resseq": 79,
@@ -556,7 +556,7 @@
           "ligand_atom_index": 0,
           "ligand_atom_name": "C",
           "ligand_atom_type": "C",
-          "receptor_atom_name": "CZ3",
+          "receptor_atom_name": "CH2",
           "receptor_resname": "TRP",
           "receptor_chain": "A",
           "receptor_resseq": 79,
@@ -1155,7 +1155,7 @@
       "num_ionic_contacts": 2,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.395625,
-      "crystal_rmsd": 1.3007860433847138,
+      "crystal_rmsd": 1.218291566314835,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {
@@ -2031,7 +2031,7 @@
       "num_ionic_contacts": 2,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.3840625,
-      "crystal_rmsd": 1.156299752539161,
+      "crystal_rmsd": 1.156299752539124,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {

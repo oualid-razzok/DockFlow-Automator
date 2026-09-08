@@ -59,7 +59,8 @@ Verified against PyPI and the official release assets (2026-09):
 
 > **Windows note:** the Vina *python* bindings have no Windows wheels, so on
 > Windows DockFlow uses the **CLI backend** with the official Vina executable
-> (`scripts/install_tools.ps1` installs it automatically and renames it
+> (`scripts/install_tools.ps1` installs it automatically — a mechanical
+> install step — and renames it
 > `vina.exe`). Results are identical — the backends produce the same
 > PDBQT/CSV artifacts and are parsed by the same code.
 
@@ -113,7 +114,8 @@ On Windows/macOS, get the **CLI executable** instead:
   `PATH` (or point the `DOCKFLOW_VINA` environment variable at it).
   **Simplest:** just drop `vina.exe` in the repository root next to
   `run_dockflow.bat` — the launcher detects it and points `DOCKFLOW_VINA` at
-  it automatically (and its quick setup downloads it for you).
+  it automatically (a mechanical detection; and its quick setup downloads
+  it for you).
 - **macOS** — `conda install -c bioconda autodock-vina` (see Path B), or
   build the CLI from source (see §7.4).
 
@@ -238,7 +240,8 @@ pip install -e ".[dev,prep,gui,viz]"
 
 The bindings are built with **CMake ≥ 3.18 and a C++17 compiler**, wrapped
 by scikit-build-core. A C++ compiler is the only true requirement — CMake
-itself is fetched automatically by the build system when absent.
+itself is fetched automatically (a mechanical build dependency step) by
+the build system when absent.
 
 **Option 1 — pip (recommended, per platform):**
 
@@ -248,7 +251,7 @@ pip install ./bindings
 
 | OS | toolchain needed |
 |---|---|
-| Linux | `sudo apt install build-essential` (or distro equivalent) |
+| Linux | `sudo apt install build-essential` (or the distro's equivalent package name) |
 | Windows | Visual Studio 2022 Build Tools → workload "Desktop development with C++" (from an *x64 Native Tools Command Prompt* or a normal shell after VS setup) |
 | macOS | `xcode-select --install` |
 
@@ -285,8 +288,10 @@ cd AutoDock-Vina
 pip install .
 ```
 
-The CLI backend (§4) is functionally equivalent and much easier — prefer it
-unless you need the in-process API.
+The CLI backend (§4) runs the same Vina core (same results for the same
+inputs/settings; it is not, however, a bit-identical interface — no
+in-process API) and is much easier — prefer it unless you need the
+in-process API.
 
 ### 7.4 The AutoDock Vina CLI from source (any OS)
 
@@ -375,7 +380,7 @@ Red flags and fixes: see the next section.
 | GUI on headless server | `QT_QPA_PLATFORM=offscreen dockflow-gui` (or use the CLI) |
 | vina python wheel install fails on non-x86_64 | use the CLI backend: `conda install -c bioconda autodock-vina` |
 | `run_dockflow.sh` → "Python found, but DockFlow is not installed in it" | expected on very first run — choose `[1]` (full conda setup) or `[2]` (quick pip setup + Vina download), or run `bash scripts/install_tools.sh` yourself |
-| quick setup pip fails with "externally-managed-environment" | the launcher retries automatically with `--break-system-packages`; if that also fails use the full conda setup (`[1]`) |
+| quick setup pip fails with "externally-managed-environment" | the launcher retries automatically (a mechanical retry) with `--break-system-packages`; if that also fails use the full conda setup (`[1]`) |
 
 ### Windows
 

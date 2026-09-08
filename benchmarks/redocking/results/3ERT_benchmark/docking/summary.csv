@@ -1,8 +1,8 @@
-ligand,pose,affinity_kcal_mol,rmsd_lb,rmsd_ub,crystal_rmsd,docking_score_efficiency,num_heavy_atoms,runtime_s,backend,error
-oht_redock,1,-9.706,0.000,0.000,2.653,-0.3347,29,34.9,python,
-oht_redock,2,-9.631,0.896,1.179,2.593,-0.3321,29,34.9,python,
-oht_redock,3,-7.381,7.100,9.545,3.531,-0.2545,29,34.9,python,
-oht_redock,4,-7.178,7.223,9.898,2.544,-0.2475,29,34.9,python,
-oht_redock,5,-6.926,3.910,7.886,2.923,-0.2388,29,34.9,python,
-oht_redock,6,-6.783,3.595,10.710,2.526,-0.2339,29,34.9,python,
-oht_redock,7,-6.775,3.699,10.715,1.884,-0.2336,29,34.9,python,
+ligand,pose,affinity_kcal_mol,rmsd_lb,rmsd_ub,crystal_rmsd,docking_score_efficiency,num_heavy_atoms,consensus_rank,runtime_s,backend,error
+oht_redock,1,-9.706,0.000,0.000,1.001,-0.3347,29,,0.0,python,
+oht_redock,2,-9.631,0.896,1.179,0.959,-0.3321,29,,0.0,python,
+oht_redock,3,-7.381,7.100,9.545,1.906,-0.2545,29,,0.0,python,
+oht_redock,4,-7.178,7.223,9.898,1.132,-0.2475,29,,0.0,python,
+oht_redock,5,-6.926,3.910,7.886,1.397,-0.2388,29,,0.0,python,
+oht_redock,6,-6.783,3.595,10.710,0.827,-0.2339,29,,0.0,python,
+oht_redock,7,-6.775,3.699,10.715,1.156,-0.2336,29,,0.0,python,

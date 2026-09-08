@@ -9,7 +9,7 @@
       "num_ionic_contacts": 0,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.5057272727272727,
-      "crystal_rmsd": 0.8363375570741415,
+      "crystal_rmsd": 0.3199501855722586,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {
@@ -711,7 +711,7 @@
       "num_ionic_contacts": 0,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.49945454545454543,
-      "crystal_rmsd": 0.7992522613659278,
+      "crystal_rmsd": 0.257176784757328,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {
@@ -1282,11 +1282,11 @@
           "ligand_atom_index": 4,
           "ligand_atom_name": "C",
           "ligand_atom_type": "A",
-          "receptor_atom_name": "CD2",
-          "receptor_resname": "LEU",
+          "receptor_atom_name": "CZ3",
+          "receptor_resname": "TRP",
           "receptor_chain": "A",
-          "receptor_resseq": 565,
-          "receptor_atom_type": "C",
+          "receptor_resseq": 519,
+          "receptor_atom_type": "A",
           "distance": 4.33,
           "kind": "hydrophobic"
         },
@@ -1294,11 +1294,11 @@
           "ligand_atom_index": 4,
           "ligand_atom_name": "C",
           "ligand_atom_type": "A",
-          "receptor_atom_name": "CZ3",
-          "receptor_resname": "TRP",
+          "receptor_atom_name": "CD2",
+          "receptor_resname": "LEU",
           "receptor_chain": "A",
-          "receptor_resseq": 519,
-          "receptor_atom_type": "A",
+          "receptor_resseq": 565,
+          "receptor_atom_type": "C",
           "distance": 4.33,
           "kind": "hydrophobic"
         },
@@ -1585,7 +1585,7 @@
       "num_ionic_contacts": 0,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.4799090909090909,
-      "crystal_rmsd": 0.8597485678585578,
+      "crystal_rmsd": 0.37293042700000906,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {

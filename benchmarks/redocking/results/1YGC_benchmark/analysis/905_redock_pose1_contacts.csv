@@ -16,8 +16,8 @@ hbond,3.10,H,HD,H,SER,190,O,OA
 hbond,3.14,O,OA,H,SER,195,H,HD
 hbond,3.14,H,HD,H,GLY,216,N,N
 hbond,3.27,H,HD,H,LYS,192,O,OA
-hbond,3.27,H,HD,H,CYS,220,N,N
 hbond,3.27,H,HD,H,SER,190,O,OA
+hbond,3.27,H,HD,H,CYS,220,N,N
 hbond,3.28,H,HD,H,SER,190,OG,OA
 hbond,3.29,H,HD,H,GLY,219,O,OA
 hbond,3.39,H,HD,H,ASP,189,OD2,OA
@@ -117,8 +117,8 @@ hydrophobic,4.32,C,A,H,LYS,60,CD,C
 hydrophobic,4.33,C,C,H,THR,99,CB,C
 hydrophobic,4.33,C,A,H,HIS,57,CG,C
 hydrophobic,4.34,C,A,H,CYS,191,C,C
-hydrophobic,4.35,C,C,H,GLY,216,C,C
 hydrophobic,4.35,C,C,H,TRP,215,CD2,A
+hydrophobic,4.35,C,C,H,GLY,216,C,C
 hydrophobic,4.35,C,C,H,HIS,57,CB,C
 hydrophobic,4.35,C,A,H,HIS,57,CB,C
 hydrophobic,4.36,C,C,H,ASP,102,CB,C

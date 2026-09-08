@@ -68,6 +68,46 @@ _PREP_ENGINE_LABEL = {
     "none": "none (no charges; testing only)",
 }
 
+DEGRADED_MODE_MESSAGE = (
+    "The receptor will be prepared in SCIENTIFICALLY DEGRADED mode. "
+    "Results will not be suitable for publication. Install OpenBabel/RDKit "
+    "or choose a different engine."
+)
+
+
+def _degraded_ack_key() -> str:
+    """QSettings key for the per-version degraded-mode acknowledgement."""
+    from dockflow_core import __version__
+
+    return f"degraded_ack/{__version__}"
+
+
+def confirm_degraded_engine(parent, settings) -> bool:
+    """Blocking degraded-mode confirmation (final pass, item 8).
+
+    Shows a warning modal with [Cancel run] / [I understand, continue
+    anyway] when the resolved receptor engine is the ``none`` fallback.
+    "Continue anyway" is persisted per DockFlow version in ``settings``
+    (QSettings in production, injectable in tests) so the user is not
+    re-prompted on every run, but IS re-prompted after a version upgrade.
+    """
+    key = _degraded_ack_key()
+    if bool(settings.value(key, False)):
+        return True
+    box = QMessageBox(parent)
+    box.setIcon(QMessageBox.Icon.Warning)
+    box.setWindowTitle("Scientifically degraded mode")
+    box.setText(DEGRADED_MODE_MESSAGE)
+    cancel = box.addButton("Cancel run", QMessageBox.ButtonRole.RejectRole)
+    continue_anyway = box.addButton(
+        "I understand, continue anyway", QMessageBox.ButtonRole.AcceptRole)
+    box.setDefaultButton(cancel)
+    box.exec()
+    if box.clickedButton() is continue_anyway:
+        settings.setValue(key, True)
+        return True
+    return False
+
 
 @dataclass
 class GuiState:
@@ -804,6 +844,21 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "No target", "Load a target structure first (step 1).")
             return
         options = self._receptor_options()
+        # Degraded-mode modal (final pass, item 8): blocking confirmation
+        # when the resolved engine is the `none` fallback.  The choice is
+        # persisted per DockFlow version (re-prompted after upgrades).
+        try:
+            from dockflow_core.preparator import resolved_engine_name
+
+            resolved = resolved_engine_name(options.engine)
+        except Exception:  # noqa: BLE001 - unknown/unavailable engine: the
+            # prep job fails loudly with the proper error message instead
+            resolved = None
+        if resolved == "none" and not confirm_degraded_engine(
+                self, self.settings):
+            self._log("receptor preparation cancelled: degraded engine "
+                      "not confirmed", "warn")
+            return
         out_dir = self.state.workdir / "prepared"
         input_path = target.path
 

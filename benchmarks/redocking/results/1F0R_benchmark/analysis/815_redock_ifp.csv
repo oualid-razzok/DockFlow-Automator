@@ -1,0 +1,4 @@
+pose,A:ALA190:hydrophobic,A:ASP189:hbond,A:ASP189:hydrophobic,A:ASP189:ionic,A:CYS191:hydrophobic,A:CYS220:hbond,A:GLN192:hydrophobic,A:GLU97:hbond,A:GLU217:hydrophobic,A:GLY216:hbond,A:GLY216:hydrophobic,A:GLY219:hbond,A:GLY219:hydrophobic,A:GLY226:hydrophobic,A:PHE174:hydrophobic,A:SER195:hbond,A:SER214:hydrophobic,A:THR98:hydrophobic,A:TRP215:hydrophobic,A:TYR99:hbond,A:TYR99:hydrophobic,A:VAL213:hydrophobic
+1,1,1,1,1,1,1,1,0,0,0,1,1,0,1,1,0,1,0,1,0,1,1
+2,1,0,0,1,1,0,0,0,1,1,1,1,1,0,1,0,1,1,1,0,1,1
+3,1,0,0,0,1,0,1,1,0,0,1,0,0,0,1,1,1,1,1,1,1,1

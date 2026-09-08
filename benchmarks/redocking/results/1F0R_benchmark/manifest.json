@@ -1,11 +1,11 @@
 {
   "run_id": "1F0R_benchmark",
-  "run_dir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark",
+  "run_dir": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark",
   "ok": true,
   "error": null,
   "cancelled": false,
   "config": {
-    "workdir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results",
+    "workdir": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results",
     "run_id": "1F0R_benchmark",
     "target": {
       "pdb_id": "1F0R"
@@ -48,67 +48,68 @@
     "prepare_ligands": 2.19,
     "gridbox": 0.04,
     "docking": 31.85,
-    "analysis": 0.08,
-    "total": 35.52
+    "analysis": 0.06,
+    "total": 0.08,
+    "original_run_duration_s": 35.52
   },
-  "duration_s": 35.52,
+  "duration_s": 0.08,
   "stages": [
     {
       "name": "download",
-      "status": "done",
-      "started_at": "2026-09-08T01:32:02Z",
-      "ended_at": "2026-09-08T01:32:03Z",
-      "duration_s": 1.08,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "prepare_receptor",
-      "status": "done",
-      "started_at": "2026-09-08T01:32:03Z",
-      "ended_at": "2026-09-08T01:32:03Z",
-      "duration_s": 0.267,
-      "engine": "openbabel",
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
+      "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "prepare_ligands",
-      "status": "done",
-      "started_at": "2026-09-08T01:32:03Z",
-      "ended_at": "2026-09-08T01:32:05Z",
-      "duration_s": 2.187,
-      "engine": "meeko",
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
+      "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "gridbox",
-      "status": "done",
-      "started_at": "2026-09-08T01:32:05Z",
-      "ended_at": "2026-09-08T01:32:05Z",
-      "duration_s": 0.043,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "docking",
-      "status": "done",
-      "started_at": "2026-09-08T01:32:05Z",
-      "ended_at": "2026-09-08T01:32:37Z",
-      "duration_s": 31.851,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
       "engine": null,
-      "backend": "python",
-      "detail": null
+      "backend": null,
+      "detail": "not requested (--stage)"
     },
     {
       "name": "analysis",
       "status": "done",
-      "started_at": "2026-09-08T01:32:37Z",
-      "ended_at": "2026-09-08T01:32:37Z",
-      "duration_s": 0.076,
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.061,
       "engine": null,
       "backend": null,
       "detail": null
@@ -116,28 +117,28 @@
     {
       "name": "visualization",
       "status": "skipped",
-      "started_at": "2026-09-08T01:32:37Z",
-      "ended_at": "2026-09-08T01:32:37Z",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
       "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": "disabled in config"
+      "detail": "not requested (--stage)"
     },
     {
       "name": "report",
       "status": "done",
-      "started_at": "2026-09-08T01:32:37Z",
-      "ended_at": "2026-09-08T01:32:37Z",
-      "duration_s": 0.014,
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.016,
       "engine": null,
       "backend": null,
       "detail": null
     }
   ],
   "environment": {
-    "dockflow": "0.2.1",
+    "dockflow": "0.1.1",
     "python": "3.12.14",
-    "python_executable": "/home/z/my-project/bindings-venv/bin/python",
+    "python_executable": "/home/z/.venv/bin/python3.12",
     "platform": "Linux 5.10.134-013.8.3.kangaroo.al8.x86_64 (x86_64)",
     "numpy": "2.5.3",
     "vina": "1.2.7",
@@ -145,25 +146,22 @@
     "rdkit": "2025.9.6",
     "gemmi": "0.7.5",
     "openbabel_wheel": "3.1.1.23",
-    "pandas": "3.0.5",
+    "pandas": "2.2.3",
     "dockflow_bindings": {
-      "importable": true,
-      "version": "0.1.0"
+      "importable": false,
+      "version": null
     },
-    "git_sha": null,
-    "captured_at": "2026-09-08T01:32:37Z"
+    "git_sha": "343691d2ccd48474c29dbdd05e8ab3d7122b250c",
+    "captured_at": "2026-09-08T13:48:42Z"
   },
   "target": {
-    "identifier": "1F0R",
-    "source": "pdb",
-    "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/raw/1f0r.pdb",
-    "title": "CRYSTAL STRUCTURE OF HUMAN COAGULATION FACTOR XA COMPLEXED WITH RPR208815",
-    "resolution": 2.1,
+    "identifier": "1f0r",
+    "source": "pdb (resumed)",
+    "path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/raw/1f0r.pdb",
+    "title": "",
+    "resolution": null,
     "uniprot_ids": [],
-    "ligand_codes": [
-      "CA",
-      "815"
-    ]
+    "ligand_codes": []
   },
   "receptor": {
     "pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/prepared/receptor.pdbqt",
@@ -328,8 +326,8 @@
   "gridbox": {
     "center": [
       7.356,
-      4.7675,
-      22.058500000000002
+      4.768,
+      22.059
     ],
     "size": [
       16.73,
@@ -338,10 +336,10 @@
     ],
     "source": "pocket:815",
     "padding": 4.0,
-    "vina_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/gridbox.txt",
     "warnings": [],
     "assumption_strength": "strong",
-    "receptor_coverage_pct": 6.7
+    "receptor_coverage_pct": 6.7,
+    "vina_config": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/gridbox.txt"
   },
   "docking": {
     "backend": "python",
@@ -349,15 +347,16 @@
     "num_ok": 1,
     "resumed": 0,
     "warnings": [],
+    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/docking/summary.csv",
     "results": [
       {
         "ligand": {
           "identifier": "815_redock",
-          "source": "pdb_ligand",
-          "value": "815",
-          "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/raw/815.sdf",
-          "pdbqt_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/prepared/815_redock.pdbqt",
-          "status": "docked",
+          "source": "file",
+          "value": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/prepared/815_redock.pdbqt",
+          "path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/prepared/815_redock.pdbqt",
+          "pdbqt_path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/prepared/815_redock.pdbqt",
+          "status": "prepared",
           "error": null,
           "num_rotatable_bonds": 6,
           "num_heavy_atoms": 31,
@@ -402,7 +401,7 @@
             "affinity": -10.253,
             "rmsd_lb": 0.0,
             "rmsd_ub": 0.0,
-            "crystal_rmsd": 4.728089094225089,
+            "crystal_rmsd": 0.29795423466426313,
             "remarks": [
               "REMARK VINA RESULT:   -10.253      0.000      0.000",
               "REMARK INTER + INTRA:         -14.507",
@@ -421,7 +420,7 @@
             "affinity": -9.347,
             "rmsd_lb": 2.07,
             "rmsd_ub": 8.84,
-            "crystal_rmsd": 3.2110577438617485,
+            "crystal_rmsd": 1.5690522831143554,
             "remarks": [
               "REMARK VINA RESULT:    -9.347      2.070      8.840",
               "REMARK INTER + INTRA:         -13.311",
@@ -440,7 +439,7 @@
             "affinity": -9.19,
             "rmsd_lb": 2.509,
             "rmsd_ub": 8.807,
-            "crystal_rmsd": 2.6874017969493376,
+            "crystal_rmsd": 1.833551964214215,
             "remarks": [
               "REMARK VINA RESULT:    -9.190      2.509      8.807",
               "REMARK INTER + INTRA:         -13.103",
@@ -459,7 +458,7 @@
             "affinity": -9.018,
             "rmsd_lb": 2.746,
             "rmsd_ub": 9.234,
-            "crystal_rmsd": 4.396832040294665,
+            "crystal_rmsd": 2.145307717220937,
             "remarks": [
               "REMARK VINA RESULT:    -9.018      2.746      9.234",
               "REMARK INTER + INTRA:         -12.875",
@@ -478,7 +477,7 @@
             "affinity": -8.945,
             "rmsd_lb": 1.863,
             "rmsd_ub": 2.54,
-            "crystal_rmsd": 4.837917451801359,
+            "crystal_rmsd": 1.9766192303643988,
             "remarks": [
               "REMARK VINA RESULT:    -8.945      1.863      2.540",
               "REMARK INTER + INTRA:         -12.779",
@@ -497,7 +496,7 @@
             "affinity": -8.57,
             "rmsd_lb": 2.136,
             "rmsd_ub": 3.11,
-            "crystal_rmsd": 4.291976040395181,
+            "crystal_rmsd": 1.3092515552064987,
             "remarks": [
               "REMARK VINA RESULT:    -8.570      2.136      3.110",
               "REMARK INTER + INTRA:         -12.284",
@@ -516,7 +515,7 @@
             "affinity": -8.178,
             "rmsd_lb": 2.572,
             "rmsd_ub": 3.806,
-            "crystal_rmsd": 4.766754368492934,
+            "crystal_rmsd": 2.330014225384089,
             "remarks": [
               "REMARK VINA RESULT:    -8.178      2.572      3.806",
               "REMARK INTER + INTRA:         -11.766",
@@ -535,7 +534,7 @@
             "affinity": -7.588,
             "rmsd_lb": 3.28,
             "rmsd_ub": 4.923,
-            "crystal_rmsd": 3.5950281918667506,
+            "crystal_rmsd": 2.4443471658768576,
             "remarks": [
               "REMARK VINA RESULT:    -7.588      3.280      4.923",
               "REMARK INTER + INTRA:         -10.985",
@@ -554,7 +553,7 @@
             "affinity": -7.521,
             "rmsd_lb": 2.625,
             "rmsd_ub": 9.555,
-            "crystal_rmsd": 4.414273046030064,
+            "crystal_rmsd": 1.8741910171995713,
             "remarks": [
               "REMARK VINA RESULT:    -7.521      2.625      9.555",
               "REMARK INTER + INTRA:         -10.896",
@@ -569,15 +568,14 @@
             ]
           }
         ],
-        "out_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/docking/815_redock_out.pdbqt",
-        "log_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/docking/815_redock_out.log",
-        "runtime": 31.799,
+        "out_path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/docking/815_redock_out.pdbqt",
+        "log_path": null,
+        "runtime": 0.0,
         "backend": "python",
         "error": null,
         "best_affinity": -10.253
       }
-    ],
-    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/docking/summary.csv"
+    ]
   },
   "analysis": {
     "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
@@ -592,7 +590,7 @@
           "num_ionic_contacts": 4,
           "num_metal_contacts": 0,
           "docking_score_efficiency": -0.330741935483871,
-          "crystal_rmsd": 4.728089094225089,
+          "crystal_rmsd": 0.29795423466426313,
           "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
           "contacts": [
             {
@@ -743,11 +741,11 @@
               "ligand_atom_index": 31,
               "ligand_atom_name": "C",
               "ligand_atom_type": "A",
-              "receptor_atom_name": "CZ3",
-              "receptor_resname": "TRP",
+              "receptor_atom_name": "CG",
+              "receptor_resname": "PHE",
               "receptor_chain": "A",
-              "receptor_resseq": 215,
-              "receptor_atom_type": "C",
+              "receptor_resseq": 174,
+              "receptor_atom_type": "A",
               "distance": 3.64,
               "kind": "hydrophobic"
             },
@@ -755,11 +753,11 @@
               "ligand_atom_index": 31,
               "ligand_atom_name": "C",
               "ligand_atom_type": "A",
-              "receptor_atom_name": "CG",
-              "receptor_resname": "PHE",
+              "receptor_atom_name": "CZ3",
+              "receptor_resname": "TRP",
               "receptor_chain": "A",
-              "receptor_resseq": 174,
-              "receptor_atom_type": "A",
+              "receptor_resseq": 215,
+              "receptor_atom_type": "C",
               "distance": 3.64,
               "kind": "hydrophobic"
             },
@@ -1295,10 +1293,10 @@
               "ligand_atom_index": 31,
               "ligand_atom_name": "C",
               "ligand_atom_type": "A",
-              "receptor_atom_name": "CH2",
-              "receptor_resname": "TRP",
+              "receptor_atom_name": "CB",
+              "receptor_resname": "PHE",
               "receptor_chain": "A",
-              "receptor_resseq": 215,
+              "receptor_resseq": 174,
               "receptor_atom_type": "C",
               "distance": 4.18,
               "kind": "hydrophobic"
@@ -1307,10 +1305,10 @@
               "ligand_atom_index": 31,
               "ligand_atom_name": "C",
               "ligand_atom_type": "A",
-              "receptor_atom_name": "CB",
-              "receptor_resname": "PHE",
+              "receptor_atom_name": "CH2",
+              "receptor_resname": "TRP",
               "receptor_chain": "A",
-              "receptor_resseq": 174,
+              "receptor_resseq": 215,
               "receptor_atom_type": "C",
               "distance": 4.18,
               "kind": "hydrophobic"
@@ -1818,7 +1816,7 @@
           "num_ionic_contacts": 1,
           "num_metal_contacts": 0,
           "docking_score_efficiency": -0.30151612903225805,
-          "crystal_rmsd": 3.2110577438617485,
+          "crystal_rmsd": 1.5690522831143554,
           "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
           "contacts": [
             {
@@ -2125,7 +2123,7 @@
               "ligand_atom_index": 12,
               "ligand_atom_name": "C",
               "ligand_atom_type": "A",
-              "receptor_atom_name": "CE1",
+              "receptor_atom_name": "CD1",
               "receptor_resname": "PHE",
               "receptor_chain": "A",
               "receptor_resseq": 174,
@@ -2137,7 +2135,7 @@
               "ligand_atom_index": 12,
               "ligand_atom_name": "C",
               "ligand_atom_type": "A",
-              "receptor_atom_name": "CD1",
+              "receptor_atom_name": "CE1",
               "receptor_resname": "PHE",
               "receptor_chain": "A",
               "receptor_resseq": 174,
@@ -2593,11 +2591,11 @@
               "ligand_atom_index": 8,
               "ligand_atom_name": "C",
               "ligand_atom_type": "A",
-              "receptor_atom_name": "CZ3",
-              "receptor_resname": "TRP",
+              "receptor_atom_name": "CE2",
+              "receptor_resname": "PHE",
               "receptor_chain": "A",
-              "receptor_resseq": 215,
-              "receptor_atom_type": "C",
+              "receptor_resseq": 174,
+              "receptor_atom_type": "A",
               "distance": 4.16,
               "kind": "hydrophobic"
             },
@@ -2605,11 +2603,11 @@
               "ligand_atom_index": 8,
               "ligand_atom_name": "C",
               "ligand_atom_type": "A",
-              "receptor_atom_name": "CE2",
-              "receptor_resname": "PHE",
+              "receptor_atom_name": "CZ3",
+              "receptor_resname": "TRP",
               "receptor_chain": "A",
-              "receptor_resseq": 174,
-              "receptor_atom_type": "A",
+              "receptor_resseq": 215,
+              "receptor_atom_type": "C",
               "distance": 4.16,
               "kind": "hydrophobic"
             },
@@ -3154,7 +3152,7 @@
           "num_ionic_contacts": 0,
           "num_metal_contacts": 0,
           "docking_score_efficiency": -0.2964516129032258,
-          "crystal_rmsd": 2.6874017969493376,
+          "crystal_rmsd": 1.833551964214215,
           "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
           "contacts": [
             {
@@ -4342,12 +4340,18 @@
   },
   "visualization": {},
   "paths": {
-    "target_structure": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/raw/1f0r.pdb",
-    "receptor_pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/prepared/receptor.pdbqt",
-    "gridbox_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/gridbox.txt",
-    "docking_summary": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/docking/summary.csv",
-    "analysis_json": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/analysis/interactions.json",
+    "target_structure": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/raw/1f0r.pdb",
+    "analysis_json": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/analysis/interactions.json",
     "crystal_rmsd_reference": "815 in 1f0r.pdb",
-    "report": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/report.md"
+    "report": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1F0R_benchmark/report.md"
+  },
+  "checksums": {
+    "raw/1f0r.pdb": "e2aecdf27172bcb947177a0d8ef6b125b604772bb388083a7eff42a6f79504c9",
+    "raw/815.sdf": "34d91e628c0eaf54b82b67b1703d897c38848e30f4745807d55b49bfd3012761",
+    "prepared/receptor.pdbqt": "2dabbd5cd015c3ac7753b491e2c204c8b88f9c9420e91d71ae20245b8e289b6a",
+    "prepared/815_redock.pdbqt": "b004b60b61f64c7696573208736c72d7891cc5358aad29e5db90f4c66e141d1a",
+    "gridbox.txt": "83db6030e6a5672e63039014e8f4ccfa4e6e31a50a67db0d622d2cfbc8197749",
+    "docking/summary.csv": "2c61f3bdca0f6c9b2b70670166b528c3dd2289bf256ceed065361772162b2d39",
+    "docking/815_redock_out.pdbqt": "68fbac2a353115ce0a789e93332f9bcf882183a764a2268144303c5afca3d6d0"
   }
 }

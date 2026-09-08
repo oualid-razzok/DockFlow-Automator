@@ -705,6 +705,18 @@ def select_engine(preferred: str = "auto") -> BaseEngine:
     return PassThroughEngine()  # pragma: no cover - unreachable
 
 
+def resolved_engine_name(preferred: str = "auto") -> str:
+    """The engine ``auto`` (or an explicit request) will actually use.
+
+    Used by the degraded-mode gates (final pass, item 8): the CLI
+    ``--allow-degraded`` flag and the GUI modal both need to know BEFORE
+    the run whether the resolved engine is the dependency-free ``none``
+    fallback.  Raises :class:`PreparationError` for unknown/unavailable
+    explicit engines - the caller decides whether that is fatal.
+    """
+    return select_engine(preferred).name
+
+
 # ---------------------------------------------------------------------------
 # AD4 atom typing (mirrors MGLTools' fuse/smarts typing, pragmatic subset)
 # ---------------------------------------------------------------------------

@@ -43,8 +43,8 @@ hydrophobic,4.06,C,C,A,VAL,47,CG2,C
 hydrophobic,4.07,C,C,A,ALA,50,CB,C
 hydrophobic,4.08,C,C,A,LEU,110,CD2,C
 hydrophobic,4.12,C,C,A,LEU,110,CD2,C
-hydrophobic,4.13,C,C,A,TRP,79,CH2,A
 hydrophobic,4.13,C,C,A,TRP,79,CZ3,A
+hydrophobic,4.13,C,C,A,TRP,79,CH2,A
 hydrophobic,4.14,C,C,A,TRP,79,CB,C
 hydrophobic,4.14,C,C,A,TRP,79,CH2,A
 hydrophobic,4.21,C,C,A,TRP,108,CE3,A

@@ -1,0 +1,37 @@
+MODEL 1
+REMARK VINA RESULT:    -7.907      0.000      0.000
+REMARK INTER + INTRA:          -8.993
+REMARK INTER:                  -8.831
+REMARK INTRA:                  -0.162
+REMARK UNBOUND:                -0.162
+REMARK SMILES CN(C)Cc1ccc2c(c1)[nH]c(=O)c1nccn12
+REMARK SMILES IDX 4 1 2 2 1 3 3 4 5 5 6 6 10 7 7 8 9 9 8 10 11 11 18 12 12 13
+REMARK SMILES IDX 17 14 14 15 13 16 16 17 15 18
+REMARK H PARENT 11 19
+ROOT
+ATOM      1  C   UNL     1      21.593  67.039   8.772  1.00  0.00    +0.119 C 
+ENDROOT
+BRANCH   1   2
+ATOM      2  N   UNL     1      20.613  65.960   8.983  1.00  0.00    -0.305 NA
+ATOM      3  C   UNL     1      19.510  66.041   8.021  1.00  0.00    +0.105 C 
+ATOM      4  C   UNL     1      20.086  66.022  10.348  1.00  0.00    +0.105 C 
+ENDBRANCH   1   2
+BRANCH   1   5
+ATOM      5  C   UNL     1      23.029  66.584   8.939  1.00  0.00    -0.032 A 
+ATOM      6  C   UNL     1      23.652  65.811   7.945  1.00  0.00    +0.007 A 
+ATOM      7  C   UNL     1      23.761  66.953  10.081  1.00  0.00    +0.033 A 
+ATOM      8  C   UNL     1      24.981  65.398   8.084  1.00  0.00    +0.029 A 
+ATOM      9  C   UNL     1      25.084  66.545  10.228  1.00  0.00    +0.066 A 
+ATOM     10  C   UNL     1      25.688  65.768   9.228  1.00  0.00    +0.071 A 
+ATOM     11  N   UNL     1      25.799  66.915  11.379  1.00  0.00    -0.317 N 
+ATOM     12  N   UNL     1      27.027  65.392   9.444  1.00  0.00    -0.294 N 
+ATOM     13  C   UNL     1      27.115  66.558  11.617  1.00  0.00    +0.292 C 
+ATOM     14  C   UNL     1      27.877  64.650   8.667  1.00  0.00    +0.114 A 
+ATOM     15  C   UNL     1      27.721  65.758  10.574  1.00  0.00    +0.203 A 
+ATOM     16  O   UNL     1      27.663  66.926  12.655  1.00  0.00    -0.265 OA
+ATOM     17  C   UNL     1      29.059  64.601   9.372  1.00  0.00    +0.132 A 
+ATOM     18  N   UNL     1      28.957  65.290  10.551  1.00  0.00    -0.232 NA
+ATOM     19  H   UNL     1      25.361  67.470  12.101  1.00  0.00    +0.170 HD
+ENDBRANCH   1   5
+TORSDOF 2
+ENDMDL

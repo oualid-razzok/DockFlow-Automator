@@ -1,40 +1,25 @@
-# =============================================================================
-# DockFlow redocking benchmark set (audit item 7)
-#
-# Classic protein-ligand complexes used for redocking validation.  All
-# entries verified against RCSB (single organic ligand after excluding
-# waters, ions and sugars).  Sources: the PDBbind core set / Astex diverse
-# set literature, plus HIV-1 protease inhibitors used by the DockFlow
-# example configs.
-#
-# Columns:
-#   pdb_id          RCSB entry
-#   ligand_resname  co-crystallized ligand code (excluded: HOH, ions, ...)
-#   target          protein name (from the PDB TITLE)
-#   note            benchmark-family note
-# =============================================================================
-pdb_id,ligand_resname,target,note
-1HVR,XK2,HIV-1 protease (cyclic urea inhibitor),DockFlow example / PDBbind
-1HSG,MK1,"HIV-1 protease (L-735,524 saquinavir analog)",classic PR redocking
-1HTG,G37,HIV-1 protease (penicillin-derived inhibitor),classic PR redocking
-1HPV,478,HIV-1 protease (VX-478 amprenavir),classic PR redocking
-1MUI,AB1,HIV-1 protease (lopinavir),classic PR redocking
-1DWD,MID,HIV-1 protease,classic PR redocking
-1AZM,AZM,human carbonic anhydrase II (acetazolamide),PDBbind core classic
-1E66,HUX,acetylcholinesterase (huprine X),PDBbind core classic
-1F0R,815,human coagulation factor Xa (RPR208815),PDBbind core classic
-1Q41,IXM,GSK-3 beta (indirubin-3'-monoxime),PDBbind core classic
-1SNC,THP,staphylococcal nuclease (thymidine 3'5'-diphosphate),PDBbind core classic
-3ERT,OHT,human estrogen receptor alpha (4-hydroxytamoxifen),PDBbind core classic
-1XLZ,FIL,human phosphodiesterase 4B (filaminast),PDBbind core classic
-1STP,BTN,streptavidin (biotin),ultra-high-affinity classic
-1CBX,BZS,carboxypeptidase A (benzylsuccinate),classic metalloprotease
-1TNG,AMC,serine protease (benzamidine derivative),trypsin family
-1BTY,BEN,beta-trypsin (benzamidine),trypsin family
-1MQ6,XLD,3-chloro-pyridyl inhibitor complex,synthetic inhibitor
-1N8Q,DHB,lipoxygenase (protocatechuic acid),small natural product
-1NVQ,UCN,checkpoint kinase Chk1 (UCN-01),kinase inhibitor
-1JAP,HOA,pro-leu-gly-hydroxylamine complex,hydroxamic inhibitor
-1YGC,905,factor VIIa (small molecule inhibitor),serine protease
-1N46,PFA,thyroid hormone receptor beta,nuclear receptor
-1SL3,170,thrombin (P1 heteroaryl inhibitor),serine protease
+pdb_id,ligand_resname,target,note,resolution_a,uniprot,pdb_sha256
+1HVR,XK2,HIV-1 protease (cyclic urea inhibitor),DockFlow example / PDBbind,1.8,P04585,c8d3f238d3269a66823454d4681b71467b4677a18751ce094047961620b338cb
+1HSG,MK1,"HIV-1 protease (L-735,524 saquinavir analog)",classic PR redocking,2.0,P03367,d430675c358060808ef614002cfdcfcfa824714d89f1240adf5749d2ba60fed2
+1HTG,G37,HIV-1 protease (penicillin-derived inhibitor),classic PR redocking,2.0,P03366,4c3ca492ae249fc39d972c7c25ced1b2afa94b23ba5e3b07f08ffe059dc8c4bd
+1HPV,478,HIV-1 protease (VX-478 amprenavir),classic PR redocking,1.9,P04587,ab6e368029f01a69641bcb69458e7f3ee02a3176c196482adffbedf8e6de5983
+1MUI,AB1,HIV-1 protease (lopinavir),classic PR redocking,2.8,Q903J0,0c02b3715d59cc59024e1dc5ed15f75097fc24ba3b4680c994113e776a24860d
+1DWD,MID,HIV-1 protease,classic PR redocking,3.0,P00734,c46b204df18e98d6407c086d45821f58465e37b8d70efd421d195ec95268732e
+1AZM,AZM,human carbonic anhydrase II (acetazolamide),PDBbind core classic,2.0,P00915,cfe92653bb7633f9fb87fd92f0c4a8e8ad3f9405449c0dc8ca3191d6c2c9c6ea
+1E66,HUX,acetylcholinesterase (huprine X),PDBbind core classic,2.1,P04058,591ee697172bddc96d9a3f979dc620ecf2a3e962e38b65eb08b53f48c2d210f7
+1F0R,815,human coagulation factor Xa (RPR208815),PDBbind core classic,2.1,P00742,e2aecdf27172bcb947177a0d8ef6b125b604772bb388083a7eff42a6f79504c9
+1Q41,IXM,GSK-3 beta (indirubin-3'-monoxime),PDBbind core classic,2.1,P49841,5e7395b6245478e44d95209759df9267eddcf5f8b395a2cc6acdef594dc1806d
+1SNC,THP,staphylococcal nuclease (thymidine 3'5'-diphosphate),PDBbind core classic,1.65,P00644,68040ae0419fe5e03b79bab6b66bf8aad4a512835453136ad219443ea361dcb7
+3ERT,OHT,human estrogen receptor alpha (4-hydroxytamoxifen),PDBbind core classic,1.9,P03372,9810b43b6956ef1d85d0e3760a1c24189d58f0ea956820927549b56e7f44b5f3
+1XLZ,FIL,human phosphodiesterase 4B (filaminast),PDBbind core classic,2.06,Q07343,4f51adb1015273de138698bb28c5a5288942568d875687ab6f348ffecba0bf34
+1STP,BTN,streptavidin (biotin),ultra-high-affinity classic,2.6,P22629,6fbb3d5c324e717fe7284703426e74ea58191431720daab1b2faa0bbb6430f30
+1CBX,BZS,carboxypeptidase A (benzylsuccinate),classic metalloprotease,2.0,P00730,c5240fc61f9249876d36e9f252b5040da702ac943e821eef460f76b749d96d25
+1TNG,AMC,serine protease (benzamidine derivative),trypsin family,1.8,P00760,cbf8b593446676b751e31a865d4f6e443e244dd92960967888f7a61dd74dffb1
+1BTY,BEN,beta-trypsin (benzamidine),trypsin family,1.5,P00760,1113c41bc6f14aa44dcd547121c4cde8f3000412c6acc5c45a014a39ab1170eb
+1MQ6,XLD,3-chloro-pyridyl inhibitor complex,synthetic inhibitor,2.1,P00742,e465a81a952cc6c5166c35010f5bbd6779110eee027c6bb3da3424f04c61aadc
+1N8Q,DHB,lipoxygenase (protocatechuic acid),small natural product,2.1,P09186,61c406bfbabc2637f43a50691b3964116236ee402bdb8dff4a142bef01d851da
+1NVQ,UCN,checkpoint kinase Chk1 (UCN-01),kinase inhibitor,2.0,O14757,8409d2d85b63987704ca5b3fc078a554bc23f67e92a3e30028c8bc94502d3fa3
+1JAP,HOA,pro-leu-gly-hydroxylamine complex,hydroxamic inhibitor,1.82,P22894,a401b277a3e625fc2b8d88ecef11fa1b20ccb7e27430a505c9b577a1a83bf192
+1YGC,905,factor VIIa (small molecule inhibitor),serine protease,2.0,P08709,78d2d86c43128cd669a0e852628e77519d8dec0b448b471c49a4928db6ac8cf9
+1N46,PFA,thyroid hormone receptor beta,nuclear receptor,2.2,P10828,e028b428a5c4b78c71f8bc6b82e66041a08cc92a01db8730d3e1f1a844eeb24a
+1SL3,170,thrombin (P1 heteroaryl inhibitor),serine protease,1.81,P00734,8cfafee08b45955600c2c923c4dde1bc9b670a49715b09892671adb262cd63d6

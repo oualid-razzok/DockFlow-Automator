@@ -67,8 +67,8 @@ hydrophobic,4.11,C,C,A,ILE,84,CG2,C
 hydrophobic,4.12,C,C,B,VAL,82,CG2,C
 hydrophobic,4.13,C,C,B,ASP,25,CG,C
 hydrophobic,4.13,C,C,A,ALA,28,CA,C
-hydrophobic,4.13,C,A,B,VAL,32,CG2,C
 hydrophobic,4.13,C,A,B,ASP,30,C,C
+hydrophobic,4.13,C,A,B,VAL,32,CG2,C
 hydrophobic,4.13,C,A,B,ILE,84,CG2,C
 hydrophobic,4.14,C,A,A,GLY,48,C,C
 hydrophobic,4.14,C,C,A,VAL,32,CG2,C

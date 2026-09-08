@@ -1,5 +1,12 @@
 # DockFlow-Automator
 
+> **BETA — read before citing.** DockFlow-Automator is a BETA automation
+> layer around established docking tools. The validation suite
+> (24-complex redocking, 21-complex MGLTools comparison, 3-target DUD-E
+> enrichment) is published under `benchmarks/`; please review it (start
+> with `docs/SCIENTIFIC_VALIDATION.md`) before citing. No claim of
+> superior performance is made.
+
 **Unified, automated molecular docking: target/ligand download → preparation → grid box → docking → 3D visualization — end to end.**
 
 [![build](https://github.com/oualid-razzok/DockFlow-Automator/actions/workflows/build.yml/badge.svg)](https://github.com/oualid-razzok/DockFlow-Automator/actions/workflows/build.yml)
@@ -63,7 +70,7 @@ double-click launchers are included for all three
 
 1. [Features](#features)
 2. [Quick start](#quick-start)
-3. [Validated example: 1HVR redocking](#validated-example-1hvr-redocking)
+3. [Validated example: 1HVR redocking (single complex, 1 of 24)](#validated-example-1hvr-redocking-single-complex-1-of-24)
 4. [Scientific validation vs software tests (item: what "tested" means)](#scientific-validation-vs-software-tests-item-what-tested-means)
 5. [Scientific limitations and assumptions](#scientific-limitations-and-assumptions)
 6. [Known scientific differences per preparation engine](#known-scientific-differences-per-preparation-engine)
@@ -105,7 +112,9 @@ definition, AutoDock Vina docking, interaction analysis, rendering and reporting
   preview in the GUI (rotate/zoom, no OpenGL required).
 - **Docking**: official Vina **python bindings**, the **vina CLI**,
   **Smina**, or **GNINA** (CNN scoring, Apache-2.0) — selected
-  automatically. Batch docking across ligands with progress callbacks,
+  automatically (a mechanical availability choice; the scientific
+  choices — scoring function, exhaustiveness, seed — stay yours and are
+  recorded). Batch docking across ligands with progress callbacks,
   cancellation and **crash-safe checkpoint/resume** (`progress.json`,
   `--force` to re-dock), `--score-only` / `--local-only` modes,
   vina / vinardo / ad4 scoring.
@@ -126,8 +135,9 @@ definition, AutoDock Vina docking, interaction analysis, rendering and reporting
   EF@5% and BEDROC (α=20, RDKit-verified) for actives+decoys panels
   straight from `summary.csv`, with an optional ROC PNG.
 - **Visualization**: headless PyMOL (ray-traced PNG + `.pse` sessions + CGO
-  wire-frame grid box, in-process or subprocess) with an automatic matplotlib
-  fallback renderer for minimal installs; "Open in PyMOL" from the GUI;
+  wire-frame grid box, in-process or subprocess) with an automatic (mechanical
+  renderer choice, not a scientific one) matplotlib fallback renderer for
+  minimal installs; "Open in PyMOL" from the GUI;
   and a **self-contained interactive 3D viewer** (`visualization/`
   `interactive.html`, 3Dmol.js) with pose switching, grid box, contacts
   and crystal overlay for every completed run.
@@ -186,7 +196,8 @@ micromamba run -n dockflow pip install "dockflow-automator[prep,engine,gui,viz]"
 Platform support (verified): everything installs from pip on all three OS;
 the Vina *python bindings* ship wheels for Linux (cp38–cp312) only, so on
 Windows/macOS the equally capable **vina CLI backend** is used (installed
-automatically by the scripts below). Details in
+automatically by the scripts below — a mechanical install step, no
+scientific choices involved). Details in
 [BUILD_GUIDE.md](BUILD_GUIDE.md#2-platform-support-matrix).
 
 | OS | one command | then |
@@ -197,8 +208,8 @@ automatically by the scripts below). Details in
 
 > **No setup done yet?** Just double-click the launcher for your OS — it
 > detects the missing install and offers a one-keypress guided setup
-> (full conda stack, or quick pip install + automatic Vina engine
-> download).
+> (full conda stack, or quick pip install + automatic (mechanical)
+> Vina engine download).
 
 ```bash
 # core + ligand/receptor preparation (Meeko + RDKit)
@@ -313,10 +324,15 @@ runs/<run_id>/
 
 ---
 
-## Validated example: 1HVR redocking
+## Validated example: 1HVR redocking (single complex, 1 of 24)
 
 A real validation run (Vina 1.2.7 python bindings, exhaustiveness 16,
-seed 2026; artifacts committed under `examples/results/1HVR/`):
+seed 2026, OpenBabel receptor engine; artifacts committed under
+`examples/results/1HVR/`) — validated in the narrow sense of *one
+complex evaluated*: best-pose symmetry-aware crystal RMSD **0.84 Å**
+(PASS at the 2.0 Å community-convention threshold); the full 24-complex
+benchmark is in `benchmarks/redocking/results/` and the single-citable
+summary in `docs/SCIENTIFIC_VALIDATION.md`:
 
 ```text
 [1] target    1HVR downloaded from RCSB (co-crystal ligand XK2)
@@ -324,8 +340,10 @@ seed 2026; artifacts committed under `examples/results/1HVR/`):
 [3] ligand    XK2 prepared with Meeko (46 heavy atoms, 10 rotatable bonds)
 [4] grid box  center (-8.7, 15.5, 27.9), volume 6974 A^3 (pocket:XK2 + 4 A)
 [5] docking   9 poses; best -11.13 kcal/mol
-[6] analysis  9 poses in 4 clusters; best crystal RMSD 1.08 A (PASS,
+[6] analysis  9 poses in 4 clusters; best crystal RMSD 0.84 A (PASS,
               threshold <= 2.0 A) - the co-crystal pose is recovered
+              AND ranked first (rank-1 RMSD 0.84 A; symmetry-aware,
+              atom-order independent RMSD - see docs/interaction_criteria.md)
 [7] contacts  ILE47, ILE50, ALA28, ILE84, ASP25/30 - the canonical
               HIV-1 protease flap/active-site residues
 [8] report    report.md + manifest.json + environment.json
@@ -345,9 +363,10 @@ see `.github/workflows/nightly.yml`):
 
 | benchmark | result | artifacts |
 |---|---|---|
-| 24-complex redocking (exh. 8, seed 2026) | **24/24 completed, 18/24 success (75%)**, mean RMSD 1.32 Å / median 0.96 Å | `benchmarks/redocking/results/` |
-| DUD-E hivpr enrichment (133 ligands) | **ROC AUC 0.665**, EF@1% 3.33, EF@5% 2.38, BEDROC 0.665 | `benchmarks/enrichment/results/` |
-| MGLTools 1.5.7 comparison (same box/seed) | DockFlow 16/21 vs MGLTools 14/21 pose recovery; mean RMSD delta +0.45 Å; 3 genuine MGLTools crashes recorded | `benchmarks/mgltools_comparison/results/` |
+| 24-complex redocking (exh. 8, seed 2026) | **24/24 completed; rank-1 pose recovery 21/24 (87.5%, 95% CI 69.0–95.7%)**, top-3 23/24, best-any-rank 23/24; mean best-pose RMSD 0.67 Å / median 0.62 Å (all definitions + CIs in the summary) | `benchmarks/redocking/results/` |
+| DUD-E enrichment, 3 targets (hivpr, aa2ar, parp1; 133 ligands each) | **ROC AUC 0.665 / 0.593 / 0.729** (evaluation, not a superiority claim; random 0.5) | `benchmarks/enrichment/results/` |
+| MGLTools 1.5.7 comparison (same box/seed) | DockFlow 20/21 vs MGLTools 18/21 pose recovery on the MGL-completed subset; mean RMSD delta +0.25 Å; 3 genuine MGLTools crashes recorded with full tracebacks | `benchmarks/mgltools_comparison/results/` |
+| Symmetry-RMSD independent cross-check | 193 poses vs spyrmsd: **max |Δ| = 0.0 Å** (found and fixed an atom-order bias first - see the CHANGELOG) | `benchmarks/redocking/results/rmsd_crosscheck.png` |
 
 Failures are recorded with reasons and full run directories - a
 benchmark that drops its failures is not a benchmark.
@@ -397,10 +416,16 @@ run made" footer in `report.md`):
   atom type (no angle criterion); see
   [docs/interaction_criteria.md](docs/interaction_criteria.md).  "H-bond
   contact" means donor-acceptor within 3.5 A, not a verified bond.
-* **Default protonation** — receptors keep their deposited protonation
-  plus toolkit hydrogen addition (pH 7.4 convention); ligands use the
-  input state unless `protonate: true` (dimorphite-dl).  Tautomers are
-  *not* enumerated; one tautomer in, one tautomer docked.
+* **Default protonation** — receptors keep their DEPOSITED protonation
+  states as solved (crystallographic protonation is rarely resolved at
+  typical PDB resolution; most H atoms are added by the toolkit at pH 7.4
+  using a residue-template lookup, NOT by a true pKa calculation).
+  Residues whose pKa is shifted by the local environment (catalytic
+  Asp/Glu, His tautomers, buried Lys) may be mis-protonated; the report
+  names the pH-sensitive residues near the box.  Use PROPKA / H++ for a
+  pKa-informed assignment and feed the result as the receptor input.
+  Ligands use the input state unless `protonate: true` (dimorphite-dl).
+  Tautomers are *not* enumerated; one tautomer in, one tautomer docked.
 * **Single reference geometry** — one PDB conformation per target;
   no ensemble averaging.
 * **Waters/metals removed by default** — with a recorded warning per
@@ -436,7 +461,7 @@ Measured numbers for all engines on the 1HVR example live in
 
 ## Pipeline stages explained
 
-| stage | module | what happens | MGLTools equivalent |
+| stage | module | what happens | MGLTools-equivalent *logic* (reimplemented on Meeko+RDKit+OpenBabel; NOT the same code, NOT bit-identical output — per-property comparison in [docs/preparation_validation.md](docs/preparation_validation.md)) |
 |---|---|---|---|
 | download | `dockflow_core.downloader` | RCSB/PDBe/AlphaFold/PubChem/ZINC with retries + cache | — |
 | prepare receptor | `dockflow_core.preparator` | filter (chains, altLoc, waters, hetero) → add H → Gasteiger → merge non-polar H → AD4 types → PDBQT | `prepare_receptor4.py` |
@@ -486,7 +511,9 @@ Receptor option mapping (defaults follow `prepare_receptor4.py`):
 
 Every stage is usable standalone (see the module docstrings) and degrades
 gracefully: missing optional dependencies produce informative warnings and
-a working (if less accurate) fallback, never a crash.
+a working — but **scientifically degraded** (geometry-only, zero charges;
+the CLI refuses to start without `--allow-degraded`, the GUI asks, and the
+report carries the ⚠ banner) — fallback, never a silent crash.
 
 ## Repository layout
 
@@ -496,7 +523,9 @@ DockFlow-Automator/
 ├── dockflow_core/                # backend logic & workflow orchestration
 │   ├── cli.py                    # `dockflow` command line interface
 │   ├── downloader.py             # PDB/UniProt/AlphaFold + PubChem/ZINC/RCSB ligands
-│   ├── preparator.py             # MGLTools-equivalent receptor/ligand preparation
+│   ├── preparator.py             # MGLTools-*logic* receptor/ligand preparation
+│                                 #   (reimplemented on Meeko/RDKit/OpenBabel;
+│                                 #   NOT bit-identical - see docs/preparation_validation.md)
 │   ├── gridbox.py                # search-space computation + Vina config I/O
 │   ├── docker_engine.py          # AutoDock Vina execution & scoring (3 backends)
 │   ├── analyzer.py               # interactions, RMSD, clustering, efficiency
@@ -526,7 +555,9 @@ DockFlow-Automator/
 ├── run_dockflow.sh               #
 ├── docker/                       # Dockerfile, env.yaml, entrypoint, compose
 ├── examples/                     # YAML pipeline + shell walkthrough + committed
-│                                 #   artifacts of the validated 1HVR run
+│                                 #   artifacts of the 1HVR example run
+│                                 #   (single complex; the 24-complex suite is
+│                                 #   in benchmarks/)
 ├── benchmarks/                   # redocking benchmark suite, DUD-E enrichment
 │                                 #   panel, MGLTools comparison, license audit
 ├── docs/                         # interaction criteria, JSON schemas,
@@ -672,25 +703,16 @@ its terms; the dependency-free and RDKit engines avoid it entirely):
 
 ## Roadmap
 
-**Track 1 — scientific validation (current priority; the feature set is
-frozen until this track is complete):**
+**v1.0.0-rc1 is FEATURE-FROZEN for the v1.0 release and the paper
+submission.**  The complete post-v1 roadmap (WatVina explicit-water
+docking, RxDock port, ProLIF interaction fingerprints, 2D interaction
+diagrams, plugin API, AD4 maps, and the deferred validation studies)
+lives in [ROADMAP_POST_V1.md](ROADMAP_POST_V1.md) and is explicitly out
+of scope for the paper.
 
-- execute the full 24-complex redocking benchmark
-  (`benchmarks/redocking/`) and publish the success-rate table;
-- run the MGLTools cross-comparison on a python2 environment and extend
-  `docs/preparation_validation.md`;
-- expand `benchmarks/enrichment/` with a full DUD-E HIV-PR panel and
-  publish ROC/EF/BEDROC numbers (`dockflow enrich`);
-- add cross-Vina-version scoring comparisons to the reproducibility
-  workflow.
-
-**Track 2 — deferred until Track 1 is complete:**
-
-- flexible side chains (Meeko reactive/flex preparation)
-- AD4 maps (`autogrid`) as a first-class scoring path
-- multi-receptor / ensemble docking and consensus scoring
-- 2D ligand-interaction diagrams
-- plugin API for custom scoring functions (Smina custom scores)
+What the freeze means in practice: no new pipeline stages, no new
+optional dependencies, no new features until v1.0 ships - only fixes
+that make published claims more honest or more reproducible.
 
 ---
 

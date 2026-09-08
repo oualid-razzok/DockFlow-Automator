@@ -22,3 +22,17 @@
 2026-09-08 01:38:07,324 | INFO    | dockflow.pipeline. | pipeline step report: running 
 2026-09-08 01:38:07,338 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1SL3_benchmark/report.md
 2026-09-08 01:38:07,349 | INFO    | dockflow.pipeline. | run 1SL3_benchmark finished in 79.3s (ok=True)
+2026-09-08 13:48:43,484 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.1.1 starting run 1SL3_benchmark
+2026-09-08 13:48:43,485 | INFO    | dockflow.pipeline. | restored provenance sections from /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1SL3_benchmark/manifest.json
+2026-09-08 13:48:43,485 | INFO    | dockflow.pipeline. | pipeline step download: skipped not requested
+2026-09-08 13:48:43,485 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: skipped not requested
+2026-09-08 13:48:43,485 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: skipped not requested
+2026-09-08 13:48:43,486 | INFO    | dockflow.pipeline. | pipeline step gridbox: skipped not requested
+2026-09-08 13:48:43,487 | INFO    | dockflow.pipeline. | pipeline step docking: skipped not requested
+2026-09-08 13:48:43,489 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 13:48:43,555 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1SL3_benchmark/docking/170_redock_poses.sdf
+2026-09-08 13:48:43,555 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 13:48:43,556 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped not requested
+2026-09-08 13:48:43,556 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 13:48:43,573 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1SL3_benchmark/report.md
+2026-09-08 13:48:43,585 | INFO    | dockflow.pipeline. | run 1SL3_benchmark finished in 0.1s (ok=True)

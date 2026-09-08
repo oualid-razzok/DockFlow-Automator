@@ -9,7 +9,7 @@
       "num_ionic_contacts": 9,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.5028,
-      "crystal_rmsd": 0.35307263731605776,
+      "crystal_rmsd": 0.3530726373153708,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {
@@ -899,7 +899,7 @@
       "num_ionic_contacts": 1,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.4342,
-      "crystal_rmsd": 1.4295827530355332,
+      "crystal_rmsd": 1.2186072828757157,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {
@@ -1775,7 +1775,7 @@
       "num_ionic_contacts": 6,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.4305333333333333,
-      "crystal_rmsd": 1.5482369824218356,
+      "crystal_rmsd": 1.6433855670159678,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {

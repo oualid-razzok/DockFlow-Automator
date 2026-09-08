@@ -412,15 +412,22 @@ def rdkit_symmetry_rmsd(
 ) -> float | None:
     """Graph-automorphism-aware RMSD via RDKit ``GetBestRMS`` (item 17).
 
-    The reference's proximity-bonded molecular graph is transplanted onto
-    the pose: pose coordinates are assigned to reference atoms through the
-    *geometry-matched* element correspondence (the greedy Kabsch matching
-    from :func:`symmetry_tolerant_rmsd`, so the initial assignment is
-    chemically sensible rather than input-ordered), and ``GetBestRMS``
-    then minimises the RMSD over all automorphisms of the shared graph
-    (ring flips, carboxylate turns, terminal permutations).  This is the
-    standard symmetry-correct ligand RMSD.  Returns ``None`` when the
-    RDKit path is not usable.
+    The pose molecule is built with its OWN proximity-bonded graph and
+    its own coordinates, the reference likewise, and ``GetBestRMS`` then
+    minimises the RMSD over every isomorphism between the two graphs
+    (ring flips, carboxylate turns, terminal permutations - and ANY
+    difference in atom ordering between the pose file and the reference
+    structure, which the substructure match resolves natively).
+
+    Atom-order independence matters: pose PDBQT writers and crystal
+    PDBs list atoms in different orders, and a correspondence seeded
+    only by geometry can lock in a topologically wrong assignment that
+    the automorphism search cannot repair (found by the spyrmsd
+    cross-check in the final validation pass - item 5 - where a
+    reordered biotin pose was over-penalised by ~0.37 A).  If the pose
+    graph cannot be built or is not isomorphic to the reference (very
+    distorted poses), the older seed-and-transplant strategy is used
+    as a fallback.  Returns ``None`` when the RDKit path is not usable.
     """
     try:
         from rdkit import Chem
@@ -438,11 +445,21 @@ def rdkit_symmetry_rmsd(
     ref_mol = _rdkit_mol_from_heavy_atoms(ref_heavy)
     if ref_mol is None:
         return None
-    # Seed assignment with the geometry-matched element correspondence
-    # (the greedy Kabsch matching): the pairing decides which pose
-    # coordinate lands on which reference atom.  GetBestRMS re-permutes
-    # via graph automorphisms, but a sensible seed keeps even asymmetric
-    # ligands correct (input-order seeding scrambles them).
+    # Preferred path: pose molecule with its OWN graph - GetBestRMS then
+    # minimises over all graph isomorphisms, which also resolves atom
+    # reordering between the pose and the reference.
+    pose_mol = _rdkit_mol_from_heavy_atoms(pose_heavy)
+    if pose_mol is not None:
+        try:
+            if pose_mol.GetNumAtoms() == ref_mol.GetNumAtoms():
+                return float(rdMolAlign.GetBestRMS(pose_mol, ref_mol))
+        except Exception:  # noqa: BLE001 - distorted pose graph: fall back
+            logger.debug("GetBestRMS two-molecule path failed, "
+                         "falling back to transplant", exc_info=True)
+    # Fallback: transplant pose coordinates onto the reference graph via
+    # the geometry-matched element correspondence (the pairing decides
+    # which pose coordinate lands on which reference atom).  GetBestRMS
+    # re-permutes via graph automorphisms on top of that seed.
     try:
         correspondence = symmetry_tolerant_rmsd(
             pose_atoms, reference_atoms, return_correspondence=True)

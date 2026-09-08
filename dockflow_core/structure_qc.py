@@ -358,3 +358,140 @@ def metal_warning(findings: Sequence[dict],
             "GNINA-CNN or AD4 metal maps for metal-dependent sites."
         )
     return message
+
+
+# ---------------------------------------------------------------------------
+# Catalytic / pH-sensitive residues near the binding pocket
+# (final tightening pass, item 6: protonation honesty)
+# ---------------------------------------------------------------------------
+# Residues whose protonation state is most often wrong after template-based
+# hydrogen addition: His (two tautomers, pKa ~6.5), catalytic Asp/Glu
+# (pKa shifts of several units in active sites) and the Ser-His-Asp/Glu
+# catalytic triad of hydrolases/proteases.
+_HIS_RING_N = ("ND1", "NE2")
+_ACIDIC_O = ("OD1", "OD2", "OE1", "OE2")
+_TRIAD_SER_OG_TO_HIS_N_A = 4.0
+_TRIAD_ACID_O_TO_HIS_N_A = 4.5
+
+
+def _residue_atoms(atoms: Sequence[Atom]) -> dict[tuple[str, int, str], list[Atom]]:
+    """Group standard-residue atoms by (chain, resseq, resname)."""
+    groups: dict[tuple[str, int, str], list[Atom]] = defaultdict(list)
+    for atom in atoms:
+        resname = atom.resname.strip().upper()
+        if resname in STANDARD_RESIDUES and atom.chain:
+            groups[(atom.chain.strip(), int(atom.resseq), resname)].append(atom)
+    return groups
+
+
+def detect_catalytic_residues(
+    atoms: Sequence[Atom],
+    box_center: Sequence[float] | None = None,
+    box_size: Sequence[float] | None = None,
+    pocket_shell: float = 6.0,
+) -> list[dict]:
+    """Heuristic detection of pH-sensitive / catalytic residues.
+
+    Geometry-only heuristics (no catalytic-residue database lookup):
+
+    * **catalytic triad**: a Ser-His-Asp/Glu arrangement anywhere in the
+      receptor - Ser OG within 4.0 A of a His ring nitrogen, and an
+      Asp/Glu carboxylate oxygen within 4.5 A of a His ring nitrogen
+      (the classic hydrolase/protease charge-relay geometry);
+    * **pocket pH-sensitive residues**: His or Asp/Glu side chains with
+      any atom inside the grid box or within ``pocket_shell`` A of it
+      (requires ``box_center``/``box_size``).
+
+    These are exactly the residues whose protonation state is most likely
+    wrong after template-based hydrogen addition (pH 7.4 nominal, NOT a
+    pKa calculation) - see docs/preparation_assumptions.md.
+    """
+    groups = _residue_atoms(atoms)
+    findings: list[dict] = []
+
+    # ---- catalytic triad (Ser-His-Asp/Glu charge relay) ------------------
+    his_residues = [(key, atoms_) for key, atoms_ in groups.items()
+                    if key[2] == "HIS"]
+    ser_residues = [atom for key, atoms_ in groups.items()
+                    if key[2] == "SER"
+                    for atom in atoms_ if atom.name.strip() == "OG"]
+    acid_oxygens = [atom for key, atoms_ in groups.items()
+                    if key[2] in ("ASP", "GLU")
+                    for atom in atoms_ if atom.name.strip() in _ACIDIC_O]
+    for his_key, his_atoms in his_residues:
+        his_n = [a for a in his_atoms if a.name.strip() in _HIS_RING_N]
+        if not his_n:
+            continue
+        near_ser = [
+            ser for ser in ser_residues
+            if min(np.linalg.norm([ser.x - n.x, ser.y - n.y, ser.z - n.z])
+                   for n in his_n) <= _TRIAD_SER_OG_TO_HIS_N_A]
+        if not near_ser:
+            continue
+        near_acid = [
+            oxy for oxy in acid_oxygens
+            if min(np.linalg.norm([oxy.x - n.x, oxy.y - n.y, oxy.z - n.z])
+                   for n in his_n) <= _TRIAD_ACID_O_TO_HIS_N_A]
+        if not near_acid:
+            continue
+        ser_key = (near_ser[0].chain.strip(), int(near_ser[0].resseq),
+                   near_ser[0].resname.strip().upper())
+        oxy = near_acid[0]
+        acid_key = (oxy.chain.strip(), int(oxy.resseq),
+                    oxy.resname.strip().upper())
+        findings.append({
+            "type": "catalytic_triad",
+            "residues": [
+                f"Ser {ser_key[0]}{ser_key[1]}",
+                f"His {his_key[0]}{his_key[1]}",
+                f"{acid_key[2]} {acid_key[0]}{acid_key[1]}",
+            ],
+            "detail": "Ser-His-Asp/Glu charge-relay geometry detected",
+        })
+
+    # ---- pH-sensitive residues near the pocket ---------------------------
+    if box_center is not None and box_size is not None:
+        center = np.asarray(box_center, dtype=float)
+        half = np.asarray(box_size, dtype=float) / 2.0 + pocket_shell
+        lower, upper = center - half, center + half
+        for key, atoms_ in groups.items():
+            if key[2] not in ("HIS", "ASP", "GLU"):
+                continue
+            inside = [
+                a for a in atoms_
+                if (lower[0] <= a.x <= upper[0]
+                    and lower[1] <= a.y <= upper[1]
+                    and lower[2] <= a.z <= upper[2])
+            ]
+            if inside:
+                findings.append({
+                    "type": "pocket_ph_sensitive",
+                    "residues": [f"{key[2]} {key[0]}{key[1]}"],
+                    "detail": (f"{key[2]} side chain within "
+                               f"{pocket_shell:.0f} A of the grid box"),
+                })
+    return findings
+
+
+def catalytic_residue_warning(findings: Sequence[dict]) -> str | None:
+    """Protonation-honesty warning for report.md (final pass, item 6)."""
+    if not findings:
+        return None
+    triads = [row for row in findings if row["type"] == "catalytic_triad"]
+    pockets = [row for row in findings if row["type"] == "pocket_ph_sensitive"]
+    parts: list[str] = []
+    if triads:
+        parts.append(
+            "catalytic triad(s): " + "; ".join(
+                "-".join(row["residues"]) for row in triads))
+    if pockets:
+        names = ", ".join(
+            residue for row in pockets for residue in row["residues"])
+        parts.append(f"pH-sensitive residues near the pocket: {names}")
+    return (
+        "Catalytic residues detected near the binding site; protonation "
+        "states may be wrong without pKa analysis. Hydrogens were added "
+        "by toolkit template (pH 7.4 nominal), NOT by a pKa calculation "
+        f"({'; '.join(parts)}). Run PROPKA / H++ and pass the "
+        "protonated PDB as the receptor input for rigorous work."
+    )

@@ -128,9 +128,9 @@ hydrophobic,4.46,C,A,H,TRP,215,CB,C
 hydrophobic,4.46,C,C,H,GLY,216,C,C
 hydrophobic,4.47,C,A,H,LYS,192,CB,C
 hydrophobic,4.48,C,A,H,LYS,192,CG,C
-hydrophobic,4.48,C,C,H,TRP,215,CZ3,A
 hydrophobic,4.48,C,C,H,THR,99,CG2,C
 hydrophobic,4.48,C,C,H,PRO,170,CG,C
+hydrophobic,4.48,C,C,H,TRP,215,CZ3,A
 hydrophobic,4.49,C,A,H,SER,190,C,C
 hydrophobic,4.49,C,A,H,HIS,57,C,C
 hydrophobic,4.50,C,C,H,THR,99,CB,C

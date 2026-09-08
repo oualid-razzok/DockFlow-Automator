@@ -1,14 +1,12 @@
-# DUD-E enrichment benchmark (target hivpr vs 1HVR)
+# DUD-E enrichment evaluation - multi-target summary (item 12)
 
-Protocol: DUD-E hivpr actives + decoys (seeded subsample 40/536 actives, 93/35750 decoys of the full 536/35,750 set), docked with Vina (python bindings) against the 1HVR receptor, grid box from the XK2 co-crystal ligand (strong assumption), exhaustiveness 1, num_modes 1, seed 2026.
+| target | receptor (PDB) | n actives | n decoys | ROC AUC | EF@1% | EF@5% | BEDROC (a=20) |
+|---|---|---|---|---|---|---|---|
+| hivpr | 1HVR | 40 | 93 | 0.665 | 3.325 | 2.375 | 0.6647 |
+| aa2ar | 3EML | 40 | 93 | 0.593 | 1.663 | 1.9 | 0.5486 |
+| parp1 | 2RD6 | 40 | 93 | 0.729 | 3.325 | 1.425 | 0.5157 |
 
-- ligands scored: **133**
-- ROC AUC: **0.665**
-- EF@1%: 3.325 | EF@5%: 2.375
-- BEDROC (alpha 20): 0.6647
+All targets share the identical protocol (see each target's summary.md): seeded 40/93 subsample, Meeko ligand prep, ligand-derived grid box (4.0 A padding), Vina exhaustiveness 1, num_modes 1, seed 2026.  ROC AUC random baseline 0.500; EF random baseline 1.0; the BEDROC random baseline depends on the actives fraction (recorded per target in enrichment_metrics.json).
 
-Interpretation: AUC > 0.5 means the Vina score ranks actives above decoys more often than chance; EF@x% is the actives-fold enrichment in the top x% of the ranking (1.0 = random). All metrics are heuristic screening statistics, not binding free energies.
+**Limitation (explicit):** three targets is still a small panel and every number above is a single exhaustiveness-1 seeded run.  A publication-grade virtual-screening benchmark would evaluate the full DUD-E (102 targets) with multiple seeds - that is future work (see ROADMAP_POST_V1.md), stated here so the table is not over-read.
 
-- ROC plot: `/home/z/my-project/DockFlow-Automator/benchmarks/enrichment/results/roc.png`
-- per-ligand scores: `/home/z/my-project/DockFlow-Automator/benchmarks/enrichment/results/enrichment_results.csv`
-- metrics JSON: `/home/z/my-project/DockFlow-Automator/benchmarks/enrichment/results/enrichment_metrics.json`

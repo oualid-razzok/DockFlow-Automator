@@ -1,19 +1,19 @@
 {
-  "captured_at": "2026-09-08T01:33:40Z",
-  "dockflow": "0.2.1",
+  "captured_at": "2026-09-08T13:48:42Z",
+  "dockflow": "0.1.1",
   "dockflow_bindings": {
-    "importable": true,
-    "version": "0.1.0"
+    "importable": false,
+    "version": null
   },
   "gemmi": "0.7.5",
-  "git_sha": null,
+  "git_sha": "343691d2ccd48474c29dbdd05e8ab3d7122b250c",
   "meeko": "0.8.0",
   "numpy": "2.5.3",
   "openbabel_wheel": "3.1.1.23",
-  "pandas": "3.0.5",
+  "pandas": "2.2.3",
   "platform": "Linux 5.10.134-013.8.3.kangaroo.al8.x86_64 (x86_64)",
   "python": "3.12.14",
-  "python_executable": "/home/z/my-project/bindings-venv/bin/python",
+  "python_executable": "/home/z/.venv/bin/python3.12",
   "rdkit": "2025.9.6",
   "vina": "1.2.7"
 }

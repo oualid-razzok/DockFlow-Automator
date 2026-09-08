@@ -31,8 +31,8 @@ hydrophobic,3.80,C,A,B,VAL,82,CG2,C
 hydrophobic,3.80,C,C,A,ILE,50,CG1,C
 hydrophobic,3.81,C,C,A,ALA,28,CB,C
 hydrophobic,3.83,C,C,A,GLY,48,C,C
-hydrophobic,3.83,C,A,B,ALA,28,CB,C
 hydrophobic,3.83,C,A,B,ALA,28,CA,C
+hydrophobic,3.83,C,A,B,ALA,28,CB,C
 hydrophobic,3.83,C,A,B,ALA,28,CB,C
 hydrophobic,3.84,C,C,B,PRO,81,CB,C
 hydrophobic,3.84,C,A,B,PRO,81,CB,C
@@ -61,8 +61,8 @@ hydrophobic,4.17,C,C,A,ILE,47,CB,C
 hydrophobic,4.17,C,A,B,ILE,47,CB,C
 hydrophobic,4.18,C,A,B,PRO,81,CB,C
 hydrophobic,4.19,C,C,B,PRO,81,CD,C
-hydrophobic,4.19,C,C,A,ILE,47,C,C
 hydrophobic,4.19,C,C,A,ILE,47,CA,C
+hydrophobic,4.19,C,C,A,ILE,47,C,C
 hydrophobic,4.19,C,A,B,VAL,32,CG2,C
 hydrophobic,4.21,C,A,B,ILE,47,CG1,C
 hydrophobic,4.22,C,A,B,ARG,8,CZ,C
@@ -108,8 +108,8 @@ hydrophobic,4.46,C,C,A,GLY,48,CA,C
 hydrophobic,4.47,C,C,A,ASP,25,CG,C
 hydrophobic,4.47,C,C,A,GLY,49,CA,C
 hydrophobic,4.47,C,A,B,GLY,49,C,C
-hydrophobic,4.47,C,A,A,VAL,82,CG1,C
 hydrophobic,4.47,C,A,A,ARG,8,CZ,C
+hydrophobic,4.47,C,A,A,VAL,82,CG1,C
 hydrophobic,4.48,C,C,B,ILE,50,CG1,C
 hydrophobic,4.48,C,A,B,VAL,82,CB,C
 hydrophobic,4.49,C,A,A,LEU,23,CD2,C

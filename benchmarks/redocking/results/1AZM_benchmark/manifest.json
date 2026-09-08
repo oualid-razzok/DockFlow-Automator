@@ -1,11 +1,11 @@
 {
   "run_id": "1AZM_benchmark",
-  "run_dir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark",
+  "run_dir": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark",
   "ok": true,
   "error": null,
   "cancelled": false,
   "config": {
-    "workdir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results",
+    "workdir": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results",
     "run_id": "1AZM_benchmark",
     "target": {
       "pdb_id": "1AZM"
@@ -48,67 +48,68 @@
     "prepare_ligands": 1.67,
     "gridbox": 0.03,
     "docking": 4.21,
-    "analysis": 0.07,
-    "total": 6.77
+    "analysis": 0.04,
+    "total": 0.06,
+    "original_run_duration_s": 6.77
   },
-  "duration_s": 6.77,
+  "duration_s": 0.06,
   "stages": [
     {
       "name": "download",
-      "status": "done",
-      "started_at": "2026-09-08T01:52:05Z",
-      "ended_at": "2026-09-08T01:52:06Z",
-      "duration_s": 0.531,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:41Z",
+      "ended_at": "2026-09-08T13:48:41Z",
+      "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "prepare_receptor",
-      "status": "done",
-      "started_at": "2026-09-08T01:52:06Z",
-      "ended_at": "2026-09-08T01:52:06Z",
-      "duration_s": 0.243,
-      "engine": "openbabel",
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:41Z",
+      "ended_at": "2026-09-08T13:48:41Z",
+      "duration_s": 0.0,
+      "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "prepare_ligands",
-      "status": "done",
-      "started_at": "2026-09-08T01:52:06Z",
-      "ended_at": "2026-09-08T01:52:08Z",
-      "duration_s": 1.667,
-      "engine": "meeko",
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:41Z",
+      "ended_at": "2026-09-08T13:48:41Z",
+      "duration_s": 0.0,
+      "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "gridbox",
-      "status": "done",
-      "started_at": "2026-09-08T01:52:08Z",
-      "ended_at": "2026-09-08T01:52:08Z",
-      "duration_s": 0.035,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:41Z",
+      "ended_at": "2026-09-08T13:48:41Z",
+      "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "docking",
-      "status": "done",
-      "started_at": "2026-09-08T01:52:08Z",
-      "ended_at": "2026-09-08T01:52:12Z",
-      "duration_s": 4.208,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:41Z",
+      "ended_at": "2026-09-08T13:48:41Z",
+      "duration_s": 0.0,
       "engine": null,
-      "backend": "python",
-      "detail": null
+      "backend": null,
+      "detail": "not requested (--stage)"
     },
     {
       "name": "analysis",
       "status": "done",
-      "started_at": "2026-09-08T01:52:12Z",
-      "ended_at": "2026-09-08T01:52:12Z",
-      "duration_s": 0.075,
+      "started_at": "2026-09-08T13:48:41Z",
+      "ended_at": "2026-09-08T13:48:41Z",
+      "duration_s": 0.043,
       "engine": null,
       "backend": null,
       "detail": null
@@ -116,28 +117,28 @@
     {
       "name": "visualization",
       "status": "skipped",
-      "started_at": "2026-09-08T01:52:12Z",
-      "ended_at": "2026-09-08T01:52:12Z",
+      "started_at": "2026-09-08T13:48:41Z",
+      "ended_at": "2026-09-08T13:48:41Z",
       "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": "disabled in config"
+      "detail": "not requested (--stage)"
     },
     {
       "name": "report",
       "status": "done",
-      "started_at": "2026-09-08T01:52:12Z",
-      "ended_at": "2026-09-08T01:52:12Z",
-      "duration_s": 0.011,
+      "started_at": "2026-09-08T13:48:41Z",
+      "ended_at": "2026-09-08T13:48:41Z",
+      "duration_s": 0.016,
       "engine": null,
       "backend": null,
       "detail": null
     }
   ],
   "environment": {
-    "dockflow": "0.2.1",
+    "dockflow": "0.1.1",
     "python": "3.12.14",
-    "python_executable": "/home/z/my-project/bindings-venv/bin/python",
+    "python_executable": "/home/z/.venv/bin/python3.12",
     "platform": "Linux 5.10.134-013.8.3.kangaroo.al8.x86_64 (x86_64)",
     "numpy": "2.5.3",
     "vina": "1.2.7",
@@ -145,25 +146,22 @@
     "rdkit": "2025.9.6",
     "gemmi": "0.7.5",
     "openbabel_wheel": "3.1.1.23",
-    "pandas": "3.0.5",
+    "pandas": "2.2.3",
     "dockflow_bindings": {
-      "importable": true,
-      "version": "0.1.0"
+      "importable": false,
+      "version": null
     },
-    "git_sha": null,
-    "captured_at": "2026-09-08T01:52:12Z"
+    "git_sha": "343691d2ccd48474c29dbdd05e8ab3d7122b250c",
+    "captured_at": "2026-09-08T13:48:41Z"
   },
   "target": {
-    "identifier": "1AZM",
-    "source": "pdb",
-    "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/raw/1azm.pdb",
-    "title": "DRUG-PROTEIN INTERACTIONS: STRUCTURE OF SULFONAMIDE DRUG COMPLEXED WITH HUMAN CARBONIC ANHYDRASE I",
-    "resolution": 2.0,
+    "identifier": "1azm",
+    "source": "pdb (resumed)",
+    "path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/raw/1azm.pdb",
+    "title": "",
+    "resolution": null,
     "uniprot_ids": [],
-    "ligand_codes": [
-      "ZN",
-      "AZM"
-    ]
+    "ligand_codes": []
   },
   "receptor": {
     "pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/prepared/receptor.pdbqt",
@@ -258,21 +256,21 @@
   ],
   "gridbox": {
     "center": [
-      34.471000000000004,
-      16.209500000000002,
+      34.471,
+      16.21,
       -18.916
     ],
     "size": [
       12.04,
-      12.415000000000001,
+      12.415,
       14.446
     ],
     "source": "pocket:AZM",
     "padding": 4.0,
-    "vina_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/gridbox.txt",
     "warnings": [],
     "assumption_strength": "strong",
-    "receptor_coverage_pct": 4.4
+    "receptor_coverage_pct": 4.4,
+    "vina_config": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/gridbox.txt"
   },
   "docking": {
     "backend": "python",
@@ -280,15 +278,16 @@
     "num_ok": 1,
     "resumed": 0,
     "warnings": [],
+    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/docking/summary.csv",
     "results": [
       {
         "ligand": {
           "identifier": "azm_redock",
-          "source": "pdb_ligand",
-          "value": "AZM",
-          "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/raw/azm.sdf",
-          "pdbqt_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/prepared/azm_redock.pdbqt",
-          "status": "docked",
+          "source": "file",
+          "value": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/prepared/azm_redock.pdbqt",
+          "path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/prepared/azm_redock.pdbqt",
+          "pdbqt_path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/prepared/azm_redock.pdbqt",
+          "status": "prepared",
           "error": null,
           "num_rotatable_bonds": 3,
           "num_heavy_atoms": 13,
@@ -350,7 +349,7 @@
             "affinity": -5.825,
             "rmsd_lb": 1.495,
             "rmsd_ub": 1.686,
-            "crystal_rmsd": 0.6216538150954772,
+            "crystal_rmsd": 0.6216538150963775,
             "remarks": [
               "REMARK VINA RESULT:    -5.825      1.495      1.686",
               "REMARK INTER + INTRA:          -6.853",
@@ -367,7 +366,7 @@
             "affinity": -5.588,
             "rmsd_lb": 2.094,
             "rmsd_ub": 2.2,
-            "crystal_rmsd": 1.1148669647120968,
+            "crystal_rmsd": 1.1148669647127243,
             "remarks": [
               "REMARK VINA RESULT:    -5.588      2.094      2.200",
               "REMARK INTER + INTRA:          -6.581",
@@ -401,7 +400,7 @@
             "affinity": -4.94,
             "rmsd_lb": 2.363,
             "rmsd_ub": 2.608,
-            "crystal_rmsd": 1.2133311125930262,
+            "crystal_rmsd": 1.2133311125929107,
             "remarks": [
               "REMARK VINA RESULT:    -4.940      2.363      2.608",
               "REMARK INTER + INTRA:          -5.838",
@@ -418,7 +417,7 @@
             "affinity": -4.687,
             "rmsd_lb": 2.935,
             "rmsd_ub": 5.813,
-            "crystal_rmsd": 1.1046932568982581,
+            "crystal_rmsd": 1.1046932568980048,
             "remarks": [
               "REMARK VINA RESULT:    -4.687      2.935      5.813",
               "REMARK INTER + INTRA:          -5.548",
@@ -435,7 +434,7 @@
             "affinity": -4.515,
             "rmsd_lb": 2.368,
             "rmsd_ub": 5.55,
-            "crystal_rmsd": 0.8519278070261475,
+            "crystal_rmsd": 0.8519278070263117,
             "remarks": [
               "REMARK VINA RESULT:    -4.515      2.368      5.550",
               "REMARK INTER + INTRA:          -5.352",
@@ -469,7 +468,7 @@
             "affinity": -4.329,
             "rmsd_lb": 3.061,
             "rmsd_ub": 5.379,
-            "crystal_rmsd": 0.7606051688510711,
+            "crystal_rmsd": 0.760605168851255,
             "remarks": [
               "REMARK VINA RESULT:    -4.329      3.061      5.379",
               "REMARK INTER + INTRA:          -5.138",
@@ -482,15 +481,14 @@
             ]
           }
         ],
-        "out_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/docking/azm_redock_out.pdbqt",
-        "log_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/docking/azm_redock_out.log",
-        "runtime": 4.194,
+        "out_path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/docking/azm_redock_out.pdbqt",
+        "log_path": null,
+        "runtime": 0.0,
         "backend": "python",
         "error": null,
         "best_affinity": -6.082
       }
-    ],
-    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/docking/summary.csv"
+    ]
   },
   "analysis": {
     "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
@@ -957,7 +955,7 @@
           "num_ionic_contacts": 1,
           "num_metal_contacts": 0,
           "docking_score_efficiency": -0.4480769230769231,
-          "crystal_rmsd": 0.6216538150954772,
+          "crystal_rmsd": 0.6216538150963775,
           "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
           "contacts": [
             {
@@ -1375,7 +1373,7 @@
           "num_ionic_contacts": 1,
           "num_metal_contacts": 0,
           "docking_score_efficiency": -0.4298461538461539,
-          "crystal_rmsd": 1.1148669647120968,
+          "crystal_rmsd": 1.1148669647127243,
           "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
           "contacts": [
             {
@@ -1661,12 +1659,18 @@
   },
   "visualization": {},
   "paths": {
-    "target_structure": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/raw/1azm.pdb",
-    "receptor_pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/prepared/receptor.pdbqt",
-    "gridbox_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/gridbox.txt",
-    "docking_summary": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/docking/summary.csv",
-    "analysis_json": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/analysis/interactions.json",
+    "target_structure": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/raw/1azm.pdb",
+    "analysis_json": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/analysis/interactions.json",
     "crystal_rmsd_reference": "AZM in 1azm.pdb",
-    "report": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/report.md"
+    "report": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/report.md"
+  },
+  "checksums": {
+    "raw/1azm.pdb": "cfe92653bb7633f9fb87fd92f0c4a8e8ad3f9405449c0dc8ca3191d6c2c9c6ea",
+    "raw/azm.sdf": "f4d9078947a0431510ec435cbb4442a398a8b021e53f1c95ab1adb4c7911fe26",
+    "prepared/receptor.pdbqt": "30c6e0a41dd6b4d375e5a4fb326a517223ff3b70b59141e5882e4a6ebe69f628",
+    "prepared/azm_redock.pdbqt": "ceb4b697fe70a8b2e93390c61886b9bd9ae81bf9e9241caff0afd2bba6925974",
+    "gridbox.txt": "e803569fd28e91eddb828888202c860545e4132308a5aa74717243b7af8c6d4b",
+    "docking/summary.csv": "3bd0893228892a3cc4ce5f6c81f13b15808feeb6e467bcb3ad111046123c2c12",
+    "docking/azm_redock_out.pdbqt": "ec80f243ea19554aae6d6da19c7aa8f4f89daf180276b63147d193118876cacb"
   }
 }

@@ -1,0 +1,31 @@
+2026-09-08 15:43:01,556 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.3.1 starting run 1HVR
+2026-09-08 15:43:01,557 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 15:43:01,557 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1HVR.pdb -> examples/results/1HVR/raw/1hvr.pdb
+2026-09-08 15:43:02,106 | INFO    | dockflow.pipeline. | pipeline step download: done 1HVR
+2026-09-08 15:43:02,110 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 15:43:02,126 | WARNING | dockflow.preparator. | removed hetero species: 18 CSO, 46 XK2. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 15:43:02,133 | WARNING | dockflow.preparator. | Receptor has 2 missing residues (chain A: 67; chain B: 67). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 15:43:02,365 | INFO    | dockflow.preparator. | receptor prepared: 1890 -> 1846 atoms (engine=openbabel, +1292H) -> receptor.pdbqt
+2026-09-08 15:43:02,366 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1846 atoms
+2026-09-08 15:43:02,366 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 15:43:02,366 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/XK2_ideal.sdf -> examples/results/1HVR/raw/xk2.sdf
+2026-09-08 15:43:04,840 | INFO    | dockflow.downloader. | downloading https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2244/SDF?record_type=3d -> examples/results/1HVR/raw/pubchem_2244.sdf
+2026-09-08 15:43:06,251 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 3 ligand states
+2026-09-08 15:43:06,254 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 15:43:06,315 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:XK2
+2026-09-08 15:43:06,316 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 15:50:50,139 | INFO    | dockflow.engine. | docked xk2_redock with python backend in 463.8s, best affinity -11.13
+2026-09-08 15:50:57,987 | INFO    | dockflow.engine. | docked aspirin_decoy with python backend in 7.8s, best affinity -5.47
+2026-09-08 15:51:01,562 | INFO    | dockflow.engine. | docked caffeine_decoy with python backend in 3.6s, best affinity -5.43
+2026-09-08 15:51:01,563 | INFO    | dockflow.pipeline. | pipeline step docking: done 3 ligands
+2026-09-08 15:51:01,563 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 15:51:01,672 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to examples/results/1HVR/docking/xk2_redock_poses.sdf
+2026-09-08 15:51:01,675 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to examples/results/1HVR/docking/aspirin_decoy_poses.sdf
+2026-09-08 15:51:01,678 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to examples/results/1HVR/docking/caffeine_decoy_poses.sdf
+2026-09-08 15:51:01,679 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 15:51:01,679 | INFO    | dockflow.pipeline. | pipeline step visualization: running 
+2026-09-08 15:51:07,924 | INFO    | dockflow.viewer3d. | interactive viewer: examples/results/1HVR/visualization/interactive.html
+2026-09-08 15:51:07,925 | INFO    | dockflow.pipeline. | pipeline step visualization: done 15 images + interactive.html
+2026-09-08 15:51:07,925 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 15:51:07,954 | INFO    | dockflow.pipeline. | pipeline step report: done examples/results/1HVR/report.md
+2026-09-08 15:51:07,973 | INFO    | dockflow.pipeline. | run 1HVR finished in 486.4s (ok=True)

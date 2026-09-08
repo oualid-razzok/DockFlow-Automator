@@ -9,7 +9,7 @@
       "num_ionic_contacts": 0,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.24304347826086956,
-      "crystal_rmsd": 1.2468734685553182,
+      "crystal_rmsd": 0.9696015283049859,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {
@@ -976,10 +976,10 @@
           "ligand_atom_index": 6,
           "ligand_atom_name": "C",
           "ligand_atom_type": "A",
-          "receptor_atom_name": "CA",
+          "receptor_atom_name": "C",
           "receptor_resname": "GLY",
           "receptor_chain": "B",
-          "receptor_resseq": 49,
+          "receptor_resseq": 48,
           "receptor_atom_type": "C",
           "distance": 4.14,
           "kind": "hydrophobic"
@@ -988,10 +988,10 @@
           "ligand_atom_index": 6,
           "ligand_atom_name": "C",
           "ligand_atom_type": "A",
-          "receptor_atom_name": "C",
+          "receptor_atom_name": "CA",
           "receptor_resname": "GLY",
           "receptor_chain": "B",
-          "receptor_resseq": 48,
+          "receptor_resseq": 49,
           "receptor_atom_type": "C",
           "distance": 4.14,
           "kind": "hydrophobic"
@@ -1408,10 +1408,10 @@
           "ligand_atom_index": 0,
           "ligand_atom_name": "C",
           "ligand_atom_type": "C",
-          "receptor_atom_name": "CB",
-          "receptor_resname": "ILE",
+          "receptor_atom_name": "CA",
+          "receptor_resname": "GLY",
           "receptor_chain": "B",
-          "receptor_resseq": 50,
+          "receptor_resseq": 49,
           "receptor_atom_type": "C",
           "distance": 4.39,
           "kind": "hydrophobic"
@@ -1420,10 +1420,10 @@
           "ligand_atom_index": 0,
           "ligand_atom_name": "C",
           "ligand_atom_type": "C",
-          "receptor_atom_name": "CA",
-          "receptor_resname": "GLY",
+          "receptor_atom_name": "CB",
+          "receptor_resname": "ILE",
           "receptor_chain": "B",
-          "receptor_resseq": 49,
+          "receptor_resseq": 50,
           "receptor_atom_type": "C",
           "distance": 4.39,
           "kind": "hydrophobic"
@@ -1931,7 +1931,7 @@
       "num_ionic_contacts": 0,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.2412391304347826,
-      "crystal_rmsd": 1.0603900895441916,
+      "crystal_rmsd": 0.8117229335215115,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {
@@ -3843,7 +3843,7 @@
       "num_ionic_contacts": 3,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.21617391304347827,
-      "crystal_rmsd": 2.2801916433168503,
+      "crystal_rmsd": 3.877235347946239,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {

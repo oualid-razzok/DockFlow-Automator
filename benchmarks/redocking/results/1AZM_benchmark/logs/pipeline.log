@@ -72,3 +72,17 @@ Wrong number or type of arguments for overloaded function 'Vina_set_receptor'.
 2026-09-08 01:52:12,531 | INFO    | dockflow.pipeline. | pipeline step report: running 
 2026-09-08 01:52:12,542 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/report.md
 2026-09-08 01:52:12,550 | INFO    | dockflow.pipeline. | run 1AZM_benchmark finished in 6.8s (ok=True)
+2026-09-08 13:48:41,853 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.1.1 starting run 1AZM_benchmark
+2026-09-08 13:48:41,854 | INFO    | dockflow.pipeline. | restored provenance sections from /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/manifest.json
+2026-09-08 13:48:41,854 | INFO    | dockflow.pipeline. | pipeline step download: skipped not requested
+2026-09-08 13:48:41,854 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: skipped not requested
+2026-09-08 13:48:41,854 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: skipped not requested
+2026-09-08 13:48:41,854 | INFO    | dockflow.pipeline. | pipeline step gridbox: skipped not requested
+2026-09-08 13:48:41,855 | INFO    | dockflow.pipeline. | pipeline step docking: skipped not requested
+2026-09-08 13:48:41,856 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 13:48:41,898 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/docking/azm_redock_poses.sdf
+2026-09-08 13:48:41,898 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 13:48:41,899 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped not requested
+2026-09-08 13:48:41,899 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 13:48:41,914 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1AZM_benchmark/report.md
+2026-09-08 13:48:41,924 | INFO    | dockflow.pipeline. | run 1AZM_benchmark finished in 0.1s (ok=True)

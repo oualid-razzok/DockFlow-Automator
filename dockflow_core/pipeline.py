@@ -256,6 +256,32 @@ class PipelineReport:
 
 
 # ---------------------------------------------------------------------------
+# Degraded-mode banner (final pass, item 8)
+# ---------------------------------------------------------------------------
+def degraded_mode_banner(decisions: dict, engine: str | None) -> str | None:
+    """The unmistakable report banner for scientifically degraded runs.
+
+    Fires when the resolved receptor engine is the dependency-free
+    ``none`` fallback (no hydrogens, zero charges, no aromaticity
+    perception) or any engine whose results are comparable to nothing.
+    Returns the banner line (with the warning sign) or ``None``.
+    """
+    resolved_engine = (engine or "none").split()[0].strip().lower()
+    degraded = (bool(decisions.get("degraded_mode"))
+                or resolved_engine == "none"
+                or not (decisions.get("comparable_to") or []))
+    if not degraded:
+        return None
+    return (
+        "> ⚠ SCIENTIFICALLY DEGRADED MODE: receptor prepared "
+        "with the `none` engine (no hydrogens, zero charges, no "
+        "aromaticity perception). Results are geometry-only and "
+        "NOT recommended for production. Install OpenBabel or "
+        "RDKit (`pip install dockflow-automator[prep]`) and re-run."
+    )
+
+
+# ---------------------------------------------------------------------------
 # The pipeline
 # ---------------------------------------------------------------------------
 class DockingPipeline:
@@ -361,6 +387,7 @@ class DockingPipeline:
         if resuming:
             self._log(f"single-stage run: only {sorted(requested or set())} "
                       "(artifacts loaded from the existing run directory)")
+            self._restore_previous_report_state()
 
         try:
             target_record = self._maybe_run("download", self._download)
@@ -495,6 +522,42 @@ class DockingPipeline:
                     logger.debug("on_done stage hook failed", exc_info=True)
             return result
 
+    def _restore_previous_report_state(self) -> None:
+        """Restore provenance sections from an existing run's manifest.
+
+        Single-stage re-runs (``--stage analyze``) reload artifacts from
+        disk, but the manifest's provenance sections (receptor decisions,
+        grid box, ligand prep, docking backend/decisions) are only
+        written by the stage that produced them - previously a resumed
+        run re-saved a manifest WITHOUT them, silently losing provenance.
+        Restoring the sections of stages that are NOT being re-run keeps
+        re-analysed runs fully traceable.  Sections of stages that DO
+        re-run are overwritten fresh by those stages.
+        """
+        manifest = self._run_dir / "manifest.json"
+        if not manifest.is_file():
+            return
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            logger.debug("could not restore previous manifest state",
+                         exc_info=True)
+            return
+        for section in ("target", "receptor", "gridbox", "ligands"):
+            if data.get(section) and not getattr(self._report, section, None):
+                setattr(self._report, section, data[section])
+        docking = data.get("docking") or {}
+        for key in ("backend", "num_ligands", "num_ok", "resumed",
+                    "warnings", "decisions", "summary_csv"):
+            if key in docking and key not in self._report.docking:
+                self._report.docking[key] = docking[key]
+        for key, value in (data.get("timings") or {}).items():
+            self._report.timings.setdefault(key, value)
+        if data.get("duration_s") is not None:
+            self._report.timings.setdefault("original_run_duration_s",
+                                            data["duration_s"])
+        logger.info("restored provenance sections from %s", manifest)
+
     def _load_previous_target(self):
         """Reload the target record from a previous run's artifacts."""
         from .downloader import ProteinRecord
@@ -591,7 +654,16 @@ class DockingPipeline:
                     box.padding = float((data.get("gridbox") or {}).get("padding", 0.0))
             except (ValueError, OSError):
                 logger.debug("could not restore grid box source from manifest")
-        self._report.gridbox = {**box.to_dict(), "vina_config": str(config_path)}
+        base = box.to_dict()
+        # Provenance keys that only the original gridbox stage recorded
+        # (assumption_strength, warnings, receptor_coverage_pct) survive a
+        # resume: they were restored into _report.gridbox by
+        # _restore_previous_report_state and are NOT derivable from
+        # gridbox.txt.
+        extras = {key: value for key, value in (self._report.gridbox or {}).items()
+                  if key not in base and key != "vina_config"}
+        self._report.gridbox = {**base, **extras,
+                                "vina_config": str(config_path)}
         return box
 
     def _load_previous_results(self, ligand_records):
@@ -701,12 +773,15 @@ class DockingPipeline:
         # Comparability of the resolved engine (peer item 4): which other
         # engines would have produced scientifically comparable receptors.
         comparability = engine_comparability(result.engine)
+        resolved_base = (result.engine or "none").split()[0].strip().lower()
+        degraded = resolved_base == "none" or not comparability["comparable_to"]
         # Every silent preparation decision, made explicit (audit item 10).
         decisions = {
             "rigid_receptor": not bool(result.flex_pdbqt_path),
             "protonation": (
-                f"as deposited (PDB); polar hydrogens added by the "
-                f"{result.engine.split()[0]} engine (pH 7.4 convention)"
+                f"as deposited (PDB); polar hydrogens added by toolkit "
+                f"template ({result.engine.split()[0]} engine, pH 7.4 "
+                "nominal; NOT a pKa calculation)"
                 if options.add_hydrogens else
                 "as deposited (no hydrogens added)"
             ),
@@ -737,6 +812,16 @@ class DockingPipeline:
             "metal_coordination": result.metal_coordination or "none",
             # peer item 8: flexible side chains
             "flexible_residues": result.flexible_residues or "none",
+            # final pass, item 8: machine-readable degraded-mode flag so
+            # downstream tools can detect a scientifically degraded run
+            # without parsing report prose
+            "degraded_mode": degraded,
+            "degraded_reason": (
+                "receptor prepared with the 'none' engine: no hydrogens "
+                "added, zero partial charges, no aromaticity perception - "
+                "geometry-only results, not recommended for production"
+                if degraded else None
+            ),
         }
         self._report.receptor = {
             "pdbqt": str(result.pdbqt_path),
@@ -1512,6 +1597,32 @@ class DockingPipeline:
         self._report.timings["visualization"] = round(time.perf_counter() - start, 2)
         self._progress(0.92, "visualization complete")
 
+    def _catalytic_check(self, box) -> str | None:
+        """Catalytic / pH-sensitive residues near this run's pocket (item 6).
+
+        Heuristic geometry check on the cleaned receptor (full residue
+        information) against the grid box; returns the warning text or
+        ``None``.  Never fatal - the point is honesty, not a blockade.
+        """
+        try:
+            from .pdbio import parse_pdb
+            from .structure_qc import (
+                catalytic_residue_warning,
+                detect_catalytic_residues,
+            )
+
+            receptor_info = self._report.receptor or {}
+            pdb_path = receptor_info.get("pdb")
+            if not pdb_path or not Path(pdb_path).is_file():
+                return None
+            atoms = parse_pdb(pdb_path)
+            findings = detect_catalytic_residues(
+                atoms, box_center=box.center, box_size=box.size)
+            return catalytic_residue_warning(findings)
+        except Exception:  # noqa: BLE001 - informational only, never fatal
+            logger.debug("catalytic-residue check failed", exc_info=True)
+            return None
+
     def _write_report(self, results, receptor_result, box, target_record) -> None:
         self._step("report", "running")
         from .analyzer import pose_cluster_summary, pose_coordinates
@@ -1523,6 +1634,24 @@ class DockingPipeline:
         receptor_info = self._report.receptor or {}
         decisions = receptor_info.get("decisions", {})
         gridbox_info = self._report.gridbox or {}
+
+        def _gridbox_source_text() -> str:
+            """Human-readable box source (item 9): the exact ligand/residue.
+
+            ``pocket:XK2(A263)`` becomes ``pocket:XK2 chain A residue 263``
+            so a reader can look the pocket atom up in the structure.
+            """
+            import re
+
+            source = str(gridbox_info.get("source", box.source) or "")
+            match = re.match(r"^pocket:([\w]+)\(([\w])([\d\w]+)\)$", source)
+            if match:
+                return (f"pocket:{match.group(1)} chain {match.group(2)} "
+                        f"residue {match.group(3)}")
+            return source
+
+        strength = gridbox_info.get("assumption_strength") or \
+            assumption_strength(str(gridbox_info.get("source", box.source) or ""))
         lines: list[str] = [
             "# DockFlow-Automator run report",
             "",
@@ -1533,11 +1662,20 @@ class DockingPipeline:
             f" engine: {receptor_result.engine})",
             f"- grid box: center {tuple(round(v, 2) for v in box.center)},"
             f" size {tuple(round(v, 2) for v in box.size)} A"
-            f" (source: {gridbox_info.get('source', box.source)},"
-            f" padding {gridbox_info.get('padding', 0.0)} A)",
+            f" (source: {_gridbox_source_text()},"
+            f" padding {gridbox_info.get('padding', 0.0)} A,"
+            f" assumption: {strength})",
             f"- docking backend: {self._report.docking.get('backend', '?')}",
             "",
         ]
+
+        # -- Degraded-mode banner (final pass, item 8) ----------------------
+        # UNMISTAKABLE and above the results table: a run whose receptor
+        # was prepared with the `none` engine (or any engine comparable to
+        # nothing) is scientifically degraded, not "less accurate".
+        banner = degraded_mode_banner(decisions, receptor_result.engine)
+        if banner:
+            lines += [banner, ""]
 
         # -- Engine comparability + metal sites (peer items 4, 10) ----------
         incomparable = decisions.get("incomparable_to") or []
@@ -1558,6 +1696,11 @@ class DockingPipeline:
         if metal_note:
             lines += [f"> Metal site: {metal_note}", ""]
 
+        # -- Catalytic residues / protonation honesty (final pass, item 6) --
+        catalytic_note = self._catalytic_check(box)
+        if catalytic_note:
+            lines += [f"> Protonation: {catalytic_note}", ""]
+
         # -- Redocking banner (audit item 18) --------------------------------
         banner_pose, banner_rmsd = None, None
         for result in ranked:
@@ -1572,7 +1715,7 @@ class DockingPipeline:
             verdict = "PASS" if banner_rmsd <= 2.0 else "FAIL"
             method_text = (self._report.analysis or {}).get("crystal_rmsd_method")
             method_note = (
-                f" Method: {method_text}." if method_text else ""
+                f" Method: {method_text}" if method_text else ""
             )
             lines += [
                 f"> **Redocking pose recovery: best pose RMSD = {banner_rmsd:.2f} A"
@@ -1687,25 +1830,35 @@ class DockingPipeline:
 
         # -- Assumptions footer (audit item 25) --------------------------------
         metals = decisions.get("metals_cofactors", {})
+        protonation_text = str(decisions.get("protonation", "n/a"))
+        if "toolkit template" in protonation_text:
+            # final pass, item 6: never let "pH 7.4" read as "pKa-correct"
+            protonation_text += (
+                " - catalytic residues may be mis-protonated; for rigorous "
+                "work, run PROPKA and pass the protonated PDB as input")
         lines += [
             "## Assumptions this run made",
             "",
             f"- receptor treated as rigid: "
             f"{'yes' if decisions.get('rigid_receptor', True) else 'no'}",
-            f"- protonation: {decisions.get('protonation', 'n/a')}",
+            f"- protonation: {protonation_text}",
             f"- charge model: {decisions.get('charge_model', 'gasteiger')}"
             " (Gasteiger partial charges)",
             f"- waters: {decisions.get('waters', 'removed')}",
             f"- metals/cofactors: removed {metals.get('removed', 'none')} /"
             f" kept {metals.get('kept', 'none')}",
             f"- grid box: derived from {gridbox_info.get('source', box.source)},"
-            f" padding {gridbox_info.get('padding', 0.0)} A",
+            f" padding {gridbox_info.get('padding', 0.0)} A"
+            f" (assumption: {strength})",
             f"- scoring: {scoring} (AutoDock Vina {vina_version}, no rescoring)",
             "- ligand tautomers/protonation: see manifest ligands[*].prep"
             " (input state by default; no enumeration unless configured)",
             "",
             "See README section *Scientific limitations and assumptions* for "
-            "the general limitations behind each of these decisions.",
+            "the general limitations behind each of these decisions, and "
+            "docs/preparation_assumptions.md for the full preparation "
+            "assumption table (what DockFlow does / does NOT do / what the "
+            "researcher should do for publication-grade work).",
             "",
             "## Files",
             "",

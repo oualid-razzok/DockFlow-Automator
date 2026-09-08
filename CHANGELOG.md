@@ -1,5 +1,125 @@
 # Changelog
 
+## [1.0.0rc1] - 2026-09-08
+
+**Feature freeze for v1.0 release and paper submission.**  Final
+scientific-rigor tightening pass (20 review items): no new features, no
+new pipeline stages, no new runtime dependencies - every change either
+makes a published claim more honest, adds a missing statistic, or makes
+a published number regenerable.  The post-freeze roadmap lives in
+`ROADMAP_POST_V1.md`.
+
+### Fixed - scientific correctness (found BY the new validation)
+- **Symmetry-aware crystal RMSD was atom-order dependent.**  The
+  analyzer seeded the pose-to-reference correspondence geometrically and
+  then let `GetBestRMS` permute only over graph automorphisms - when the
+  pose file and the reference PDB listed atoms in different orders (which
+  Vina/meeko outputs and crystal PDBs routinely do), the seed could lock
+  in a topologically wrong assignment that the automorphism search could
+  not repair, over-penalising symmetric ligands by up to ~0.5 Å.  Found
+  by the new independent spyrmsd cross-check (item 5); fixed by building
+  the pose molecule with its own graph so `GetBestRMS` minimises over
+  all graph isomorphisms.  After the fix: **193 benchmark poses,
+  max |Δ| vs spyrmsd = 0.0 Å**.  The same bit-identical poses were
+  re-analysed with the corrected RMSD, so the published benchmark
+  numbers changed (they were conservative, not optimistic): best-any-rank
+  success 18/24 → **23/24**, rank-1 (the new formal definition)
+  **21/24**, mean best-pose RMSD 1.32 Å → **0.67 Å**; five of the six
+  v0.3.x "failures" actually recover a ≤ 2.0 Å pose.  The remaining
+  failure modes are now classified (ranking vs sampling) via the
+  published top-N curve.
+- comparison.csv silently dropped `mgl_rmsd_a` (and three other
+  MGL-arm columns) from the published file although the summary table
+  used them - the full column set is now written.
+- `dockflow run --workdir` was accepted but ignored (the YAML workdir
+  always won).
+- single-stage resume re-saved manifests WITHOUT the provenance sections
+  (receptor decisions, grid box, ligand prep, docking backend) of the
+  stages that did not re-run; they are now restored and merged.
+- report.md: double period after the RMSD method note; stale
+  hard-coded fallback version string in source checkouts.
+
+### Changed - claim honesty (the friend's final review)
+- **Pose recovery has a formal definition** (rank-1 pose, symmetry-aware
+  heavy-atom RMSD ≤ 2.0 Å, community convention per Trott & Olson 2010 /
+  CSAR / D3R practice, NOT a validated cutoff) and the benchmark
+  publishes ALL definitions (rank-1, top-3, legacy best-any-rank) at
+  1.0/2.0/3.0 Å plus the top-N success curve - the number cannot be
+  definition-shopped (docs/interaction_criteria.md).
+- **Protonation honesty**: "pH 7.4 convention" is gone - receptors keep
+  DEPOSITED states + template hydrogens (pH 7.4 nominal, NOT a pKa
+  calculation); the report footer says so, and a new catalytic-residue
+  warning names the His/Asp/Glu residues near the box with PROPKA/H++
+  guidance.  README + docs/preparation_assumptions.md (new, the full
+  does/does-not/should table for every preparation assumption) rewritten
+  accordingly.
+- **Degraded mode is unmistakable** (item 8): the `none` engine now
+  triggers a ⚠ SCIENTIFICALLY DEGRADED banner at the top of report.md,
+  a blocking GUI modal ([Cancel run] / [I understand, continue anyway],
+  persisted per version in QSettings), a red-stderr CLI gate requiring
+  `--allow-degraded` to proceed, and machine-readable
+  `manifest.receptor.decisions.degraded_mode/degraded_reason`.
+- **Grid-box provenance in every report** (item 9): the box line names
+  the exact pocket atom (`pocket:XK2 chain A residue 263`), padding and
+  `assumption: strong|medium|weak|user-explicit`; weak/medium boxes and
+  >60%-coverage boxes carry warnings (wired since 0.3.0, now surfaced in
+  the report line as well).
+- **README claim audit** (item 16): beta banner ("no claim of superior
+  performance"), "MGLTools equivalent" → "MGLTools-equivalent *logic*
+  (NOT the same code, NOT bit-identical)", "less accurate fallback" →
+  "scientifically degraded", "validated example" → "evaluated
+  single-complex example", every "automatic" qualified as mechanical;
+  a CI doc-lint fails on unqualified flagged words, and
+  docs/claim_audit.md records every change (item 17).
+- **Enrichment reframed as an evaluation** (item 11): the AUC line now
+  states single-target/exhaustiveness-1/no-comparative-baseline
+  explicitly; the BEDROC random baseline (NOT 0.5 at α=20) is measured
+  over 10 000 seeded permutations instead of assumed.
+
+### Added - benchmark completeness and statistics
+- Per-complex preparation + grid provenance columns in
+  `redocking_results.csv` (item 1: receptor engine/atoms, ligand
+  rotatable bonds/heavy atoms, grid box source/center/size/padding/
+  assumption strength, exhaustiveness/modes/seed/cpu, RMSD method) -
+  a reader can now tell whether a failure is prep- or docking-related.
+- Wilson score 95% CIs for every success rate (hand-rolled, formula
+  documented; 18/24 example verified as 55.1%-88.0%), RMSD distribution
+  (min/p25/median/p75/max/std) + histogram PNG, per-target grouping
+  sub-table, failed-complex sub-tables with hypothesized causes and
+  failure-mode classification (item 2).
+- **MGLTools comparison fully documented** (item 4): full crash
+  tracebacks in `results/failures/*.txt` (the 200-char CSV truncation
+  is gone), `failure_stage` + `failure_root_cause` columns, the explicit
+  shared-denominator statement, Wilson CIs for both arms; both arms
+  re-run with the corrected RMSD (DF 20/21 vs MGL 18/21).
+- **DUD-E enrichment on 3 targets** (item 12): aa2ar (3EML) and parp1
+  (2RD6) added with the identical seeded protocol; committed
+  SHA-256-pinned ISM lists; `--reproduce` re-docks the exact 133-ligand
+  panel and asserts the metrics within 1e-6 (item 10); duplicate-SMILES
+  verification documented (7 duplicates in the hivpr panel, reported
+  not dropped); scoring/tie-breaking/metric formulas documented in the
+  benchmark README.
+- **Regeneration harness** (item 14): `complexes.csv` pins resolution +
+  UniProt + SHA-256 of every committed raw PDB;
+  `benchmarks/redocking/regenerate.py` re-runs the full benchmark with
+  the thread count pinned (Vina is thread-count dependent - the v0.3.1
+  CI lesson) and ASSERTS every published number within 1e-6 (verified:
+  0 mismatches); the nightly workflow runs it and fails on drift.
+- **Symmetry-RMSD validation** (item 5): analytic known-answer tests
+  (benzene 60°, naphthalene flip, aspirin O-swap, chiral ligand,
+  1.5 Å-displaced pose) + the spyrmsd cross-check script with
+  `rmsd_crosscheck.png` and a <0.1 Å acceptance gate; the
+  `crystal_rmsd_method` column in the benchmark CSV.
+- **Preparation validation extended** (item 13): 24-complex
+  DockFlow-vs-MGLTools aggregate + meeko-CLI faithfulness check,
+  generated from committed artifacts by
+  `benchmarks/preparation_validation_aggregate.py`.
+- **Paper figures** (item 19): `paper/figures/fig1-5.{png,pdf}` rendered
+  from the committed benchmark CSVs only, with a provenance README.
+- **docs/SCIENTIFIC_VALIDATION.md** (item 20): the single citable page
+  (7 sections: benchmarks, comparison, enrichment, RMSD validation,
+  preparation validation, limitations, regeneration).
+
 ## [0.3.1] - 2026-09-08
 
 CI-stability release: fixes both failing GitHub Actions jobs

@@ -50,8 +50,8 @@ hydrophobic,4.02,C,C,A,TYR,113,CG,A
 hydrophobic,4.06,C,C,A,LEU,89,CD2,C
 hydrophobic,4.09,C,C,A,ASP,83,CG,C
 hydrophobic,4.09,C,C,A,TYR,113,CG,A
-hydrophobic,4.12,C,C,A,TYR,113,CE2,A
 hydrophobic,4.12,C,C,A,TYR,113,CD2,A
+hydrophobic,4.12,C,C,A,TYR,113,CE2,A
 hydrophobic,4.15,C,C,A,LEU,89,CD2,C
 ionic,4.20,O,OA,A,ARG,87,NH1,N
 hydrophobic,4.20,C,C,A,LEU,37,CA,C

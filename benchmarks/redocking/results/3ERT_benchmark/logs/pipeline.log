@@ -72,3 +72,17 @@ Wrong number or type of arguments for overloaded function 'Vina_set_receptor'.
 2026-09-08 01:53:04,057 | INFO    | dockflow.pipeline. | pipeline step report: running 
 2026-09-08 01:53:04,069 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/3ERT_benchmark/report.md
 2026-09-08 01:53:04,081 | INFO    | dockflow.pipeline. | run 3ERT_benchmark finished in 37.5s (ok=True)
+2026-09-08 13:48:42,352 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.1.1 starting run 3ERT_benchmark
+2026-09-08 13:48:42,353 | INFO    | dockflow.pipeline. | restored provenance sections from /home/z/my-project/dockflow-v030/benchmarks/redocking/results/3ERT_benchmark/manifest.json
+2026-09-08 13:48:42,353 | INFO    | dockflow.pipeline. | pipeline step download: skipped not requested
+2026-09-08 13:48:42,353 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: skipped not requested
+2026-09-08 13:48:42,353 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: skipped not requested
+2026-09-08 13:48:42,354 | INFO    | dockflow.pipeline. | pipeline step gridbox: skipped not requested
+2026-09-08 13:48:42,355 | INFO    | dockflow.pipeline. | pipeline step docking: skipped not requested
+2026-09-08 13:48:42,356 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 13:48:42,409 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/dockflow-v030/benchmarks/redocking/results/3ERT_benchmark/docking/oht_redock_poses.sdf
+2026-09-08 13:48:42,409 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 13:48:42,409 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped not requested
+2026-09-08 13:48:42,409 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 13:48:42,423 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/dockflow-v030/benchmarks/redocking/results/3ERT_benchmark/report.md
+2026-09-08 13:48:42,436 | INFO    | dockflow.pipeline. | run 3ERT_benchmark finished in 0.1s (ok=True)

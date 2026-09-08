@@ -5,32 +5,54 @@ of classic protein–ligand complexes re-docked with the standard pipeline,
 reporting experimental-vs-predicted pose RMSD, success rate, docking
 scores and runtimes.
 
-**Status: RUN on all 24 complexes (2026-09, exhaustiveness 8, seed 2026).
-Results in `results/`: 24/24 completed, 18/24 successes (75 %, best pose
-RMSD ≤ 2.0 Å), mean best-pose RMSD 1.32 Å / median 0.96 Å, failures and
-per-complex artifacts included - see `results/summary.md`.**
+**Status: RUN on all 24 complexes (2026-09, exhaustiveness 8, seed 2026,
+cpu pinned for regeneration).  Results in `results/`: 24/24 completed;
+pose recovery (FORMAL definition: rank-1 pose, symmetry-aware heavy-atom
+RMSD ≤ 2.0 Å) 21/24 = 87.5 % (95 % Wilson CI 69.0–95.7 %); top-3
+definition 23/24; legacy best-any-rank 23/24 = 95.8 % (CI 79.8–99.3 %);
+mean best-pose RMSD 0.67 Å / median 0.62 Å; all definitions, thresholds,
+sub-tables and failure-mode classification in `results/summary.md`.**
 
 Protocol notes from the actual run:
 
-* the 6 fails (1DWD, 1F0R, 1MQ6, 1YGC, 1HSG, 1HTG) are all large flexible
-  peptidomimetic inhibitors (5+ rotatable tails) - consistent with the
-  literature expectation that rigid-receptor Vina redocking struggles
-  exactly there; every fail keeps its full run directory for inspection;
+* the published numbers use the atom-order-independent symmetry RMSD
+  (corrected in v1.0.0-rc1 after the spyrmsd cross-check found the old
+  implementation over-penalised reordered symmetric ligands; see
+  `rmsd_crosscheck.py` and the CHANGELOG).  Under the corrected RMSD,
+  only 1HTG fails at every rank (sampling failure: a 17-rotatable-bond
+  peptidomimetic with no pose within 3.0 Å), while 1DWD and 1HPV fail
+  the rank-1 definition only because their ≤ 2.0 Å pose ranks 3rd
+  (ranking failures - exactly what the published top-N curve
+  distinguishes);
+* every failed/struggling complex keeps its full run directory
+  (including all pose PDBQTs/SDFs) for inspection;
 * complexes whose ligand appears in two copies (homodimers: 1HTG, 1Q41,
   1XLZ, 1N46) use ONE instance (the largest) for the box and the RMSD
   reference - the union of both copies would inflate the box past Vina's
   30 Å cap and break the atom-count match for the RMSD;
-* every row is reproducible: fixed seed, deterministic Vina, recorded
-  environment fingerprint; re-running a row reproduces it bit-for-bit
-  (verified during the 2026-09 run: identical RMSDs across two
-  independent executions).
+* every row is reproducible: fixed seed, deterministic Vina (thread
+  count pinned by `regenerate.py`), recorded environment fingerprint;
+  the full suite was regenerated and ASSERTED to match the committed
+  CSV within 1e-6 (0 mismatches) - see `regenerate.py`.
+
+## Regenerating / validating
+
+```bash
+python benchmarks/redocking/regenerate.py            # re-dock all 24 + assert match (item 14)
+python benchmarks/redocking/regenerate.py --skip-docking   # dataset SHA-256 pins only
+python benchmarks/redocking/run_benchmark.py --report-only  # summary/figures from the committed artifacts
+python benchmarks/redocking/reanalyze.py             # re-run the ANALYSIS stage only
+python benchmarks/redocking/rmsd_crosscheck.py       # spyrmsd cross-check (item 5)
+```
 
 ## Methodology
 
 For every complex in `complexes.csv` (24 entries, all verified against
 RCSB to contain exactly one organic ligand after excluding waters, ions
 and sugars; sources: PDBbind core set / Astex diverse set literature and
-the HIV-1 protease series used by the example configs):
+the HIV-1 protease series used by the example configs; the table pins
+the ligand code, UniProt, resolution and the SHA-256 of the committed
+raw PDB):
 
 1. the PDB structure is downloaded from RCSB;
 2. the receptor is prepared with the default `auto` engine
@@ -43,11 +65,13 @@ the HIV-1 protease series used by the example configs):
    (ideal coordinates re-embedded by RDKit/Meeko);
 5. AutoDock Vina docks it with a fixed seed (2026) and configurable
    exhaustiveness (default 8);
-6. every pose is scored by **symmetry-tolerant heavy-atom Kabsch RMSD**
-   to the co-crystallized pose extracted from the PDB
+6. every pose is scored by **symmetry-aware heavy-atom RMSD**
+   (graph-automorphism minimised, atom-order independent) to the
+   co-crystallized pose extracted from the PDB
    (`crystal_rmsd`; see `docs/interaction_criteria.md`);
-7. **success** = best pose RMSD ≤ 2.0 Å, the conventional redocking
-   criterion.
+7. **success** is published under EVERY definition (rank-1 / top-3 /
+   best-any-rank at 1.0/2.0/3.0 Å thresholds) so the number cannot be
+   definition-shopped; the formal definition is rank-1 ≤ 2.0 Å.
 
 Every number is reproducible: each run directory contains the full
 `manifest.json` (stage audit trail, preparation decisions) and

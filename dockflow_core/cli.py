@@ -185,6 +185,11 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--force", action="store_true",
                      help="ignore the progress.json checkpoint and re-dock "
                           "every ligand (audit item 28)")
+    run.add_argument("--allow-degraded", action="store_true",
+                     help="proceed even when the resolved receptor engine is "
+                          "the `none` fallback (scientifically degraded: "
+                          "zero charges, no hydrogens) - explicit opt-in, "
+                          "otherwise the run exits with a warning")
 
     # ------------------------------------------------------------------ enrich
     enrich = subparsers.add_parser(
@@ -552,8 +557,18 @@ def cmd_run(args: argparse.Namespace) -> int:
     config = PipelineConfig.from_yaml(config_path)
     if args.run_id:
         config.run_id = args.run_id
+    if getattr(args, "workdir", None):
+        config.workdir = args.workdir
     if args.dry_run:
         return _dry_run(config)
+    # Degraded-mode gate (final pass, item 8): refuse to run silently with
+    # the `none` engine.  The resolved engine is checked BEFORE the run so
+    # the user can install a toolkit instead of discarding the results.
+    exit_code = _degraded_engine_gate(
+        (config.receptor or {}).get("engine", "auto"),
+        allow_degraded=getattr(args, "allow_degraded", False))
+    if exit_code is not None:
+        return exit_code
     events = PipelineEvents(
         on_step=lambda step, status, detail: print(f"[{step}] {status} {detail or ''}"),
         on_log=lambda message: print(f"    {message}"),
@@ -570,6 +585,41 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 0
     print(f"run {report.run_id} failed: {report.error}")
     print(f"logs: {report.run_dir / 'logs' / 'pipeline.log'}")
+    return 2
+
+
+DEGRADED_ENGINE_WARNING = (
+    "SCIENTIFICALLY DEGRADED MODE: the receptor would be prepared with "
+    "the `none` engine (no hydrogens, zero charges, no aromaticity "
+    "perception). Results are geometry-only and NOT recommended for "
+    "production. Install OpenBabel or RDKit "
+    "(`pip install dockflow-automator[prep]`) and re-run, or pass "
+    "--allow-degraded to proceed anyway."
+)
+
+
+def _degraded_engine_gate(preferred_engine: str, allow_degraded: bool) -> int | None:
+    """Refuse `dockflow run` in degraded mode without explicit opt-in.
+
+    Returns ``None`` when the run may proceed, or the non-zero exit code
+    (the caller turns it into the process exit status).  Unknown or
+    unavailable EXPLICIT engines are left to the pipeline, which fails
+    loudly with a proper error - only the silent `none` fallback is gated
+    here.
+    """
+    if allow_degraded:
+        return None
+    from .preparator import resolved_engine_name
+
+    try:
+        resolved = resolved_engine_name(preferred_engine)
+    except Exception:  # noqa: BLE001 - let the pipeline raise properly
+        return None
+    if resolved != "none":
+        return None
+    red = "\033[31m"
+    reset = "\033[0m"
+    print(f"{red}error: {DEGRADED_ENGINE_WARNING}{reset}", file=sys.stderr)
     return 2
 
 

@@ -72,12 +72,12 @@ hydrophobic,4.28,C,C,A,PHE,446,CZ,A
 hydrophobic,4.28,C,C,A,HIS,234,CD2,C
 hydrophobic,4.28,C,C,A,ASN,395,CB,C
 hydrophobic,4.30,C,C,A,THR,407,CB,C
-hydrophobic,4.31,C,C,A,PHE,446,CD1,A
 hydrophobic,4.31,C,C,A,SER,442,CB,C
+hydrophobic,4.31,C,C,A,PHE,446,CD1,A
 ionic,4.32,N,NA,A,ASP,392,OD2,OA
 hydrophobic,4.32,C,C,A,PHE,446,CE1,A
-hydrophobic,4.34,C,C,A,PHE,446,CD2,A
 hydrophobic,4.34,C,C,A,PHE,414,CE2,A
+hydrophobic,4.34,C,C,A,PHE,446,CD2,A
 hydrophobic,4.35,C,A,A,TYR,233,CE1,A
 hydrophobic,4.35,C,A,A,TYR,233,CE2,A
 hydrophobic,4.35,C,A,A,ILE,410,CD1,C

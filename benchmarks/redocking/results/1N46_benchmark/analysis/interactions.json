@@ -724,10 +724,10 @@
           "ligand_atom_index": 20,
           "ligand_atom_name": "C",
           "ligand_atom_type": "A",
-          "receptor_atom_name": "CD2",
-          "receptor_resname": "LEU",
+          "receptor_atom_name": "CD1",
+          "receptor_resname": "ILE",
           "receptor_chain": "A",
-          "receptor_resseq": 346,
+          "receptor_resseq": 276,
           "receptor_atom_type": "C",
           "distance": 4.0,
           "kind": "hydrophobic"
@@ -736,10 +736,10 @@
           "ligand_atom_index": 20,
           "ligand_atom_name": "C",
           "ligand_atom_type": "A",
-          "receptor_atom_name": "CD1",
-          "receptor_resname": "ILE",
+          "receptor_atom_name": "CD2",
+          "receptor_resname": "LEU",
           "receptor_chain": "A",
-          "receptor_resseq": 276,
+          "receptor_resseq": 346,
           "receptor_atom_type": "C",
           "distance": 4.0,
           "kind": "hydrophobic"
@@ -1769,7 +1769,7 @@
       "num_ionic_contacts": 5,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.41981481481481486,
-      "crystal_rmsd": 0.2027764144833448,
+      "crystal_rmsd": 0.20277641448367703,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {

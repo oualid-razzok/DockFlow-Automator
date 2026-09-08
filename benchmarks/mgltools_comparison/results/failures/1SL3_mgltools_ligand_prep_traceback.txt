@@ -1,0 +1,19 @@
+MGLTools 1.5.7 crash - 1SL3 (170) - stage: ligand_prep - script: prepare_ligand4.py
+command working directory: /home/z/my-project/dockflow-v030/benchmarks/mgltools_comparison/results/1SL3
+
+Traceback (most recent call last):
+  File "/home/z/my-project/mgltools/bin/prepare_ligand4.py", line 242, in <module>
+    attach_singletons=attach_singletons)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/MoleculePreparation.py", line 1016, in __init__
+    detect_bonds_between_cycles=detect_bonds_between_cycles)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/MoleculePreparation.py", line 765, in __init__
+    delete_single_nonstd_residues=False)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/MoleculePreparation.py", line 132, in __init__
+    lenLPS = self.lenLPS = LPM.mergeLPS(mol.allAtoms)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/atomTypeTools.py", line 141, in mergeLPS
+    lps = atoms.get(lambda x: x.element=='Lp' or x.element=='lp' or \
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/MolKit/tree.py", line 622, in get
+    result = filter(selectionString, self.data)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/atomTypeTools.py", line 142, in <lambda>
+    (x.element=='Xx' and (x.name[0]=='L' or x.name[1]=='L')))
+IndexError: string index out of range

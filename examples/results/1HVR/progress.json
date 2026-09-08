@@ -1,0 +1,28 @@
+{
+  "completed": {
+    "xk2_redock": {
+      "ligand_name": "xk2_redock",
+      "status": "ok",
+      "out": "examples/results/1HVR/docking/xk2_redock_out.pdbqt",
+      "best_affinity": -11.129,
+      "runtime": 463.81,
+      "backend": "python"
+    },
+    "aspirin_decoy": {
+      "ligand_name": "aspirin_decoy",
+      "status": "ok",
+      "out": "examples/results/1HVR/docking/aspirin_decoy_out.pdbqt",
+      "best_affinity": -5.468,
+      "runtime": 7.85,
+      "backend": "python"
+    },
+    "caffeine_decoy": {
+      "ligand_name": "caffeine_decoy",
+      "status": "ok",
+      "out": "examples/results/1HVR/docking/caffeine_decoy_out.pdbqt",
+      "best_affinity": -5.435,
+      "runtime": 3.57,
+      "backend": "python"
+    }
+  }
+}

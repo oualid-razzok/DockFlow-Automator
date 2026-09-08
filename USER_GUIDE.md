@@ -29,7 +29,9 @@ tables and publication-ready 3D renders — from the **GUI**, the **CLI** or a
 
 ## 1. The 30-second tour
 
-DockFlow-Automator chains seven stages automatically:
+DockFlow-Automator chains seven stages automatically (mechanical
+orchestration: every scientific decision along the way is recorded in
+`manifest.json` and is yours to override):
 
 ```text
 download ──► prepare receptor ──► prepare ligands ──► grid box
@@ -37,8 +39,9 @@ download ──► prepare receptor ──► prepare ligands ──► grid box
 render ◄── analyze ◄── dock (AutoDock Vina) ◄───────────────┘
 ```
 
-The fastest complete run (HIV-1 protease redocking — a validated example
-that reproduces the known active site):
+The fastest complete run (HIV-1 protease redocking — an evaluated
+single-complex example; the 24-complex benchmark suite lives in
+`benchmarks/`):
 
 ```bash
 dockflow run --config examples/configs/hiv1_protease_example.yaml
@@ -46,8 +49,9 @@ dockflow run --config examples/configs/hiv1_protease_example.yaml
 
 That single command downloads PDB `1HVR` from RCSB, pulls the co-crystal
 ligand XK2 plus aspirin and caffeine decoys, prepares receptor and ligands
-(the modern, maintained equivalent of MGLTools' `prepare_receptor4.py` /
-`prepare_ligand4.py`), derives the search box from the co-crystal ligand,
+with the modern, maintained MGLTools-*logic* stack (Meeko/RDKit/OpenBabel —
+reimplemented logic, not bit-identical output; see
+docs/preparation_validation.md), derives the search box from the co-crystal ligand,
 docks everything with Vina, analyzes contacts, renders PNGs and writes
 `manifest.json` + `report.md`. Open `runs/hiv1_protease_redocking/report.md`
 when it finishes.
@@ -70,8 +74,9 @@ when it finishes.
 > - `[1]` full setup — conda environment with Vina + PyMOL (recommended,
 >   ~10 min; Windows runs `scripts\install_tools.ps1` for you, Linux/macOS
 >   run `scripts/install_tools.sh`),
-> - `[2]` quick setup — pip install into your Python plus automatic
->   download of the Vina 1.2.7 engine (`vina.exe` on Windows,
+> - `[2]` quick setup — pip install into your Python plus automatic (a
+>   mechanical download, no scientific choices) download of the Vina 1.2.7
+>   engine (`vina.exe` on Windows,
 >   architecture-matched `vina` binary on Linux/macOS) into the repository
 >   folder, where it is auto-detected on every start.
 >
@@ -97,7 +102,8 @@ top — you can always go back to an earlier step; nothing is destroyed.
 
 Add as many ligands as you like, from any mix of sources:
 
-- **SMILES** pasted directly (3D coordinates are generated automatically),
+- **SMILES** pasted directly (3D coordinates are generated automatically —
+  a mechanical RDKit embed, not a conformer search),
 - **local files** (`.sdf`, `.mol2`, `.pdb`, `.pdbqt`),
 - **PubChem** lookups by name, CID or SMILES,
 - **ZINC22** ids,
@@ -133,8 +139,8 @@ Add as many ligands as you like, from any mix of sources:
 - Press **Start** — docking runs in background threads; the table fills in
   as ligands finish; **Cancel actually cancels** (immediately for the CLI
   backend, at the next checkpoint for the python backend).
-- The engine is chosen automatically (python bindings → vina CLI → smina)
-  and shown in the log pane.
+- The engine is chosen automatically (a mechanical availability choice:
+  python bindings → vina CLI → smina) and shown in the log pane.
 
 ### Step 6 — Results
 

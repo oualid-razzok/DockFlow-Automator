@@ -1,0 +1,4 @@
+pose,A:GLN92:hbond,A:GLU106:ionic,A:HIS94:hbond,A:HIS94:hydrophobic,A:HIS96:hbond,A:HIS119:hbond,A:HIS200:hbond,A:HIS200:hydrophobic,A:LEU131:hydrophobic,A:LEU198:hydrophobic,A:PHE91:hydrophobic,A:THR199:hbond
+1,1,1,1,1,1,1,1,0,1,1,1,1
+2,0,1,1,1,1,1,0,1,1,1,1,1
+3,0,1,1,1,1,1,0,1,0,1,0,1

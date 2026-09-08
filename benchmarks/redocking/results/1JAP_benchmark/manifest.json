@@ -1,11 +1,11 @@
 {
   "run_id": "1JAP_benchmark",
-  "run_dir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark",
+  "run_dir": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark",
   "ok": true,
   "error": null,
   "cancelled": false,
   "config": {
-    "workdir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results",
+    "workdir": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results",
     "run_id": "1JAP_benchmark",
     "target": {
       "pdb_id": "1JAP"
@@ -48,67 +48,68 @@
     "prepare_ligands": 2.06,
     "gridbox": 0.02,
     "docking": 1.35,
-    "analysis": 0.03,
-    "total": 4.53
+    "analysis": 0.02,
+    "total": 0.04,
+    "original_run_duration_s": 4.53
   },
-  "duration_s": 4.53,
+  "duration_s": 0.04,
   "stages": [
     {
       "name": "download",
-      "status": "done",
-      "started_at": "2026-09-08T01:35:14Z",
-      "ended_at": "2026-09-08T01:35:15Z",
-      "duration_s": 0.871,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:43Z",
+      "ended_at": "2026-09-08T13:48:43Z",
+      "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "prepare_receptor",
-      "status": "done",
-      "started_at": "2026-09-08T01:35:15Z",
-      "ended_at": "2026-09-08T01:35:15Z",
-      "duration_s": 0.179,
-      "engine": "openbabel",
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:43Z",
+      "ended_at": "2026-09-08T13:48:43Z",
+      "duration_s": 0.0,
+      "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "prepare_ligands",
-      "status": "done",
-      "started_at": "2026-09-08T01:35:15Z",
-      "ended_at": "2026-09-08T01:35:18Z",
-      "duration_s": 2.06,
-      "engine": "meeko",
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:43Z",
+      "ended_at": "2026-09-08T13:48:43Z",
+      "duration_s": 0.0,
+      "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "gridbox",
-      "status": "done",
-      "started_at": "2026-09-08T01:35:18Z",
-      "ended_at": "2026-09-08T01:35:18Z",
-      "duration_s": 0.021,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:43Z",
+      "ended_at": "2026-09-08T13:48:43Z",
+      "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "docking",
-      "status": "done",
-      "started_at": "2026-09-08T01:35:18Z",
-      "ended_at": "2026-09-08T01:35:19Z",
-      "duration_s": 1.354,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:43Z",
+      "ended_at": "2026-09-08T13:48:43Z",
+      "duration_s": 0.0,
       "engine": null,
-      "backend": "python",
-      "detail": null
+      "backend": null,
+      "detail": "not requested (--stage)"
     },
     {
       "name": "analysis",
       "status": "done",
-      "started_at": "2026-09-08T01:35:19Z",
-      "ended_at": "2026-09-08T01:35:19Z",
-      "duration_s": 0.03,
+      "started_at": "2026-09-08T13:48:43Z",
+      "ended_at": "2026-09-08T13:48:43Z",
+      "duration_s": 0.024,
       "engine": null,
       "backend": null,
       "detail": null
@@ -116,28 +117,28 @@
     {
       "name": "visualization",
       "status": "skipped",
-      "started_at": "2026-09-08T01:35:19Z",
-      "ended_at": "2026-09-08T01:35:19Z",
+      "started_at": "2026-09-08T13:48:43Z",
+      "ended_at": "2026-09-08T13:48:43Z",
       "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": "disabled in config"
+      "detail": "not requested (--stage)"
     },
     {
       "name": "report",
       "status": "done",
-      "started_at": "2026-09-08T01:35:19Z",
-      "ended_at": "2026-09-08T01:35:19Z",
-      "duration_s": 0.01,
+      "started_at": "2026-09-08T13:48:43Z",
+      "ended_at": "2026-09-08T13:48:43Z",
+      "duration_s": 0.014,
       "engine": null,
       "backend": null,
       "detail": null
     }
   ],
   "environment": {
-    "dockflow": "0.2.1",
+    "dockflow": "0.1.1",
     "python": "3.12.14",
-    "python_executable": "/home/z/my-project/bindings-venv/bin/python",
+    "python_executable": "/home/z/.venv/bin/python3.12",
     "platform": "Linux 5.10.134-013.8.3.kangaroo.al8.x86_64 (x86_64)",
     "numpy": "2.5.3",
     "vina": "1.2.7",
@@ -145,26 +146,22 @@
     "rdkit": "2025.9.6",
     "gemmi": "0.7.5",
     "openbabel_wheel": "3.1.1.23",
-    "pandas": "3.0.5",
+    "pandas": "2.2.3",
     "dockflow_bindings": {
-      "importable": true,
-      "version": "0.1.0"
+      "importable": false,
+      "version": null
     },
-    "git_sha": null,
-    "captured_at": "2026-09-08T01:35:19Z"
+    "git_sha": "343691d2ccd48474c29dbdd05e8ab3d7122b250c",
+    "captured_at": "2026-09-08T13:48:43Z"
   },
   "target": {
-    "identifier": "1JAP",
-    "source": "pdb",
-    "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/1jap.pdb",
-    "title": "COMPLEX OF PRO-LEU-GLY-HYDROXYLAMINE WITH THE CATALYTIC DOMAIN OF MATRIX METALLO PROTEINASE-8 (MET80 FORM)",
-    "resolution": 1.82,
+    "identifier": "1jap",
+    "source": "pdb (resumed)",
+    "path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/raw/1jap.pdb",
+    "title": "",
+    "resolution": null,
     "uniprot_ids": [],
-    "ligand_codes": [
-      "HOA",
-      "CA",
-      "ZN"
-    ]
+    "ligand_codes": []
   },
   "receptor": {
     "pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/prepared/receptor.pdbqt",
@@ -261,9 +258,9 @@
   ],
   "gridbox": {
     "center": [
-      25.326500000000003,
-      58.9805,
-      53.492000000000004
+      25.327,
+      58.98,
+      53.492
     ],
     "size": [
       10.0,
@@ -272,10 +269,10 @@
     ],
     "source": "pocket:HOA",
     "padding": 4.0,
-    "vina_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/gridbox.txt",
     "warnings": [],
     "assumption_strength": "strong",
-    "receptor_coverage_pct": 3.6
+    "receptor_coverage_pct": 3.6,
+    "vina_config": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/gridbox.txt"
   },
   "docking": {
     "backend": "python",
@@ -283,15 +280,16 @@
     "num_ok": 1,
     "resumed": 0,
     "warnings": [],
+    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/summary.csv",
     "results": [
       {
         "ligand": {
           "identifier": "hoa_redock",
-          "source": "pdb_ligand",
-          "value": "HOA",
-          "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/hoa.sdf",
-          "pdbqt_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/prepared/hoa_redock.pdbqt",
-          "status": "docked",
+          "source": "file",
+          "value": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/prepared/hoa_redock.pdbqt",
+          "path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/prepared/hoa_redock.pdbqt",
+          "pdbqt_path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/prepared/hoa_redock.pdbqt",
+          "status": "prepared",
           "error": null,
           "num_rotatable_bonds": 1,
           "num_heavy_atoms": 2,
@@ -485,15 +483,14 @@
             ]
           }
         ],
-        "out_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/hoa_redock_out.pdbqt",
-        "log_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/hoa_redock_out.log",
-        "runtime": 1.34,
+        "out_path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/docking/hoa_redock_out.pdbqt",
+        "log_path": null,
+        "runtime": 0.0,
         "backend": "python",
         "error": null,
         "best_affinity": -2.383
       }
-    ],
-    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/summary.csv"
+    ]
   },
   "analysis": {
     "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
@@ -1000,12 +997,18 @@
   },
   "visualization": {},
   "paths": {
-    "target_structure": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/1jap.pdb",
-    "receptor_pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/prepared/receptor.pdbqt",
-    "gridbox_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/gridbox.txt",
-    "docking_summary": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/summary.csv",
-    "analysis_json": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/analysis/interactions.json",
+    "target_structure": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/raw/1jap.pdb",
+    "analysis_json": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/analysis/interactions.json",
     "crystal_rmsd_reference": "HOA in 1jap.pdb",
-    "report": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/report.md"
+    "report": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1JAP_benchmark/report.md"
+  },
+  "checksums": {
+    "raw/1jap.pdb": "a401b277a3e625fc2b8d88ecef11fa1b20ccb7e27430a505c9b577a1a83bf192",
+    "raw/hoa.sdf": "d9c3695624e51ba071d734c9df6e934ea61e72714f2eb1fe95c4cd19df0b7db7",
+    "prepared/receptor.pdbqt": "e0b660b487983c8180ebaebc35cb3c96ec9926ea1d82b3e494d151dee811322e",
+    "prepared/hoa_redock.pdbqt": "4c24f5948abd0765c85aceb97b77263a398ec3518911273c3039236e4f494904",
+    "gridbox.txt": "e522d296e9ce531f42e207943fad7841b52f3d31587d2048dbd0c3eb1a308e13",
+    "docking/summary.csv": "2169291b6912940576f06c0801b1ced7f0371b86632c16d31bd2e12adace1b2f",
+    "docking/hoa_redock_out.pdbqt": "fafb3ed0daa156b52a7731f465e94d90ed5f5988bce91262baa6fe82ff1cf30c"
   }
 }

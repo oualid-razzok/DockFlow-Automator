@@ -54,12 +54,12 @@ hydrophobic,4.01,C,A,A,PHE,330,CD1,A
 hydrophobic,4.02,C,C,A,GLY,118,C,C
 hydrophobic,4.03,C,A,A,PHE,330,CE1,A
 hydrophobic,4.03,C,A,A,PHE,330,CD2,A
-hydrophobic,4.05,C,C,A,TRP,84,CG,C
 hydrophobic,4.05,C,C,A,TRP,84,CB,C
+hydrophobic,4.05,C,C,A,TRP,84,CG,C
 hydrophobic,4.05,C,C,A,TRP,84,CD2,A
 hydrophobic,4.06,C,A,A,PHE,330,CG,A
-hydrophobic,4.06,C,A,A,PHE,330,CD1,A
 hydrophobic,4.06,C,A,A,TRP,84,CE2,A
+hydrophobic,4.06,C,A,A,PHE,330,CD1,A
 hydrophobic,4.06,C,A,A,TRP,84,CE2,A
 hydrophobic,4.07,C,A,A,TRP,84,CD1,C
 hydrophobic,4.07,C,C,A,PHE,330,CE2,A
@@ -100,8 +100,8 @@ hydrophobic,4.32,C,C,A,TRP,84,CE3,A
 hydrophobic,4.32,C,C,A,GLY,119,CA,C
 hydrophobic,4.32,C,C,A,HIS,440,CD2,C
 hydrophobic,4.34,C,C,A,GLY,118,CA,C
-hydrophobic,4.35,C,C,A,GLY,118,CA,C
 hydrophobic,4.35,C,C,A,TRP,84,CG,C
+hydrophobic,4.35,C,C,A,GLY,118,CA,C
 hydrophobic,4.36,C,C,A,TRP,84,CZ3,A
 hydrophobic,4.38,C,C,A,GLY,118,C,C
 hydrophobic,4.38,C,C,A,PHE,330,CZ,A

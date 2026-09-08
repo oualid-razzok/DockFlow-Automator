@@ -1,0 +1,31 @@
+{
+  "n_total": 133,
+  "n_actives": 40,
+  "n_decoys": 93,
+  "roc_auc": 0.7286,
+  "ef_1pct": 3.325,
+  "ef_5pct": 1.425,
+  "bedroc_alpha_20": 0.5157,
+  "target": "parp1",
+  "reference_pdb": "2RD6",
+  "reference_ligand": "78P",
+  "exhaustiveness": 1,
+  "seed": 2026,
+  "subsample": {
+    "actives": "40/508",
+    "decoys": "93/30050",
+    "rng": "random.Random(seed).sample",
+    "seed": 2026
+  },
+  "duplicates": {
+    "dedup_method": "rdkit-canonical-smiles",
+    "duplicate_smiles": {},
+    "n_duplicate_entries": 0
+  },
+  "random_baselines": {
+    "roc_auc_random": 0.501,
+    "bedroc_alpha_20_random": 0.3019,
+    "ef_random": 1.0,
+    "n_permutations": 10000
+  }
+}

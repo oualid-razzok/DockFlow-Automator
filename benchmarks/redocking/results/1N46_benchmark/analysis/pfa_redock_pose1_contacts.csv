@@ -58,8 +58,8 @@ hydrophobic,3.96,C,C,A,PHE,269,CD1,A
 hydrophobic,3.97,C,A,A,LEU,330,CD2,C
 hydrophobic,3.98,C,A,A,LEU,330,CD2,C
 hydrophobic,3.99,C,C,A,ALA,279,C,C
-hydrophobic,4.00,C,A,A,LEU,346,CD2,C
 hydrophobic,4.00,C,A,A,ILE,276,CD1,C
+hydrophobic,4.00,C,A,A,LEU,346,CD2,C
 hydrophobic,4.02,C,C,A,LEU,346,CD1,C
 hydrophobic,4.04,C,A,A,LEU,346,CD1,C
 hydrophobic,4.04,C,A,A,MET,442,CE,C

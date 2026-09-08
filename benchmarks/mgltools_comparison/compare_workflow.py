@@ -63,12 +63,52 @@ MGL_FIELDNAMES = [
     "pdb_id", "ligand", "status", "mgl_rmsd_a", "mgl_affinity_kcal_mol",
     "mgl_num_poses", "mgl_receptor_atoms", "mgl_ligand_atoms",
     "mgl_ligand_polar_h", "runtime_s", "detail",
+    # final pass, item 4: crash classification instead of a truncated
+    # traceback dumped into the CSV
+    "failure_stage", "failure_root_cause",
 ]
 FINAL_FIELDNAMES = MGL_FIELDNAMES[:3] + [
     "df_rmsd_a", "df_affinity_kcal_mol", "df_receptor_atoms",
     "df_ligand_atoms", "rmsd_delta", "affinity_delta",
     "receptor_atom_delta", "success_mgl", "success_df",
-] + MGL_FIELDNAMES[7:]
+] + MGL_FIELDNAMES[3:]  # all MGL-arm columns incl. mgl_rmsd_a
+# (final pass fix: the v0.3.x field list dropped mgl_rmsd_a /
+#  mgl_affinity_kcal_mol / mgl_num_poses / mgl_receptor_atoms from the
+#  published comparison.csv even though the summary table used them)
+
+
+def wilson_ci(successes: int, total: int, z: float = 1.959964
+              ) -> tuple[float, float]:
+    """Wilson score 95% interval (Wilson 1927); same hand-rolled
+    implementation as the redocking runner (no statsmodels dependency).
+    """
+    if total <= 0:
+        return (0.0, 0.0)
+    p = successes / total
+    z2 = z * z
+    centre = p + z2 / (2.0 * total)
+    margin = z * (p * (1.0 - p) / total + z2 / (4.0 * total * total)) ** 0.5
+    denom = 1.0 + z2 / total
+    return ((centre - margin) / denom, (centre + margin) / denom)
+
+
+def _fmt_rate(successes: int, total: int) -> str:
+    if total <= 0:
+        return "n/a"
+    low, high = wilson_ci(successes, total)
+    rate = 100.0 * successes / total
+    return f"{rate:.1f}% (95% CI: {100 * low:.1f}%-{100 * high:.1f}%)"
+
+
+def _root_cause(traceback_text: str) -> str:
+    """One-line root cause: the final exception line of a traceback."""
+    lines = [line.strip() for line in traceback_text.strip().splitlines()
+             if line.strip()]
+    for line in reversed(lines):
+        # the last line of a Python traceback is the exception message
+        if line and not line.startswith("Traceback"):
+            return line[:160]
+    return "unknown (see traceback file)"
 
 
 # ---------------------------------------------------------------------------
@@ -167,9 +207,30 @@ def run_mgl_arm(complex_row: dict, out_dir: Path, bench_results: Path,
     workdir = out_dir / pdb_id
     workdir.mkdir(parents=True, exist_ok=True)
 
-    def fail(reason: str) -> dict:
-        return {"pdb_id": pdb_id, "ligand": ligand_resname,
-                "status": f"failed: {reason}"}
+    def fail(stage: str, output: str, script: str) -> dict:
+        """Record a crash with the FULL traceback in failures/ (item 4).
+
+        The v0.3.x runner truncated the captured output at 200 characters
+        inside the CSV, which is exactly what the final review asked to
+        fix: the full text now lives in
+        ``results/failures/{pdb}_mgltools_{stage}_traceback.txt`` and the
+        CSV carries the stage, a one-line root cause and the file link.
+        """
+        failure_dir = out_dir / "failures"
+        failure_dir.mkdir(parents=True, exist_ok=True)
+        traceback_path = failure_dir / f"{pdb_id}_mgltools_{stage}_traceback.txt"
+        header = (f"MGLTools 1.5.7 crash - {pdb_id} ({ligand_resname}) - "
+                  f"stage: {stage} - script: {script}\n"
+                  f"command working directory: {workdir}\n\n")
+        traceback_path.write_text(header + output.strip() + "\n",
+                                  encoding="utf-8")
+        return {
+            "pdb_id": pdb_id, "ligand": ligand_resname,
+            "status": f"failed: {script} (see {traceback_path.name})",
+            "failure_stage": stage,
+            "failure_root_cause": _root_cause(output),
+            "detail": f"full traceback: failures/{traceback_path.name}",
+        }
 
     started = time.perf_counter()
     prefix = mgl_invocation(mgl_home)
@@ -189,14 +250,15 @@ def run_mgl_arm(complex_row: dict, out_dir: Path, bench_results: Path,
                    "-r", str(bench / "prepared" / "receptor_clean.pdb"),
                    "-o", str(rec_out), "-A", "hydrogens", "-U", "nphs")
         if not rec_out.is_file():
-            return fail(f"prepare_receptor4: "
-                        f"{(proc.stderr or proc.stdout).strip()[:200]}")
+            return fail("receptor_prep", proc.stderr or proc.stdout,
+                        "prepare_receptor4.py")
     rec_total, rec_heavy = count_pdbqt_atoms(rec_out)
 
     # ---- 2. ligand: same RCSB ideal SDF, converted to mol2 for ADT ------
     sdf = next((bench / "raw").glob("*.sdf"), None)
     if sdf is None:
-        return fail("no cached ideal SDF in the benchmark run dir")
+        return fail("ligand_prep", "no cached ideal SDF in the benchmark run dir",
+                    "(input)")
     mol2 = workdir / f"{ligand_resname.lower()}.mol2"
     lig_out = workdir / f"{ligand_resname.lower()}_mgl.pdbqt"
     if not lig_out.is_file():
@@ -206,13 +268,15 @@ def run_mgl_arm(complex_row: dict, out_dir: Path, bench_results: Path,
         conv = ob.OBConversion()
         conv.SetInAndOutFormats("sdf", "mol2")
         if not conv.ReadFile(molecule, str(sdf)):
-            return fail(f"openbabel could not read {sdf.name}")
+            return fail("ligand_prep", f"openbabel could not read {sdf.name}",
+                        "obabel sdf->mol2")
         if not conv.WriteFile(molecule, str(mol2)):
-            return fail("openbabel mol2 conversion failed")
+            return fail("ligand_prep", "openbabel mol2 conversion failed",
+                        "obabel sdf->mol2")
         proc = mgl("prepare_ligand4.py", "-l", str(mol2), "-o", str(lig_out))
         if not lig_out.is_file():
-            return fail(f"prepare_ligand4: "
-                        f"{(proc.stderr or proc.stdout).strip()[:200]}")
+            return fail("ligand_prep", proc.stderr or proc.stdout,
+                        "prepare_ligand4.py")
     lig_total, lig_heavy = count_pdbqt_atoms(lig_out)
 
     # ---- 3. identical search space + seed + exhaustiveness --------------
@@ -220,12 +284,17 @@ def run_mgl_arm(complex_row: dict, out_dir: Path, bench_results: Path,
     pose_out = workdir / f"{ligand_resname.lower()}_mgl_out.pdbqt"
     from vina import Vina
 
-    vina_obj = Vina(sf_name="vina", seed=seed, cpu=0, verbosity=0)
-    vina_obj.set_receptor(str(rec_out))
-    vina_obj.set_ligand_from_file(str(lig_out))
-    vina_obj.compute_vina_maps(center=list(center), box_size=list(size))
-    vina_obj.dock(exhaustiveness=exhaustiveness, n_poses=9)
-    vina_obj.write_poses(str(pose_out), n_poses=9, overwrite=True)
+    try:
+        vina_obj = Vina(sf_name="vina", seed=seed, cpu=0, verbosity=0)
+        vina_obj.set_receptor(str(rec_out))
+        vina_obj.set_ligand_from_file(str(lig_out))
+        vina_obj.compute_vina_maps(center=list(center), box_size=list(size))
+        vina_obj.dock(exhaustiveness=exhaustiveness, n_poses=9)
+        vina_obj.write_poses(str(pose_out), n_poses=9, overwrite=True)
+    except Exception:  # noqa: BLE001 - docking crash, record fully
+        import traceback
+
+        return fail("docking", traceback.format_exc(), "vina-python")
 
     # ---- 4. crystal RMSD with the SAME analyzer as the DockFlow arm -----
     from dockflow_core.analyzer import crystal_rmsd_with_method, extract_reference_atoms
@@ -340,6 +409,10 @@ def write_report(rows: list[dict], out_dir: Path, bench_results: Path,
         "mgl_arm_completed": len(ok),
         "mgl_arm_success_within_2a": len(mgl_ok),
         "dockflow_arm_success_within_2a": len(df_ok),
+        "mgl_arm_success_rate_wilson_95ci_pct": [
+            round(100 * v, 1) for v in wilson_ci(len(mgl_ok), len(ok))],
+        "dockflow_arm_success_rate_wilson_95ci_pct": [
+            round(100 * v, 1) for v in wilson_ci(len(df_ok), len(ok))],
         "mean_rmsd_delta_a": round(sum(deltas) / len(deltas), 3) if deltas else None,
         "mean_affinity_delta": round(sum(aff_deltas) / len(aff_deltas), 3)
         if aff_deltas else None,
@@ -364,9 +437,15 @@ def write_report(rows: list[dict], out_dir: Path, bench_results: Path,
         f"- complexes attempted: {stats['complexes_attempted']}",
         f"- MGLTools arm completed: {stats['mgl_arm_completed']} "
         f"(failures recorded with reasons, not dropped)",
-        f"- MGLTools arm success (RMSD <= 2.0 A): **{len(mgl_ok)}/{len(ok)}**",
+        f"- MGLTools arm success (RMSD <= 2.0 A): **{len(mgl_ok)}/{len(ok)}** "
+        f"= {_fmt_rate(len(mgl_ok), len(ok))}",
         f"- DockFlow arm success: **{len(df_ok)}/{len(ok)}** "
-        "(from the redocking benchmark)",
+        f"= {_fmt_rate(len(df_ok), len(ok))}",
+        "- **denominator (explicit, item 4): the success rates above are "
+        f"computed on the {len(ok)}-complex MGLTools-completed subset - "
+        f"{len(merged) - len(ok)} MGLTools crashes are excluded.  This is "
+        "NOT a head-to-head 24-vs-24 comparison; the full 24-complex "
+        "DockFlow numbers are in benchmarks/redocking/results/.",
         f"- mean RMSD delta (MGLTools - DockFlow): {_fmt(stats['mean_rmsd_delta_a'], 3)} A",
         f"- mean affinity delta (MGLTools - DockFlow): {_fmt(stats['mean_affinity_delta'], 3)} kcal/mol",
         f"- mean receptor atom-count delta: {_fmt(stats['mean_receptor_atom_delta'], 1)}",
@@ -391,13 +470,14 @@ def write_report(rows: list[dict], out_dir: Path, bench_results: Path,
                 f"{entry.get('df_ligand_atoms', 'n/a')}/{entry.get('mgl_ligand_atoms', 'n/a')} |"
             )
         else:
-            reason = str(entry.get("status", ""))
-            reason = (reason[:100] + "...") if len(reason) > 100 else reason
+            # item 4: crashes link to the full traceback file and carry the
+            # stage + one-line root cause instead of a truncated dump
             lines.append(
                 f"| {entry['pdb_id']} | {entry.get('ligand', '')} | "
-                f"{_fmt(entry.get('df_rmsd_a'))} | FAILED | - | "
+                f"{_fmt(entry.get('df_rmsd_a'))} | FAILED ({entry.get('failure_stage', 'n/a')}) | - | "
                 f"{_fmt(entry.get('df_affinity_kcal_mol'))} | - | - | - | - |"
-                f" {reason} |"
+                f" root cause: {entry.get('failure_root_cause', 'n/a')}; "
+                f"[full traceback]({entry.get('detail', '')}) |"
             )
     lines += [
         "",
@@ -410,12 +490,12 @@ def write_report(rows: list[dict], out_dir: Path, bench_results: Path,
         "DockFlow did.  Neither arm is a ground truth: both are compared",
         "against the crystal pose.",
         "",
-        "The three MGLTools-arm failures are **genuine MGLTools 1.5.7",
-        "crashes** on these inputs (tracebacks preserved in the per-complex",
-        "work directories and in ``mgl_arm_results.csv``); the DockFlow arm",
-        "processed the same files successfully.  They are recorded, not",
-        "dropped, so the two arms' success rates are not directly comparable",
-        "(14/21 vs 16/21 of the MGL-completed subset).",
+        "The MGLTools-arm failures are **genuine MGLTools 1.5.7 crashes** "
+        "on these inputs (full tracebacks in ``results/failures/``, linked "
+        "from the table and the CSV); the DockFlow arm processed the same "
+        "files successfully.  They are recorded, not dropped, so the two "
+        "arms' success rates share the MGLTools-completed denominator "
+        "stated above - not a head-to-head 24-vs-24.",
         "",
         "Systematic differences to keep in mind when reading the table:",
         "",

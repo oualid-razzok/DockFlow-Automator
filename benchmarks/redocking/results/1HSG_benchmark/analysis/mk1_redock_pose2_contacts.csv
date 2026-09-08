@@ -90,8 +90,8 @@ hydrophobic,4.24,C,C,A,PRO,81,CD,C
 hydrophobic,4.24,C,A,A,ALA,28,CA,C
 hydrophobic,4.25,C,C,B,ILE,84,CG1,C
 hydrophobic,4.26,C,C,A,ALA,28,CA,C
-hydrophobic,4.27,C,C,B,ASP,25,CG,C
 hydrophobic,4.27,C,C,A,ASP,25,CG,C
+hydrophobic,4.27,C,C,B,ASP,25,CG,C
 hydrophobic,4.27,C,A,A,ASP,30,C,C
 ionic,4.28,N,NA,A,ASP,25,OD2,OA
 hydrophobic,4.28,C,C,B,VAL,32,CG2,C

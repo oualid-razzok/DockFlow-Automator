@@ -9,7 +9,7 @@
       "num_ionic_contacts": 4,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.6165555555555556,
-      "crystal_rmsd": 0.13531695592847343,
+      "crystal_rmsd": 0.13531695592772663,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {
@@ -1403,7 +1403,7 @@
       "num_ionic_contacts": 0,
       "num_metal_contacts": 0,
       "docking_score_efficiency": -0.5527777777777777,
-      "crystal_rmsd": 0.3835035879486934,
+      "crystal_rmsd": 0.3835035879500109,
       "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
       "contacts": [
         {

@@ -23,18 +23,32 @@ from .utils import DockFlowError
 
 
 def _resolve_version() -> str:
-    """Prefer the installed distribution metadata; fall back to a literal.
+    """Prefer the installed distribution metadata; fall back to pyproject.
 
     This keeps ``__version__`` in sync with ``pyproject.toml`` when the
     package is installed (regular or editable) while still working when the
-    repository is used straight from a source checkout without installation.
+    repository is used straight from a source checkout without installation
+    (the pyproject ``version`` is parsed directly in that case, so a
+    checkout never reports a stale hard-coded number).
     """
     try:
         from importlib import metadata
 
         return metadata.version("dockflow-automator")
     except Exception:  # pragma: no cover - source checkout without install
-        return "0.1.1"
+        try:
+            import re
+            from pathlib import Path
+
+            pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+            match = re.search(r'^version\s*=\s*"([^"]+)"',
+                              pyproject.read_text(encoding="utf-8"),
+                              re.MULTILINE)
+            if match:
+                return match.group(1)
+        except Exception:  # noqa: BLE001 - truly minimal environments
+            pass
+        return "0.0.0+unknown"
 
 
 __version__ = _resolve_version()

@@ -56,14 +56,14 @@ hydrophobic,4.16,C,C,A,LEU,89,CD1,C
 hydrophobic,4.18,C,C,A,TYR,115,CE1,A
 hydrophobic,4.18,C,C,A,ASP,83,CB,C
 ionic,4.19,O,OA,A,ARG,87,NH1,N
-hydrophobic,4.19,C,C,A,LEU,37,CD2,C
 hydrophobic,4.19,C,C,A,LEU,37,CA,C
+hydrophobic,4.19,C,C,A,LEU,37,CD2,C
 hydrophobic,4.19,C,C,A,TYR,115,CE1,A
 ionic,4.21,N,N,A,ASP,83,OD2,OA
 hydrophobic,4.24,C,C,A,LEU,37,CD2,C
 ionic,4.28,O,OA,A,ARG,35,NH2,N
-hydrophobic,4.35,C,C,A,TYR,113,CD1,A
 hydrophobic,4.35,C,C,A,TYR,113,CG,A
+hydrophobic,4.35,C,C,A,TYR,113,CD1,A
 hydrophobic,4.35,C,C,A,ARG,35,CZ,C
 hydrophobic,4.39,C,C,A,TYR,115,CG,A
 ionic,4.41,O,OA,A,ARG,35,NH1,N

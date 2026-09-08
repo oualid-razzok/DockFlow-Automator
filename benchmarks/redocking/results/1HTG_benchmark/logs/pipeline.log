@@ -21,3 +21,31 @@
 2026-09-08 03:54:21,790 | INFO    | dockflow.pipeline. | pipeline step report: running 
 2026-09-08 03:54:21,808 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HTG_benchmark/report.md
 2026-09-08 03:54:21,822 | INFO    | dockflow.pipeline. | run 1HTG_benchmark finished in 269.0s (ok=True)
+2026-09-08 13:48:41,412 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.1.1 starting run 1HTG_benchmark
+2026-09-08 13:48:41,413 | INFO    | dockflow.pipeline. | restored provenance sections from /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HTG_benchmark/manifest.json
+2026-09-08 13:48:41,413 | INFO    | dockflow.pipeline. | pipeline step download: skipped not requested
+2026-09-08 13:48:41,413 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: skipped not requested
+2026-09-08 13:48:41,414 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: skipped not requested
+2026-09-08 13:48:41,414 | INFO    | dockflow.pipeline. | pipeline step gridbox: skipped not requested
+2026-09-08 13:48:41,415 | INFO    | dockflow.pipeline. | pipeline step docking: skipped not requested
+2026-09-08 13:48:41,418 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 13:48:41,521 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HTG_benchmark/docking/g37_redock_poses.sdf
+2026-09-08 13:48:41,521 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 13:48:41,522 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped not requested
+2026-09-08 13:48:41,522 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 13:48:41,543 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HTG_benchmark/report.md
+2026-09-08 13:48:41,557 | INFO    | dockflow.pipeline. | run 1HTG_benchmark finished in 0.1s (ok=True)
+2026-09-08 13:49:33,310 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.3.1 starting run 1HTG_benchmark
+2026-09-08 13:49:33,311 | INFO    | dockflow.pipeline. | restored provenance sections from /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HTG_benchmark/manifest.json
+2026-09-08 13:49:33,311 | INFO    | dockflow.pipeline. | pipeline step download: skipped not requested
+2026-09-08 13:49:33,311 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: skipped not requested
+2026-09-08 13:49:33,311 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: skipped not requested
+2026-09-08 13:49:33,312 | INFO    | dockflow.pipeline. | pipeline step gridbox: skipped not requested
+2026-09-08 13:49:33,313 | INFO    | dockflow.pipeline. | pipeline step docking: skipped not requested
+2026-09-08 13:49:33,348 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 13:49:33,422 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HTG_benchmark/docking/g37_redock_poses.sdf
+2026-09-08 13:49:33,422 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 13:49:33,423 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped not requested
+2026-09-08 13:49:33,423 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 13:49:33,443 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HTG_benchmark/report.md
+2026-09-08 13:49:33,458 | INFO    | dockflow.pipeline. | run 1HTG_benchmark finished in 0.1s (ok=True)

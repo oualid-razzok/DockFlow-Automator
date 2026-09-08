@@ -16,8 +16,8 @@ hydrophobic,3.63,C,A,A,TRP,215,CE3,C
 hydrophobic,3.65,C,C,A,TRP,215,CE2,C
 hydrophobic,3.66,C,A,A,TRP,215,CE3,C
 hydrophobic,3.69,C,C,A,TRP,215,CE3,C
-hydrophobic,3.75,C,C,A,TRP,215,CD2,C
 hydrophobic,3.75,C,C,A,PHE,174,CD1,A
+hydrophobic,3.75,C,C,A,TRP,215,CD2,C
 hydrophobic,3.76,C,C,A,TRP,215,CB,C
 hydrophobic,3.77,C,A,A,GLN,192,CB,C
 hydrophobic,3.77,C,C,A,TRP,215,CZ2,C
@@ -35,8 +35,8 @@ hydrophobic,3.89,C,A,A,VAL,213,CG1,C
 hydrophobic,3.90,C,A,A,GLY,216,CA,C
 hydrophobic,3.92,C,A,A,TRP,215,CB,C
 hydrophobic,3.93,C,A,A,TRP,215,C,C
-hydrophobic,3.94,C,C,A,TRP,215,CH2,C
 hydrophobic,3.94,C,C,A,TRP,215,CE3,C
+hydrophobic,3.94,C,C,A,TRP,215,CH2,C
 hydrophobic,3.97,C,A,A,GLN,192,CD,C
 hydrophobic,3.99,C,A,A,GLN,192,CB,C
 hydrophobic,3.99,C,C,A,TYR,99,CE2,A
@@ -77,8 +77,8 @@ hydrophobic,4.30,C,C,A,GLY,218,CA,C
 hydrophobic,4.31,C,A,A,GLY,218,C,C
 hydrophobic,4.31,C,C,A,TRP,215,CE2,C
 hydrophobic,4.33,C,C,A,TRP,215,CD1,C
-hydrophobic,4.34,C,A,A,GLY,218,CA,C
 hydrophobic,4.34,C,A,A,GLN,192,CD,C
+hydrophobic,4.34,C,A,A,GLY,218,CA,C
 hydrophobic,4.34,C,C,A,THR,98,C,C
 hydrophobic,4.35,C,C,A,TRP,215,CG,C
 hydrophobic,4.38,C,A,A,CYS,191,CA,C

@@ -1,9 +1,0 @@
-{
-  "n_total": 133,
-  "n_actives": 40,
-  "n_decoys": 93,
-  "roc_auc": 0.6648,
-  "ef_1pct": 3.325,
-  "ef_5pct": 2.375,
-  "bedroc_alpha_20": 0.6647
-}

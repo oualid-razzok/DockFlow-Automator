@@ -74,3 +74,17 @@ Wrong number or type of arguments for overloaded function 'Vina_set_receptor'.
 2026-09-08 01:53:33,809 | INFO    | dockflow.pipeline. | pipeline step report: running 
 2026-09-08 01:53:33,819 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1NVQ_benchmark/report.md
 2026-09-08 01:53:33,829 | INFO    | dockflow.pipeline. | run 1NVQ_benchmark finished in 16.9s (ok=True)
+2026-09-08 13:48:43,132 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.1.1 starting run 1NVQ_benchmark
+2026-09-08 13:48:43,132 | INFO    | dockflow.pipeline. | restored provenance sections from /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1NVQ_benchmark/manifest.json
+2026-09-08 13:48:43,132 | INFO    | dockflow.pipeline. | pipeline step download: skipped not requested
+2026-09-08 13:48:43,132 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: skipped not requested
+2026-09-08 13:48:43,132 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: skipped not requested
+2026-09-08 13:48:43,133 | INFO    | dockflow.pipeline. | pipeline step gridbox: skipped not requested
+2026-09-08 13:48:43,134 | INFO    | dockflow.pipeline. | pipeline step docking: skipped not requested
+2026-09-08 13:48:43,134 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 13:48:43,179 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1NVQ_benchmark/docking/ucn_redock_poses.sdf
+2026-09-08 13:48:43,179 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 13:48:43,179 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped not requested
+2026-09-08 13:48:43,179 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 13:48:43,189 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1NVQ_benchmark/report.md
+2026-09-08 13:48:43,200 | INFO    | dockflow.pipeline. | run 1NVQ_benchmark finished in 0.1s (ok=True)

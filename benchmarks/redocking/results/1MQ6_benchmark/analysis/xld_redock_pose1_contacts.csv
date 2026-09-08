@@ -26,8 +26,8 @@ hydrophobic,3.89,C,A,A,GLN,192,CB,C
 hydrophobic,3.89,C,A,A,TRP,215,CB,C
 hydrophobic,3.91,C,A,A,TRP,215,C,C
 hydrophobic,3.92,C,C,A,PHE,174,CG,A
-hydrophobic,3.93,C,A,A,GLY,216,CA,C
 hydrophobic,3.93,C,A,A,TRP,215,C,C
+hydrophobic,3.93,C,A,A,GLY,216,CA,C
 hydrophobic,3.93,C,A,A,TYR,99,CD2,A
 hydrophobic,3.95,C,A,A,TRP,215,CE3,C
 hydrophobic,3.96,C,A,A,TYR,99,CE1,A

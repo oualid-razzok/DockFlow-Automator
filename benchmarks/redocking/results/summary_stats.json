@@ -2,10 +2,94 @@
   "complexes_attempted": 24,
   "completed": 24,
   "failed": 0,
-  "successful_within_2a": 18,
-  "success_rate_pct": 75.0,
-  "mean_rmsd_a": 1.32,
-  "median_rmsd_a": 0.96,
+  "successful_within_2a": 23,
+  "success_rate_pct": 95.8,
+  "success_rate_wilson_95ci_pct": [
+    79.8,
+    99.3
+  ],
+  "rank1_successful_within_2a": 21,
+  "rank1_success_rate_pct": 87.5,
+  "rank1_wilson_95ci_pct": [
+    69.0,
+    95.7
+  ],
+  "top3_successful_within_2a": 23,
+  "top3_success_rate_pct": 95.8,
+  "top3_wilson_95ci_pct": [
+    79.8,
+    99.3
+  ],
+  "mean_rmsd_a": 0.67,
+  "median_rmsd_a": 0.62,
+  "rmsd_distribution": {
+    "min": 0.023,
+    "p25": 0.258,
+    "median": 0.621,
+    "p75": 0.863,
+    "max": 3.034,
+    "std": 0.62,
+    "n": 24
+  },
+  "rank1_rmsd_distribution": {
+    "min": 0.024,
+    "p25": 0.314,
+    "median": 0.637,
+    "p75": 1.168,
+    "max": 4.353,
+    "std": 1.092,
+    "n": 24
+  },
+  "success_by_definition_threshold": {
+    "rank1": {
+      "1.0a": 15,
+      "2.0a": 21,
+      "3.0a": 22
+    },
+    "top3": {
+      "1.0a": 20,
+      "2.0a": 23,
+      "3.0a": 23
+    },
+    "best_any_rank": {
+      "1.0a": 20,
+      "2.0a": 23,
+      "3.0a": 23
+    }
+  },
+  "topn_success_rate_pct": {
+    "1": 87.5,
+    "2": 91.7,
+    "3": 95.8,
+    "4": 95.8,
+    "5": 95.8,
+    "6": 95.8,
+    "7": 95.8,
+    "8": 95.8,
+    "9": 95.8
+  },
+  "per_target_group": [
+    {
+      "group": "HIV-1 protease",
+      "attempted": 6,
+      "successful_within_2a": 5,
+      "rate_pct": 83.3,
+      "wilson_95ci_pct": [
+        43.6,
+        97.0
+      ]
+    },
+    {
+      "group": "other targets",
+      "attempted": 18,
+      "successful_within_2a": 18,
+      "rate_pct": 100.0,
+      "wilson_95ci_pct": [
+        82.4,
+        100.0
+      ]
+    }
+  ],
   "mean_runtime_s": 58.5,
   "mean_best_affinity": -8.86
 }

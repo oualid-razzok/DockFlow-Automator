@@ -1,0 +1,17 @@
+REMARK VINA RESULT:    -1.550      2.800      2.800
+REMARK INTER + INTRA:          -1.550
+REMARK INTER:                  -1.550
+REMARK INTRA:                   0.000
+REMARK UNBOUND:                 0.000
+REMARK SMILES NO
+REMARK SMILES IDX 1 1 2 4
+REMARK H PARENT 1 2 1 3 2 5
+ROOT
+ATOM      1  N   UNL     1      28.076  60.375  50.503  1.00  0.00    -0.219 NA
+ATOM      2  H   UNL     1      27.519  61.141  50.116  1.00  0.00     0.151 HD
+ATOM      3  H   UNL     1      27.725  59.525  50.055  1.00  0.00     0.151 HD
+ATOM      4  O   UNL     1      29.351  60.562  49.830  1.00  0.00    -0.320 OA
+ATOM      5  H   UNL     1      29.942  59.965  50.333  1.00  0.00     0.237 HD
+ENDROOT
+TORSDOF 1
+END

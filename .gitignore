@@ -28,9 +28,24 @@ data/
 *.sdf
 !tests/**/*.pdbqt
 
+# Benchmark + validation artifacts are DELIBERATELY committed (final pass,
+# items 1, 5, 10, 14): pose PDBQT/SDF files, the pinned DUD-E panel lists
+# and the example run outputs are the evidence behind every published
+# number - they are un-ignored here.
+!benchmarks/**/*.pdbqt
+!benchmarks/**/*.sdf
+!benchmarks/enrichment/data/
+!benchmarks/enrichment/data/*.ism
+
+# Regeneration scratch directories (never published)
+benchmarks/redocking/results-regen/
+benchmarks/enrichment/results-reproduce/
+
 # Downloaded engines (vina.exe dropped next to the launcher)
 vina.exe
 vina
 runs/
 dockflow_runs/
 examples/results/*/
+!examples/results/1HVR/
+!examples/results/1HVR/**

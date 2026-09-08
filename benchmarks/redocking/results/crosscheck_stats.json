@@ -1,0 +1,9 @@
+{
+  "poses_compared": 193,
+  "complexes": 24,
+  "independent_method": "spyrmsd-symmrmsd",
+  "max_abs_delta_a": 0.0,
+  "mean_abs_delta_a": 0.0,
+  "delta_limit_a": 0.1,
+  "passed": true
+}

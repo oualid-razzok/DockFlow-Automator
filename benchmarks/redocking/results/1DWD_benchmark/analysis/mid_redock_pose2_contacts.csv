@@ -57,8 +57,8 @@ hydrophobic,4.13,C,A,H,GLU,192,CB,C
 hydrophobic,4.13,C,C,H,GLU,97,CA,C
 hydrophobic,4.14,C,A,H,TRP,60,CH2,A
 hydrophobic,4.15,C,C,H,TRP,60,CH2,A
-hydrophobic,4.15,C,C,H,LEU,99,CG,C
 hydrophobic,4.15,C,C,H,ASN,98,CA,C
+hydrophobic,4.15,C,C,H,LEU,99,CG,C
 hydrophobic,4.17,C,C,H,TRP,96,C,C
 hydrophobic,4.18,C,C,H,GLU,217,CA,C
 hydrophobic,4.18,C,A,H,TRP,215,CD1,C

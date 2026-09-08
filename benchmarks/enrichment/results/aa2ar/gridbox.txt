@@ -1,0 +1,8 @@
+# DUD-E enrichment grid box - target aa2ar - reference 3EML ligand ZMA (4.0 A padding, assumption: strong)
+center_x = -9.255
+center_y = -7.071
+center_z = 56.203500000000005
+size_x = 14.442
+size_y = 12.946000000000002
+size_z = 22.165
+exhaustiveness = 1

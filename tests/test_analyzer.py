@@ -620,3 +620,173 @@ def test_extract_reference_atoms_single_instance(tmp_path):
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     reference = extract_reference_atoms(path, "XXX")
     assert len(reference) == 4  # one instance only
+
+
+# ---------------------------------------------------------------------------
+# Symmetry-aware RMSD: analytically known cases (final pass, item 5)
+# ---------------------------------------------------------------------------
+def _rdkit_heavy_atoms(smiles: str, seed: int = 42) -> list[Atom]:
+    """Deterministic heavy-Atom coordinates of an RDKit molecule."""
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+
+    mol = Chem.MolFromSmiles(smiles)
+    assert mol is not None, f"RDKit could not parse {smiles!r}"
+    mol = Chem.AddHs(mol)
+    params = AllChem.ETKDGv3()
+    params.randomSeed = seed
+    assert AllChem.EmbedMolecule(mol, params) == 0
+    conf = mol.GetConformer()
+    atoms: list[Atom] = []
+    for index, atom in enumerate(mol.GetAtoms()):
+        if atom.GetAtomicNum() == 1:
+            continue
+        pos = conf.GetAtomPosition(index)
+        symbol = atom.GetSymbol()
+        atoms.append(Atom(name=f"{symbol}{index}", resname="LIG", chain="A",
+                          resseq=1, x=pos.x, y=pos.y, z=pos.z,
+                          element=symbol))
+    return atoms
+
+
+def _rotate(atoms: list[Atom], rotation: np.ndarray,
+            translation=(0.0, 0.0, 0.0)) -> list[Atom]:
+    rotated = []
+    for a in atoms:
+        xyz = np.asarray([a.x, a.y, a.z]) @ rotation + np.asarray(translation)
+        rotated.append(
+            Atom(name=a.name, resname=a.resname, chain=a.chain,
+                 resseq=a.resseq, x=float(xyz[0]), y=float(xyz[1]),
+                 z=float(xyz[2]), element=a.element))
+    return rotated
+
+
+def _molecule_axes(atoms: list[Atom]) -> tuple[np.ndarray, np.ndarray]:
+    """(long in-plane axis, plane normal) of a planar molecule (SVD)."""
+    coords = np.array([[a.x, a.y, a.z] for a in atoms])
+    centered = coords - coords.mean(axis=0)
+    _u, _s, vt = np.linalg.svd(centered, full_matrices=False)
+    return vt[0], vt[2]  # largest variance = long axis, smallest = normal
+
+
+def _rotation_about(axis: np.ndarray, degrees: float) -> np.ndarray:
+    axis = axis / np.linalg.norm(axis)
+    theta = np.deg2rad(degrees)
+    k = np.array([[0, -axis[2], axis[1]],
+                  [axis[2], 0, -axis[0]],
+                  [-axis[1], axis[0], 0]])
+    return (np.eye(3) + np.sin(theta) * k
+            + (1 - np.cos(theta)) * (k @ k))
+
+
+def test_symmetry_rmsd_known_cases():
+    """Analytic symmetry cases with hand-constructed molecules (item 5).
+
+    Each case has a KNOWN answer, so the symmetry-aware RMSD
+    (``crystal_rmsd_with_method`` -> RDKit GetBestRMS, graph automorphisms)
+    is validated against analytic expectations, not just internal
+    consistency:
+
+    (a) benzene rigidly rotated 60 deg about its ring normal: a C6
+        automorphism - symmetry-aware ~ 0; a naive UNALIGNED fixed-order
+        RMSD (no superposition, the careless-script baseline) reports the
+        full ~1.4 A ring shift;
+    (b) naphthalene flipped 180 deg about its long in-plane axis: a C2
+        automorphism - symmetry-aware ~ 0, naive unaligned > 0;
+    (c) aspirin with the two carboxylic-acid oxygens relabeled (the atom
+        order tools emit for symmetric groups): same chemistry -
+        symmetry-aware ~ 0, fixed-correspondence Kabsch (superposed,
+        identity order) > 0;
+    (d) a chiral ligand with NO automorphisms (2-butanol), rigidly
+        displaced: symmetry-aware == naive (~ 0 both, as any superposed
+        RMSD must be for a rigid motion);
+    (e) the same chiral ligand with one atom genuinely displaced so the
+        RMSD is ~1.5 A: both methods must agree (no symmetry to exploit).
+    """
+    pytest.importorskip("rdkit")
+    from dockflow_core.analyzer import crystal_rmsd_with_method, kabsch_rmsd
+
+    def _naive(pose: list[Atom], ref: list[Atom]) -> float:
+        return kabsch_rmsd([(a.x, a.y, a.z) for a in pose],
+                           [(a.x, a.y, a.z) for a in ref])
+
+    def _naive_unaligned(pose: list[Atom], ref: list[Atom]) -> float:
+        return float(np.sqrt(np.mean([
+            (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2
+            for a, b in zip(pose, ref, strict=True)])))
+
+    def _symmetric(pose: list[Atom], ref: list[Atom]) -> float:
+        value, method = crystal_rmsd_with_method(pose, ref)
+        assert method == "rdkit-getbestrms-graph-automorphism"
+        assert value is not None
+        return value
+
+    # (a) benzene rotated 60 deg about the ring normal ---------------------
+    benzene = _rdkit_heavy_atoms("c1ccccc1")
+    _long, normal = _molecule_axes(benzene)
+    rotated = _rotate(benzene, _rotation_about(normal, 60.0),
+                      (0.5, -0.4, 0.3))
+    assert _symmetric(rotated, benzene) == pytest.approx(0.0, abs=1e-3)
+    assert _naive_unaligned(rotated, benzene) > 0.5
+    # (superposed fixed-order Kabsch is ~0 for ANY rigid motion - the
+    # automorphism matters because real pose/reference atom orders and
+    # partial-symmetry arrangements are NOT rigid motions of each other)
+
+    # (b) naphthalene flipped 180 deg about the long in-plane axis ---------
+    naphthalene = _rdkit_heavy_atoms("c1ccc2ccccc2c1")
+    long_axis, _normal = _molecule_axes(naphthalene)
+    flipped = _rotate(naphthalene, _rotation_about(long_axis, 180.0),
+                      (-0.2, 0.6, 0.1))
+    assert _symmetric(flipped, naphthalene) == pytest.approx(0.0, abs=1e-3)
+    assert _naive_unaligned(flipped, naphthalene) > 0.3
+
+    # (c) aspirin with the two acid oxygens swapped -----------------------
+    aspirin = _rdkit_heavy_atoms("CC(=O)Oc1ccccc1C(=O)O")
+    swapped = list(aspirin)
+    for carbon in [a for a in aspirin if a.element == "C"]:
+        oxygens = [(i, a) for i, a in enumerate(aspirin)
+                   if a.element == "O" and _shares_bond(a, carbon)]
+        if len(oxygens) != 2:
+            continue
+        # the COOH group (NOT the acetyl ester): both oxygens bonded
+        # only to this carbon - swapping them is a graph automorphism
+        others = [a for a in aspirin if a is not carbon]
+        if any(_shares_bond(o, other) for _i, o in oxygens
+               for other in others if other not in (o,)):
+            continue
+        (i, first), (j, second) = oxygens
+        swapped[i], swapped[j] = second, first
+        break
+    else:
+        pytest.fail("aspirin test: carboxylic acid oxygens not found")
+    assert _symmetric(swapped, aspirin) == pytest.approx(0.0, abs=1e-3)
+    assert _naive(swapped, aspirin) > 0.3
+
+    # (d) chiral ligand, no automorphisms, rigid displacement -------------
+    butanol = _rdkit_heavy_atoms("CC[C@H](C)O")
+    displaced = _rotate(butanol, _rotation_about(np.array([0.2, 1.0, -0.3]),
+                                                 37.0), (1.0, 2.0, -1.0))
+    naive_d = _naive(displaced, butanol)
+    sym_d = _symmetric(displaced, butanol)
+    assert naive_d == pytest.approx(0.0, abs=1e-6)
+    assert sym_d == pytest.approx(naive_d, abs=1e-3)
+
+    # (e) same ligand, one atom displaced so RMSD ~ 1.5 A -----------------
+    n_heavy = len(butanol)
+    delta = 1.5 * np.sqrt(n_heavy)
+    shifted = list(butanol)
+    oxygen = next(i for i, a in enumerate(butanol) if a.element == "O")
+    last = butanol[oxygen]
+    shifted[oxygen] = Atom(name=last.name, resname="LIG", chain="A",
+                           resseq=1, x=last.x, y=last.y + delta, z=last.z,
+                           element="O")
+    naive_e = _naive(shifted, butanol)
+    sym_e = _symmetric(shifted, butanol)
+    assert 1.0 < sym_e < 2.0
+    assert abs(sym_e - naive_e) < 0.1  # both methods agree
+
+
+def _shares_bond(a: Atom, b: Atom, cutoff: float = 2.0) -> bool:
+    """Crude distance-based bonding for the aspirin test setup."""
+    return (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2 < cutoff ** 2
+

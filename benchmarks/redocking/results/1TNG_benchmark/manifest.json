@@ -1,11 +1,11 @@
 {
   "run_id": "1TNG_benchmark",
-  "run_dir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark",
+  "run_dir": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark",
   "ok": true,
   "error": null,
   "cancelled": false,
   "config": {
-    "workdir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results",
+    "workdir": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results",
     "run_id": "1TNG_benchmark",
     "target": {
       "pdb_id": "1TNG"
@@ -48,67 +48,68 @@
     "prepare_ligands": 2.01,
     "gridbox": 0.03,
     "docking": 2.27,
-    "analysis": 0.08,
-    "total": 5.51
+    "analysis": 0.04,
+    "total": 0.06,
+    "original_run_duration_s": 5.51
   },
-  "duration_s": 5.51,
+  "duration_s": 0.06,
   "stages": [
     {
       "name": "download",
-      "status": "done",
-      "started_at": "2026-09-08T01:33:54Z",
-      "ended_at": "2026-09-08T01:33:54Z",
-      "duration_s": 0.894,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "prepare_receptor",
-      "status": "done",
-      "started_at": "2026-09-08T01:33:54Z",
-      "ended_at": "2026-09-08T01:33:55Z",
-      "duration_s": 0.217,
-      "engine": "openbabel",
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
+      "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "prepare_ligands",
-      "status": "done",
-      "started_at": "2026-09-08T01:33:55Z",
-      "ended_at": "2026-09-08T01:33:57Z",
-      "duration_s": 2.007,
-      "engine": "meeko",
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
+      "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "gridbox",
-      "status": "done",
-      "started_at": "2026-09-08T01:33:57Z",
-      "ended_at": "2026-09-08T01:33:57Z",
-      "duration_s": 0.033,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": null
+      "detail": "not requested (--stage)"
     },
     {
       "name": "docking",
-      "status": "done",
-      "started_at": "2026-09-08T01:33:57Z",
-      "ended_at": "2026-09-08T01:33:59Z",
-      "duration_s": 2.267,
+      "status": "skipped",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.0,
       "engine": null,
-      "backend": "python",
-      "detail": null
+      "backend": null,
+      "detail": "not requested (--stage)"
     },
     {
       "name": "analysis",
       "status": "done",
-      "started_at": "2026-09-08T01:33:59Z",
-      "ended_at": "2026-09-08T01:33:59Z",
-      "duration_s": 0.081,
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.039,
       "engine": null,
       "backend": null,
       "detail": null
@@ -116,28 +117,28 @@
     {
       "name": "visualization",
       "status": "skipped",
-      "started_at": "2026-09-08T01:33:59Z",
-      "ended_at": "2026-09-08T01:33:59Z",
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
       "duration_s": 0.0,
       "engine": null,
       "backend": null,
-      "detail": "disabled in config"
+      "detail": "not requested (--stage)"
     },
     {
       "name": "report",
       "status": "done",
-      "started_at": "2026-09-08T01:33:59Z",
-      "ended_at": "2026-09-08T01:33:59Z",
-      "duration_s": 0.011,
+      "started_at": "2026-09-08T13:48:42Z",
+      "ended_at": "2026-09-08T13:48:42Z",
+      "duration_s": 0.015,
       "engine": null,
       "backend": null,
       "detail": null
     }
   ],
   "environment": {
-    "dockflow": "0.2.1",
+    "dockflow": "0.1.1",
     "python": "3.12.14",
-    "python_executable": "/home/z/my-project/bindings-venv/bin/python",
+    "python_executable": "/home/z/.venv/bin/python3.12",
     "platform": "Linux 5.10.134-013.8.3.kangaroo.al8.x86_64 (x86_64)",
     "numpy": "2.5.3",
     "vina": "1.2.7",
@@ -145,25 +146,22 @@
     "rdkit": "2025.9.6",
     "gemmi": "0.7.5",
     "openbabel_wheel": "3.1.1.23",
-    "pandas": "3.0.5",
+    "pandas": "2.2.3",
     "dockflow_bindings": {
-      "importable": true,
-      "version": "0.1.0"
+      "importable": false,
+      "version": null
     },
-    "git_sha": null,
-    "captured_at": "2026-09-08T01:33:59Z"
+    "git_sha": "343691d2ccd48474c29dbdd05e8ab3d7122b250c",
+    "captured_at": "2026-09-08T13:48:42Z"
   },
   "target": {
-    "identifier": "1TNG",
-    "source": "pdb",
-    "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/raw/1tng.pdb",
-    "title": "PREDICTION OF NOVEL SERINE PROTEASE INHIBITORS",
-    "resolution": 1.8,
+    "identifier": "1tng",
+    "source": "pdb (resumed)",
+    "path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/raw/1tng.pdb",
+    "title": "",
+    "resolution": null,
     "uniprot_ids": [],
-    "ligand_codes": [
-      "CA",
-      "AMC"
-    ]
+    "ligand_codes": []
   },
   "receptor": {
     "pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/prepared/receptor.pdbqt",
@@ -333,21 +331,21 @@
   ],
   "gridbox": {
     "center": [
-      29.3955,
-      14.370000000000001,
+      29.395,
+      14.37,
       17.044
     ],
     "size": [
       10.279,
-      10.645999999999999,
+      10.646,
       12.43
     ],
     "source": "pocket:AMC",
     "padding": 4.0,
-    "vina_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/gridbox.txt",
     "warnings": [],
     "assumption_strength": "strong",
-    "receptor_coverage_pct": 3.6
+    "receptor_coverage_pct": 3.6,
+    "vina_config": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/gridbox.txt"
   },
   "docking": {
     "backend": "python",
@@ -355,15 +353,16 @@
     "num_ok": 1,
     "resumed": 0,
     "warnings": [],
+    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/docking/summary.csv",
     "results": [
       {
         "ligand": {
           "identifier": "amc_redock",
-          "source": "pdb_ligand",
-          "value": "AMC",
-          "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/raw/amc.sdf",
-          "pdbqt_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/prepared/amc_redock.pdbqt",
-          "status": "docked",
+          "source": "file",
+          "value": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/prepared/amc_redock.pdbqt",
+          "path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/prepared/amc_redock.pdbqt",
+          "pdbqt_path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/prepared/amc_redock.pdbqt",
+          "status": "prepared",
           "error": null,
           "num_rotatable_bonds": 2,
           "num_heavy_atoms": 8,
@@ -408,7 +407,7 @@
             "affinity": -4.741,
             "rmsd_lb": 0.0,
             "rmsd_ub": 0.0,
-            "crystal_rmsd": 1.0856779705275326,
+            "crystal_rmsd": 0.4577394735941524,
             "remarks": [
               "REMARK VINA RESULT:    -4.741      0.000      0.000",
               "REMARK INTER + INTRA:          -5.181",
@@ -425,7 +424,7 @@
             "affinity": -4.503,
             "rmsd_lb": 0.505,
             "rmsd_ub": 1.845,
-            "crystal_rmsd": 0.1826981465263746,
+            "crystal_rmsd": 0.18269814652699687,
             "remarks": [
               "REMARK VINA RESULT:    -4.503      0.505      1.845",
               "REMARK INTER + INTRA:          -4.922",
@@ -442,7 +441,7 @@
             "affinity": -3.864,
             "rmsd_lb": 2.729,
             "rmsd_ub": 3.984,
-            "crystal_rmsd": 0.9233223550927169,
+            "crystal_rmsd": 0.4699939877603959,
             "remarks": [
               "REMARK VINA RESULT:    -3.864      2.729      3.984",
               "REMARK INTER + INTRA:          -4.227",
@@ -459,7 +458,7 @@
             "affinity": -3.811,
             "rmsd_lb": 2.028,
             "rmsd_ub": 2.841,
-            "crystal_rmsd": 0.5961463737569045,
+            "crystal_rmsd": 0.5961463737576673,
             "remarks": [
               "REMARK VINA RESULT:    -3.811      2.028      2.841",
               "REMARK INTER + INTRA:          -4.168",
@@ -476,7 +475,7 @@
             "affinity": -3.721,
             "rmsd_lb": 2.222,
             "rmsd_ub": 3.015,
-            "crystal_rmsd": 0.5081612615911386,
+            "crystal_rmsd": 0.5081612615909149,
             "remarks": [
               "REMARK VINA RESULT:    -3.721      2.222      3.015",
               "REMARK INTER + INTRA:          -4.071",
@@ -493,7 +492,7 @@
             "affinity": -3.719,
             "rmsd_lb": 2.525,
             "rmsd_ub": 3.431,
-            "crystal_rmsd": 0.0929080018395049,
+            "crystal_rmsd": 0.09290800183828125,
             "remarks": [
               "REMARK VINA RESULT:    -3.719      2.525      3.431",
               "REMARK INTER + INTRA:          -4.069",
@@ -510,7 +509,7 @@
             "affinity": -3.56,
             "rmsd_lb": 1.72,
             "rmsd_ub": 2.179,
-            "crystal_rmsd": 0.11867879489767177,
+            "crystal_rmsd": 0.11867879489671385,
             "remarks": [
               "REMARK VINA RESULT:    -3.560      1.720      2.179",
               "REMARK INTER + INTRA:          -3.896",
@@ -527,7 +526,7 @@
             "affinity": -3.489,
             "rmsd_lb": 2.2,
             "rmsd_ub": 3.389,
-            "crystal_rmsd": 0.9173066446560163,
+            "crystal_rmsd": 0.5118139341640623,
             "remarks": [
               "REMARK VINA RESULT:    -3.489      2.200      3.389",
               "REMARK INTER + INTRA:          -3.819",
@@ -544,7 +543,7 @@
             "affinity": -3.028,
             "rmsd_lb": 3.071,
             "rmsd_ub": 3.755,
-            "crystal_rmsd": 0.5281443776878725,
+            "crystal_rmsd": 0.528144377687442,
             "remarks": [
               "REMARK VINA RESULT:    -3.028      3.071      3.755",
               "REMARK INTER + INTRA:          -3.317",
@@ -557,15 +556,14 @@
             ]
           }
         ],
-        "out_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/docking/amc_redock_out.pdbqt",
-        "log_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/docking/amc_redock_out.log",
-        "runtime": 2.252,
+        "out_path": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/docking/amc_redock_out.pdbqt",
+        "log_path": null,
+        "runtime": 0.0,
         "backend": "python",
         "error": null,
         "best_affinity": -4.741
       }
-    ],
-    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/docking/summary.csv"
+    ]
   },
   "analysis": {
     "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
@@ -580,7 +578,7 @@
           "num_ionic_contacts": 2,
           "num_metal_contacts": 0,
           "docking_score_efficiency": -0.592625,
-          "crystal_rmsd": 1.0856779705275326,
+          "crystal_rmsd": 0.4577394735941524,
           "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
           "contacts": [
             {
@@ -1150,7 +1148,7 @@
           "num_ionic_contacts": 2,
           "num_metal_contacts": 0,
           "docking_score_efficiency": -0.562875,
-          "crystal_rmsd": 0.1826981465263746,
+          "crystal_rmsd": 0.18269814652699687,
           "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
           "contacts": [
             {
@@ -1708,7 +1706,7 @@
           "num_ionic_contacts": 0,
           "num_metal_contacts": 0,
           "docking_score_efficiency": -0.483,
-          "crystal_rmsd": 0.9233223550927169,
+          "crystal_rmsd": 0.4699939877603959,
           "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
           "contacts": [
             {
@@ -2150,12 +2148,18 @@
   },
   "visualization": {},
   "paths": {
-    "target_structure": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/raw/1tng.pdb",
-    "receptor_pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/prepared/receptor.pdbqt",
-    "gridbox_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/gridbox.txt",
-    "docking_summary": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/docking/summary.csv",
-    "analysis_json": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/analysis/interactions.json",
+    "target_structure": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/raw/1tng.pdb",
+    "analysis_json": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/analysis/interactions.json",
     "crystal_rmsd_reference": "AMC in 1tng.pdb",
-    "report": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/report.md"
+    "report": "/home/z/my-project/dockflow-v030/benchmarks/redocking/results/1TNG_benchmark/report.md"
+  },
+  "checksums": {
+    "raw/1tng.pdb": "cbf8b593446676b751e31a865d4f6e443e244dd92960967888f7a61dd74dffb1",
+    "raw/amc.sdf": "5609c449268cbdf67072c9c303b03e63224b6413e2a1358597516a82e68b3f19",
+    "prepared/receptor.pdbqt": "d53ec127a5010eff32ff19a0133b9a17d2235789dc084a6dab4b2ed8cdeeaca2",
+    "prepared/amc_redock.pdbqt": "a076be7eb6979da78d8f3c8eba71440eda1ac1a554b2bf542a5cb1968f575fe6",
+    "gridbox.txt": "a6dd6ea44695c9a963cfb2b72ff16866acb11c6bd716515ce4d4f3e32f91edc3",
+    "docking/summary.csv": "1f84ed2bc3dcf58b95474010c65dd8bcb43675a928c15deac492a1c07ea40663",
+    "docking/amc_redock_out.pdbqt": "0313aab47b3c0dae41e27f3348ee1e43890ce8eaa05d2c2d257bfb5a17f00cf4"
   }
 }

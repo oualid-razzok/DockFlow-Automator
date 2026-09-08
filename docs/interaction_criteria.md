@@ -82,8 +82,19 @@ and JSON contact tables are designed to be importable for such workflows.
   group swaps), which is the standard symmetry-correct ligand RMSD;
   without RDKit a greedy element-matching Kabsch fallback is used.  The
   method actually used is recorded per pose
-  (`interactions.json` → `poses[*].crystal_rmsd_method`) and per run
-  (`manifest.analysis.crystal_rmsd_method`),
+  (`interactions.json` → `poses[*].crystal_rmsd_method`), per run
+  (`manifest.analysis.crystal_rmsd_method`) and per benchmark row
+  (`redocking_results.csv` → `crystal_rmsd_method`),
+* **atom-order independent** (final-pass item 5): the pose molecule is
+  built with its own proximity-bonded graph, so the RMSD does not depend
+  on the order in which the pose file or the reference PDB lists atoms.
+  This was not true before v1.0.0-rc1 — a geometrically seeded
+  correspondence could lock in a topologically wrong assignment and
+  over-penalise symmetric ligands by up to ~0.5 Å.  The fix was found by
+  the independent spyrmsd cross-check
+  (`benchmarks/redocking/rmsd_crosscheck.py`; 193 poses, max |Δ| = 0.0 Å
+  after the fix) and is guarded by analytic test cases
+  (`tests/test_analyzer.py::test_symmetry_rmsd_known_cases`),
 * computed after optimal **superposition** (rotation + translation
   removed; reflections are not considered),
 * reported against the co-crystallized ligand pose extracted from the
@@ -91,11 +102,44 @@ and JSON contact tables are designed to be importable for such workflows.
 * undefined (`null`) when the docked ligand and the reference ligand have
   different heavy-atom element sets (e.g. decoys) — never an error.
 
-## Conventions vs validated thresholds (peer item 5)
+## Pose recovery: the formal definition (final pass, item 3)
+
+**"Pose recovery"** = the best-SCORING Vina pose (rank 1, the pose Vina
+assigns the lowest predicted affinity) whose symmetry-aware heavy-atom
+RMSD to the co-crystallized ligand is **≤ 2.0 Å**.
+
+Two things a reader must know about this definition:
+
+1. **The 2.0 Å threshold is a community convention, not a validated
+   cutoff.**  It follows common redocking-benchmark practice since Trott
+   & Olson (2010) and is the working convention of the CSAR and D3R
+   benchmarking exercises.  It is NOT a thermodynamically validated
+   boundary — a 1.9 Å pose is not "twice as good" as a 3.8 Å pose, and
+   for some targets the crystal pose itself is one of several
+   well-populated conformers.
+2. **"Best-scoring" means Vina rank 1.**  Alternative definitions yield
+   different success rates, which is why the benchmark publishes ALL of
+   them (rank-1, top-3 best-RMSD, and the legacy best-any-rank, each at
+   1.0/2.0/3.0 Å thresholds, plus the top-N success curve):
+
+   * `rank1_rmsd_a` — RMSD of the rank-1 pose (the formal definition);
+   * `top3_rmsd_a` — best RMSD among the 3 best-scored poses ("a good
+     pose exists and Vina ranks it within the top 3");
+   * `best_crystal_rmsd_a` — best RMSD among all returned poses (the
+     v0.3.x legacy definition; sampling capability, not ranking).
+
+   On the 24-complex benchmark (v1.0.0-rc1 numbers): rank-1 21/24
+   (87.5%), top-3 23/24 (95.8%), best-any-rank 23/24 (95.8%) — see
+   `benchmarks/redocking/results/summary.md` for the confidence
+   intervals.  The distinction matters: a complex that fails rank-1 but
+   passes top-3 is a *scoring* failure (the pose was found but
+   outranked); a complex that fails at every rank is a *sampling*
+   failure.
+
+## Threshold classification: conventions vs heuristics (peer item 5; none experimentally validated)
 
 Every threshold DockFlow applies falls into one of two classes.  The
-report labels heuristic outputs explicitly so no number is mistaken for
-a validated result.
+report labels heuristic outputs explicitly so no number is mistaken for a validated result (the labels are heuristic, none experimentally confirmed).
 
 | Threshold | Value | Class | Where used |
 |---|---|---|---|
@@ -112,8 +156,8 @@ a validated result.
 | Grid box ligand padding | 4 Å default | **Convention** (covers typical pose spread; no target validation) | grid box derivation |
 | Box volume sanity | > 8 000 Å³ warn / > 27 000 Å³ error | **Heuristic guardrail** (typical binding-site scale) | grid box validation |
 
-None of these values are experimentally validated for a specific
-target/target-class.  The only numbers in a DockFlow run that come from
+None of these values are experimentally validated for a specific target (they are conventions and heuristics, none
+experimentally confirmed).  The only numbers in a DockFlow run that come from
 outside this codebase are the Vina/GNINA scoring-function parameters,
 and those are *empirical scoring functions*, not experimental
 measurements.  When a threshold matters for a decision (publication,

@@ -1,0 +1,8 @@
+# DUD-E enrichment grid box - target parp1 - reference 2RD6 ligand 78P (4.0 A padding, assumption: strong)
+center_x = 25.810499999999998
+center_y = 65.29849999999999
+center_z = 8.7105
+size_x = 14.833000000000002
+size_y = 13.777000000000001
+size_z = 14.671
+exhaustiveness = 1

@@ -1,0 +1,25 @@
+MGLTools 1.5.7 crash - 1E66 (HUX) - stage: receptor_prep - script: prepare_receptor4.py
+command working directory: /home/z/my-project/dockflow-v030/benchmarks/mgltools_comparison/results/1E66
+
+Traceback (most recent call last):
+  File "/home/z/my-project/mgltools/bin/prepare_receptor4.py", line 204, in <module>
+    dict=dictionary)    
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/MoleculePreparation.py", line 558, in __init__
+    version=version, delete_single_nonstd_residues=delete_single_nonstd_residues)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/MoleculePreparation.py", line 124, in __init__
+    self.repairMol(mol, self.repair_type_list)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/MoleculePreparation.py", line 174, in repairMol
+    self.newHs = self.addHydrogens(mol)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/AutoDockTools/MoleculePreparation.py", line 187, in addHydrogens
+    HB.addHydrogens(mol)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/MolKit/hydrogenBuilder.py", line 81, in addHydrogens
+    hat = AddHydrogens().addHydrogens(mol.allAtoms, method=self.method)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/PyBabel/addh.py", line 92, in addHydrogens
+    Hatoms = self.place_hydrogens1(atoms, num_H_to_add)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/PyBabel/addh.py", line 149, in place_hydrogens1
+    Hat = Hat + self.add_methyl_hydrogen(a, SP3_O_H_DIST)
+  File "/home/z/my-project/mgltools/MGLToolsPckgs/PyBabel/addh.py", line 303, in add_methyl_hydrogen
+    c3 = atom2.bonds[1].atom1.coords
+  File "/home/z/my-project/mgltools/lib/python2.7/UserList.py", line 31, in __getitem__
+    def __getitem__(self, i): return self.data[i]
+IndexError: list index out of range

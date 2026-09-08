@@ -46,8 +46,8 @@ hydrophobic,4.22,C,A,A,TRP,519,CG,C
 hydrophobic,4.25,C,A,A,HIS,518,CE1,A
 hydrophobic,4.26,C,C,A,TRP,519,CE3,A
 hydrophobic,4.29,C,C,A,ILE,557,CG1,C
-hydrophobic,4.33,C,A,A,LEU,565,CD2,C
 hydrophobic,4.33,C,A,A,TRP,519,CZ3,A
+hydrophobic,4.33,C,A,A,LEU,565,CD2,C
 hydrophobic,4.34,C,A,A,GLN,514,CD,C
 hydrophobic,4.35,C,A,A,TRP,519,CD2,A
 hydrophobic,4.36,C,A,A,ILE,572,CD1,C

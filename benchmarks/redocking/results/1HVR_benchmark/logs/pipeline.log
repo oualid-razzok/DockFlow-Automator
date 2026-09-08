@@ -22,3 +22,31 @@
 2026-09-08 03:49:44,210 | INFO    | dockflow.pipeline. | pipeline step report: running 
 2026-09-08 03:49:44,225 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HVR_benchmark/report.md
 2026-09-08 03:49:44,239 | INFO    | dockflow.pipeline. | run 1HVR_benchmark finished in 242.6s (ok=True)
+2026-09-08 13:48:39,646 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.1.1 starting run 1HVR_benchmark
+2026-09-08 13:48:39,647 | INFO    | dockflow.pipeline. | restored provenance sections from /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HVR_benchmark/manifest.json
+2026-09-08 13:48:39,647 | INFO    | dockflow.pipeline. | pipeline step download: skipped not requested
+2026-09-08 13:48:39,647 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: skipped not requested
+2026-09-08 13:48:39,648 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: skipped not requested
+2026-09-08 13:48:39,649 | INFO    | dockflow.pipeline. | pipeline step gridbox: skipped not requested
+2026-09-08 13:48:39,650 | INFO    | dockflow.pipeline. | pipeline step docking: skipped not requested
+2026-09-08 13:48:39,660 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 13:48:41,232 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HVR_benchmark/docking/xk2_redock_poses.sdf
+2026-09-08 13:48:41,232 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 13:48:41,233 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped not requested
+2026-09-08 13:48:41,233 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 13:48:41,294 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HVR_benchmark/report.md
+2026-09-08 13:48:41,309 | INFO    | dockflow.pipeline. | run 1HVR_benchmark finished in 1.6s (ok=True)
+2026-09-08 13:49:31,359 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.3.1 starting run 1HVR_benchmark
+2026-09-08 13:49:31,360 | INFO    | dockflow.pipeline. | restored provenance sections from /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HVR_benchmark/manifest.json
+2026-09-08 13:49:31,360 | INFO    | dockflow.pipeline. | pipeline step download: skipped not requested
+2026-09-08 13:49:31,361 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: skipped not requested
+2026-09-08 13:49:31,361 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: skipped not requested
+2026-09-08 13:49:31,362 | INFO    | dockflow.pipeline. | pipeline step gridbox: skipped not requested
+2026-09-08 13:49:31,363 | INFO    | dockflow.pipeline. | pipeline step docking: skipped not requested
+2026-09-08 13:49:31,374 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 13:49:33,008 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HVR_benchmark/docking/xk2_redock_poses.sdf
+2026-09-08 13:49:33,009 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 13:49:33,009 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped not requested
+2026-09-08 13:49:33,009 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 13:49:33,074 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/dockflow-v030/benchmarks/redocking/results/1HVR_benchmark/report.md
+2026-09-08 13:49:33,092 | INFO    | dockflow.pipeline. | run 1HVR_benchmark finished in 1.7s (ok=True)

@@ -1,0 +1,4 @@
+pose,A:ALA50:hydrophobic,A:ALA86:hydrophobic,A:ASN23:hbond,A:ASN49:hbond,A:ASN49:hydrophobic,A:ASP128:hbond,A:ASP128:hydrophobic,A:ASP128:ionic,A:GLY48:hydrophobic,A:LEU25:hydrophobic,A:LEU110:hydrophobic,A:SER27:hbond,A:SER27:hydrophobic,A:SER45:hbond,A:SER45:hydrophobic,A:SER88:hbond,A:SER88:hydrophobic,A:THR90:hbond,A:THR90:hydrophobic,A:TRP79:hydrophobic,A:TRP92:hydrophobic,A:TRP108:hbond,A:TRP108:hydrophobic,A:TYR43:hbond,A:TYR43:hydrophobic,A:VAL47:hydrophobic
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1
+2,1,1,0,1,1,1,0,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1
+3,0,1,0,1,1,1,1,1,1,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,1,1
