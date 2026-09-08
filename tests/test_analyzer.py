@@ -448,15 +448,29 @@ def test_analyze_docking_result_reference_mismatch_is_not_fatal(
 
 
 def test_pose_cluster_summary_known_structure():
-    """Two tight groups + one outlier = three clusters with known members."""
+    """Two conformations + one distinct pose = three clusters with known members.
+
+    ``cluster_poses`` measures Kabsch (superposition) RMSD, so rigid-body
+    placement does NOT separate poses - a pose translated 5 A away is still
+    the same binding conformation once optimally superposed.  Poses must
+    therefore differ in *internal geometry* to land in separate clusters:
+    here two poses share conformation A (tiny thermal noise), two share
+    conformation B (an arm flipped), and one is a third distinct conformation.
+    """
     from dockflow_core.analyzer import pose_cluster_summary
 
+    rng = np.random.default_rng(5)
+    base = rng.normal(size=(12, 3))
+    arm_flipped = base.copy()
+    arm_flipped[[2, 5, 8]] += np.array([0.0, 9.0, 9.0])  # different conformation
+    distinct = base.copy()
+    distinct[[1, 4, 7, 10]] += np.array([9.0, 0.0, -9.0])  # yet another one
     poses = [
-        np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),   # group A
-        np.array([[0.1, 0.0, 0.0], [1.1, 0.0, 0.0]]),   # group A
-        np.array([[5.0, 0.0, 0.0], [6.0, 0.0, 0.0]]),   # group B
-        np.array([[5.2, 0.0, 0.0], [6.2, 0.0, 0.0]]),   # group B
-        np.array([[50.0, 0.0, 0.0], [51.0, 0.0, 0.0]]), # outlier
+        base,                                                   # conformation A
+        base + rng.normal(scale=0.05, size=base.shape),          # A + noise
+        arm_flipped,                                            # conformation B
+        arm_flipped + rng.normal(scale=0.05, size=base.shape),   # B + noise
+        distinct,                                               # conformation C
     ]
     affinities = [-9.0, -8.9, -8.0, -7.9, -6.0]
     clusters = pose_cluster_summary(poses, affinities, cutoff=2.0)
@@ -467,10 +481,20 @@ def test_pose_cluster_summary_known_structure():
     assert clusters[0]["representative_pose"] == 1
     assert clusters[0]["mean_affinity"] == pytest.approx(-8.95)
     assert clusters[2]["intra_cluster_rmsd_spread"] == pytest.approx(0.0)
+    # noise-only spread inside a cluster stays far below the 2 A cutoff
+    assert 0.0 < clusters[0]["intra_cluster_rmsd_spread"] < 0.5
 
 
 def test_kabsch_rmsd_matches_bindings_both_paths():
-    """NumPy and C++ Kabsch agree on an analytic rotation (item 15/35)."""
+    """NumPy and C++ Kabsch agree on an analytic rotation (item 15/35).
+
+    Only runs where the C++ accelerator is built (dev machines, the
+    bindings-equivalence CI job); the plain test matrix skips it because
+    it never compiles the optional extension module.
+    """
+    pytest.importorskip(
+        "dockflow_bindings", reason="C++ accelerator not built in this job"
+    )
     coords = np.array([
         [0.0, 0.0, 0.0], [1.5, 0.2, 0.0], [0.3, 1.4, 0.7],
         [2.1, 1.1, -0.4], [-0.7, 0.5, 1.2],

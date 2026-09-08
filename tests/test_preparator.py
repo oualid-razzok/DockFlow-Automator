@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.machinery
 import importlib.util
 import logging
 import sys
@@ -248,9 +249,30 @@ class _BrokenOBModule(types.ModuleType):
 
 @pytest.fixture
 def broken_openbabel(monkeypatch):
-    """Make the openbabel bindings importable but unusable at attribute level."""
+    """Make the openbabel bindings importable but unusable at attribute level.
+
+    Works whether or not the *real* openbabel package is installed: the CI
+    test matrix (macOS/Windows/Py3.10 cells) does not install the ``obabel``
+    extra, so a stub package with a valid ``__spec__`` is injected into
+    ``sys.modules`` - that keeps ``is_importable("openbabel")`` True (it
+    uses ``importlib.util.find_spec``, which consults ``sys.modules`` and
+    requires a non-None ``__spec__``), while any attribute access on the
+    submodule raises AttributeError, exactly like the broken wheel the
+    v0.1.1 audit discovered.
+    """
     broken = _BrokenOBModule("openbabel.openbabel")
-    import openbabel as package
+    broken.__spec__ = importlib.machinery.ModuleSpec(
+        "openbabel.openbabel", loader=None
+    )
+    try:
+        import openbabel as package
+    except ImportError:  # not installed in this matrix cell - stub it
+        package = types.ModuleType("openbabel")
+        package.__spec__ = importlib.machinery.ModuleSpec(
+            "openbabel", loader=None, is_package=True
+        )
+        package.__path__ = []  # mark as package for submodule imports
+        monkeypatch.setitem(sys.modules, "openbabel", package)
 
     monkeypatch.setattr(package, "openbabel", broken, raising=False)
     monkeypatch.setitem(sys.modules, "openbabel.openbabel", broken)

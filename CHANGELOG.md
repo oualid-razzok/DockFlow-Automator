@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.2.1] - 2026-09-08
+
+CI-repair release: fixes the failures observed when the 0.2.0 tree was
+pushed to GitHub (test matrix, docker smoke, reproducibility workflow).
+
+### Fixed
+- **Docker smoke test exit 127**: the container entrypoint's `shell`
+  passthrough forwarded the literal `shell` token to bash
+  (`bash shell -c ...` → "No such file or directory"); it now shifts the
+  token off first, so `docker run ... shell -c "command -v vina"` works.
+- **`broken_openbabel` test fixture crashed on CI matrix cells without
+  openbabel** (`ModuleNotFoundError` at setup): the fixture now injects a
+  stub `openbabel` package with a valid `__spec__` (so
+  `is_importable`/`find_spec` still sees it) when the real wheel is absent
+  — macOS, Windows and Py3.10 cells exercise the same broken-dependency
+  fall-through as a full install.
+- **`test_kabsch_rmsd_matches_bindings_both_paths` hard-required the C++
+  accelerator** (unbuilt in the plain test matrix → `ModuleNotFoundError`):
+  it now `importorskip`s the module and runs for real in the dedicated
+  `bindings-equivalence` CI job, which also executes the dual-path
+  kabsch/clustering analyzer tests from now on.
+- **`test_pose_cluster_summary_known_structure` asserted translated
+  congruent shapes form 3 clusters**: `cluster_poses` measures
+  superposition (Kabsch) RMSD, so rigid-body placement cannot separate
+  poses — only differing *internal geometry* can.  The test data now uses
+  three genuinely distinct conformations (arm-flip variants), and the test
+  documents the semantics it verifies.
+- **meeko was silently unusable on clean installs**: meeko 0.8.0 imports
+  `scipy` (via `meeko.receptor_pdbqt`) without declaring it, exactly like
+  its undeclared `gemmi`/`pandas` imports; without scipy every ligand
+  preparation fails ("meeko is required for ligand preparation").  `scipy`
+  is now pinned in the `prep` and `all` extras — this is also what made
+  the `reproducibility` CI workflow (1HVR seed-determinism + scientific
+  tests) fail before this release.
+
+### Changed
+- `bindings-equivalence` CI job additionally runs the analyzer tests that
+  exercise both the C++ and pure-NumPy RMSD paths (`-k "kabsch or cluster"`).
+
 ## [0.2.0] - 2026-09-07
 
 Audit/peer-review release: *correctness of the "auto" machinery,

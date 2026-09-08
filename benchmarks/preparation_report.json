@@ -1,0 +1,92 @@
+{
+  "receptor": {
+    "openbabel": {
+      "engine": "openbabel",
+      "atoms_out": 1846,
+      "heavy_atoms": 1500,
+      "polar_hydrogens": 346,
+      "charge_sum": 0.074,
+      "charge_min": -0.507,
+      "charge_max": 0.387,
+      "ad4_type_histogram": {
+        "A": 74,
+        "C": 896,
+        "HD": 346,
+        "N": 256,
+        "NA": 2,
+        "OA": 268,
+        "S": 4
+      },
+      "removed_hetero": {
+        "CSO": 18,
+        "XK2": 46
+      },
+      "num_warnings": 1,
+      "warnings": [
+        "removed hetero species: 18 CSO, 46 XK2. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site"
+      ]
+    },
+    "rdkit": {
+      "engine": "rdkit",
+      "atoms_out": 1848,
+      "heavy_atoms": 1500,
+      "polar_hydrogens": 348,
+      "charge_sum": 23.966,
+      "charge_min": -0.508,
+      "charge_max": 0.399,
+      "ad4_type_histogram": {
+        "A": 74,
+        "C": 896,
+        "HD": 348,
+        "N": 248,
+        "NA": 10,
+        "OA": 268,
+        "SA": 4
+      },
+      "removed_hetero": {
+        "CSO": 18,
+        "XK2": 46
+      },
+      "num_warnings": 1,
+      "warnings": [
+        "removed hetero species: 18 CSO, 46 XK2. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site"
+      ]
+    },
+    "none": {
+      "engine": "none",
+      "atoms_out": 1826,
+      "heavy_atoms": 1500,
+      "polar_hydrogens": 326,
+      "charge_sum": 0.0,
+      "charge_min": 0.0,
+      "charge_max": 0.0,
+      "ad4_type_histogram": {
+        "C": 970,
+        "HD": 326,
+        "N": 258,
+        "OA": 268,
+        "S": 4
+      },
+      "removed_hetero": {
+        "CSO": 18,
+        "XK2": 46
+      },
+      "num_warnings": 2,
+      "warnings": [
+        "removed hetero species: 18 CSO, 46 XK2. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site",
+        "no chemistry toolkit available: hydrogens were NOT added and partial charges are set to 0.0 (install openbabel-wheel or rdkit)"
+      ]
+    }
+  },
+  "ligand": {
+    "engine": "meeko",
+    "atoms": 50,
+    "real_heavy_atoms": 46,
+    "virtual_atoms": 2,
+    "polar_hydrogens": 2,
+    "rotatable_bonds": 10,
+    "charge_sum": 0.007,
+    "input_had_explicit_hydrogens": true,
+    "protonation_source": "input protonation state (no pH adjustment)"
+  }
+}

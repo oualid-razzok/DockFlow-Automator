@@ -21,7 +21,9 @@ case "${1:-}" in
         exec "${ENV_BIN}/dockflow-gui" "$@"
         ;;
     shell)
-        # pass through any args, e.g.: shell -c "command -v vina"
+        # pass through any args AFTER dropping the "shell" token itself,
+        # e.g.: shell -c "command -v vina"  ->  bash -c "command -v vina"
+        shift
         exec /bin/bash "$@"
         ;;
     dockflow)

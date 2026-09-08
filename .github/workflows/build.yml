@@ -181,6 +181,13 @@ jobs:
       - name: Equivalence test suite (tests/test_bindings.py)
         run: python -m pytest tests/test_bindings.py -v
 
+      - name: Analyzer dual-path Kabsch tests (bindings + numpy fallback)
+        # test_kabsch_rmsd_matches_bindings_both_paths is skipped in the plain
+        # matrix (no compiled accelerator there) - this is the job that owns it
+        run: >-
+          python -m pytest tests/test_analyzer.py
+          -k "kabsch or cluster" -v
+
       - name: Randomised delta report (scripts/bindings_equivalence.py)
         run: python scripts/bindings_equivalence.py --out bindings_deltas.json
 
