@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dockflow-automator"
-version = "0.2.1"
+version = "0.3.0"
 description = "Unified, automated molecular docking: download, prepare, dock and visualize - end to end."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -64,6 +64,9 @@ prep = [
     "pandas>=1.5",
     "scipy>=1.10",
 ]
+# Opt-in protonation enumeration (work-order item 11; ADR-0008).
+# Deliberately NOT in `all`: state enumeration is a scientific choice.
+protonation = ["dimorphite-dl>=2.0"]
 # OpenBabel Python bindings (wheel distribution, Linux x86_64 only);
 # on Windows/macOS install openbabel through conda-forge instead.
 obabel = ["openbabel-wheel>=3.1.1; sys_platform == 'linux'"]

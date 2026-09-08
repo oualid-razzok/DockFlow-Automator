@@ -1,0 +1,24 @@
+2026-09-08 03:45:41,660 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1HVR_benchmark
+2026-09-08 03:45:41,661 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 03:45:41,662 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1HVR.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HVR_benchmark/raw/1hvr.pdb
+2026-09-08 03:45:42,223 | INFO    | dockflow.pipeline. | pipeline step download: done 1HVR
+2026-09-08 03:45:42,226 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 03:45:42,240 | WARNING | dockflow.preparator. | removed hetero species: 18 CSO, 46 XK2. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 03:45:42,245 | WARNING | dockflow.preparator. | Receptor has 2 missing residues (chain A: 67; chain B: 67). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 03:45:42,439 | INFO    | dockflow.preparator. | receptor prepared: 1890 -> 1846 atoms (engine=openbabel, +1292H) -> receptor.pdbqt
+2026-09-08 03:45:42,440 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1846 atoms
+2026-09-08 03:45:42,440 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 03:45:42,441 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/XK2_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HVR_benchmark/raw/xk2.sdf
+2026-09-08 03:45:44,861 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 03:45:44,861 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 03:45:44,890 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:XK2
+2026-09-08 03:45:44,890 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 03:49:44,082 | INFO    | dockflow.engine. | docked xk2_redock with python backend in 239.2s, best affinity -11.18
+2026-09-08 03:49:44,083 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 03:49:44,083 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 03:49:44,210 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HVR_benchmark/docking/xk2_redock_poses.sdf
+2026-09-08 03:49:44,210 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 03:49:44,210 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 03:49:44,210 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 03:49:44,225 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HVR_benchmark/report.md
+2026-09-08 03:49:44,239 | INFO    | dockflow.pipeline. | run 1HVR_benchmark finished in 242.6s (ok=True)

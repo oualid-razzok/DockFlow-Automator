@@ -1,0 +1,34 @@
+pdb_id,ligand,status,mgl_rmsd_a,mgl_affinity_kcal_mol,mgl_num_poses,mgl_receptor_atoms,mgl_ligand_atoms,mgl_ligand_polar_h,runtime_s,detail
+1STP,BTN,ok,3.5500366118666786,-7.238,9,901,16,3,10.0,rmsd method: rdkit-getbestrms-graph-automorphism
+1HVR,XK2,ok,1.9991221157677972,-12.483,8,1500,46,2,91.0,rmsd method: rdkit-getbestrms-graph-automorphism
+1HSG,MK1,ok,4.427182173540501,-11.382,9,1514,45,4,140.4,rmsd method: rdkit-getbestrms-graph-automorphism
+1HTG,G37,ok,3.858777872984939,-10.255,9,1516,55,7,351.2,rmsd method: rdkit-getbestrms-graph-automorphism
+1HPV,478,ok,1.6882353239779764,-8.879,9,1516,35,4,63.8,rmsd method: rdkit-getbestrms-graph-automorphism
+1MUI,AB1,ok,1.6064236220286738,-11.027,9,1516,46,4,149.2,rmsd method: rdkit-getbestrms-graph-automorphism
+1DWD,MID,ok,1.0779404782977193,-9.833,9,2358,37,5,85.7,rmsd method: rdkit-getbestrms-graph-automorphism
+1AZM,AZM,ok,0.5663166617575921,-6.268,9,2019,13,3,6.1,rmsd method: rdkit-getbestrms-graph-automorphism
+1E66,HUX,"failed: prepare_receptor4: Traceback (most recent call last):
+  File ""/home/z/my-project/mgltools/bin/prepare_receptor4.py"", line 204, in <module>
+    dict=dictionary)    
+  File ""/home/z/my-project/mgltools/MGLToolsPckgs/AutoD",,,,,,,,
+1F0R,815,ok,3.5785575034667336,-10.34,9,2227,31,3,34.5,rmsd method: rdkit-getbestrms-graph-automorphism
+1Q41,IXM,ok,0.3815124359817803,-10.223,9,5428,21,3,9.3,rmsd method: rdkit-getbestrms-graph-automorphism
+1SNC,THP,ok,1.1480872616931896,-7.397,9,1082,25,5,29.3,rmsd method: rdkit-getbestrms-graph-automorphism
+3ERT,OHT,ok,3.6989060647789276,-9.542,7,1932,29,1,28.6,rmsd method: rdkit-getbestrms-graph-automorphism
+1XLZ,FIL,ok,0.9838804774792446,-8.26,9,5202,21,2,15.9,rmsd method: rdkit-getbestrms-graph-automorphism
+1CBX,BZS,ok,0.1740547471257729,-8.019,9,2437,15,2,11.0,rmsd method: rdkit-getbestrms-graph-automorphism
+1TNG,AMC,ok,0.16013257727676047,-4.738,9,1629,8,3,3.9,rmsd method: rdkit-getbestrms-graph-automorphism
+1BTY,BEN,ok,0.051329066712107525,-5.427,9,1629,9,3,4.2,rmsd method: rdkit-getbestrms-graph-automorphism
+1MQ6,XLD,"failed: prepare_ligand4: Traceback (most recent call last):
+  File ""/home/z/my-project/mgltools/bin/prepare_ligand4.py"", line 242, in <module>
+    attach_singletons=attach_singletons)
+  File ""/home/z/my-project/mgltools/MGLTo",,,,,,,,
+1N8Q,DHB,ok,0.6905271989446112,-5.66,9,6778,11,3,9.5,rmsd method: rdkit-getbestrms-graph-automorphism
+1NVQ,UCN,ok,2.7926012590227294,-11.895,1,2169,36,3,31.2,rmsd method: rdkit-getbestrms-graph-automorphism
+1JAP,HOA,ok,0.027714415895295212,-2.381,9,1260,2,3,2.7,rmsd method: rdkit-getbestrms-graph-automorphism
+1YGC,905,ok,4.198238113469955,-10.07,9,2368,38,8,73.1,rmsd method: rdkit-getbestrms-graph-automorphism
+1N46,PFA,ok,0.3920714790938293,-12.005,1,3872,27,2,18.7,rmsd method: rdkit-getbestrms-graph-automorphism
+1SL3,170,"failed: prepare_ligand4: Traceback (most recent call last):
+  File ""/home/z/my-project/mgltools/bin/prepare_ligand4.py"", line 242, in <module>
+    attach_singletons=attach_singletons)
+  File ""/home/z/my-project/mgltools/MGLTo",,,,,,,,

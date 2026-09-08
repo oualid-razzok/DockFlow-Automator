@@ -1,0 +1,24 @@
+2026-09-08 01:36:48,046 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1SL3_benchmark
+2026-09-08 01:36:48,046 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:36:48,046 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1SL3.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1SL3_benchmark/raw/1sl3.pdb
+2026-09-08 01:36:49,222 | INFO    | dockflow.pipeline. | pipeline step download: done 1SL3
+2026-09-08 01:36:49,225 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:36:49,242 | WARNING | dockflow.preparator. | removed hetero species: 37 170, 16 TYS. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:36:49,248 | WARNING | dockflow.preparator. | Receptor has 6 missing residues (chain A: 15; chain A: 147-149; chain A: 218; chain B: 363). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:36:49,501 | INFO    | dockflow.preparator. | receptor prepared: 2655 -> 2837 atoms (engine=openbabel, +2291H) -> receptor.pdbqt
+2026-09-08 01:36:49,502 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2837 atoms
+2026-09-08 01:36:49,503 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:36:49,503 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/170_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1SL3_benchmark/raw/170.sdf
+2026-09-08 01:36:51,614 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:36:51,614 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:36:51,689 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:170
+2026-09-08 01:36:51,689 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:38:07,244 | INFO    | dockflow.engine. | docked 170_redock with python backend in 75.5s, best affinity -10.18
+2026-09-08 01:38:07,245 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:38:07,245 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:38:07,323 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1SL3_benchmark/docking/170_redock_poses.sdf
+2026-09-08 01:38:07,323 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:38:07,324 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:38:07,324 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:38:07,338 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1SL3_benchmark/report.md
+2026-09-08 01:38:07,349 | INFO    | dockflow.pipeline. | run 1SL3_benchmark finished in 79.3s (ok=True)

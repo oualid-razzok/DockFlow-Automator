@@ -89,7 +89,7 @@ class GuiState:
 class MainWindow(QMainWindow):
     """The DockFlow application window."""
 
-    def __init__(self) -> None:
+    def __init__(self, settings=None) -> None:
         super().__init__()
         self.setWindowTitle("DockFlow-Automator")
         self.resize(1240, 860)
@@ -97,13 +97,26 @@ class MainWindow(QMainWindow):
         self.state = GuiState(workdir=self.config.workdir.resolve()
                               if self.config.workdir.exists() or True else Path("."))
         self._workers: list = []
-        self.settings = QSettings("DockFlow", "DockFlow-Automator")
+        # QSettings is injectable so tests can exercise the first-run
+        # tutorial logic with a fresh, isolated settings file.
+        self.settings = settings or QSettings("DockFlow", "DockFlow-Automator")
 
         self._build_ui()
         self._build_menus()
         self._restore_geometry()
         self._refresh_engine_labels()
+        self._maybe_show_tutorial()
         logger.info("GUI ready (workdir=%s)", self.state.workdir)
+
+    def _maybe_show_tutorial(self) -> None:
+        """First-run welcome tour (work-order item 21).
+
+        Shown once per tutorial version (QSettings); dismissible via
+        Help > First-run tutorial at any time.
+        """
+        from .tutorial import maybe_show_tutorial
+
+        maybe_show_tutorial(self, self.settings)
 
     # ------------------------------------------------------------------ layout
     def _build_ui(self) -> None:
@@ -272,6 +285,17 @@ class MainWindow(QMainWindow):
         self.receptor_status.setProperty("muted", True)
         self.receptor_status.setWordWrap(True)
         rec_form.addRow(self.receptor_status)
+        # Engine comparability (work-order item 30): the GUI surfaces the
+        # SAME comparability sets the manifest records, so an engine choice
+        # made here is as informed as one made in the YAML.
+        self.rec_comparability = QLabel("")
+        self.rec_comparability.setProperty("muted", True)
+        self.rec_comparability.setWordWrap(True)
+        self.rec_comparability.setStyleSheet("font-size: 11px;")
+        rec_form.addRow(self.rec_comparability)
+        self.rec_engine.currentIndexChanged.connect(
+            self._update_engine_comparability)
+        self._update_engine_comparability()
         # ligand options
         lig_box = QWidget()
         lig_form = QFormLayout(lig_box)
@@ -325,6 +349,13 @@ class MainWindow(QMainWindow):
             self._compute_box_from_cocystal)
         self.gridbox_widget.computeFromResiduesRequested.connect(
             self._compute_box_from_residues)
+        # Pocket-assumption provenance (work-order item 30): the same
+        # assumption_strength the manifest records, shown BEFORE docking.
+        self.gridbox_assumption = QLabel("box not defined yet")
+        self.gridbox_assumption.setProperty("muted", True)
+        self.gridbox_assumption.setWordWrap(True)
+        self.gridbox_assumption.setStyleSheet("font-size: 11px;")
+        layout.addWidget(self.gridbox_assumption)
         return self._wrap_page(
             "4 - Grid box",
             "Define the Vina search space.  Derive it automatically from the "
@@ -444,9 +475,17 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(env_report)
 
         help_menu = self.menuBar().addMenu("&Help")
+        tutorial_action = QAction("First-run &tutorial", self)
+        tutorial_action.triggered.connect(self._show_tutorial)
+        help_menu.addAction(tutorial_action)
         about = QAction("&About DockFlow", self)
         about.triggered.connect(self._show_about)
         help_menu.addAction(about)
+
+    def _show_tutorial(self) -> None:
+        from .tutorial import TutorialDialog
+
+        TutorialDialog(self).exec()
 
     # ------------------------------------------------------------------ misc UI
     def _goto_step(self, index: int) -> None:
@@ -858,8 +897,12 @@ class MainWindow(QMainWindow):
             self.stepbar.set_state(2, "done")
 
     # ------------------------------------------------------------------ step 4
-    def _on_box_changed(self, box) -> None:
+    def _on_box_changed(self, box, manual: bool = True) -> None:
         self.state.grid_box = box
+        # manual edits make the box the user's own assumption; programmatic
+        # set_box() calls re-annotate with the derivation source right after
+        if manual and self.gridbox_assumption is not None:
+            self._set_gridbox_assumption("explicit (user-edited)")
         self._update_gridbox_preview()
 
     def _update_gridbox_preview(self) -> None:
@@ -885,6 +928,40 @@ class MainWindow(QMainWindow):
             points = np.zeros((0, 3))
         self.gridbox_preview.set_data(points, colors, self.state.grid_box)
 
+    def _update_engine_comparability(self) -> None:
+        """Comparability hint for the selected engine (manifest's data)."""
+        from dockflow_core.preparator import engine_comparability
+
+        key = list(_PREP_ENGINE_LABEL)[self.rec_engine.currentIndex()] \
+            if self.rec_engine.currentIndex() >= 0 else "auto"
+        info = engine_comparability("none" if key == "none" else key)
+        comparable = info["comparable_to"]
+        incomparable = info["incomparable_to"]
+        parts = []
+        if comparable:
+            parts.append(f"comparable: {', '.join(comparable)}")
+        if incomparable:
+            parts.append(f"NOT comparable: {', '.join(incomparable)}")
+        note = " | ".join(parts) if parts else "unknown engine"
+        if key == "none":
+            note = ("none engine: ZERO charges / hydrogens - testing only; "
+                    "scores incomparable to every real engine")
+        self.rec_comparability.setText(f"score comparability: {note}")
+
+    def _set_gridbox_assumption(self, source: str) -> None:
+        from dockflow_core.gridbox import assumption_strength
+
+        strength = assumption_strength(source)
+        notes = {
+            "strong": "strong assumption: pocket observed in THIS receptor",
+            "medium": "medium assumption: homologous/external ligand pocket",
+            "weak": "weak assumption: no pocket knowledge (whole structure)",
+            "user-explicit": "your explicit box: the assumption is yours",
+        }
+        self.gridbox_assumption.setText(
+            f"pocket provenance: {source} ({notes.get(strength, strength)}); "
+            "recorded in manifest.gridbox.assumption_strength")
+
     def _compute_box_from_cocystal(self) -> None:
         target = self.state.target
         if target is None or target.path is None or not target.ligand_codes:
@@ -898,6 +975,7 @@ class MainWindow(QMainWindow):
             box = box_from_pocket(target.path, target.ligand_codes[0],
                                   padding=self.gridbox_widget.padding.value())
             self.gridbox_widget.set_box(box)
+            self._set_gridbox_assumption(box.source)
             self._log(f"grid box from ligand {target.ligand_codes[0]}: "
                       f"center {tuple(round(v, 1) for v in box.center)}", "ok")
         except (ValueError, Exception) as exc:  # noqa: BLE001
@@ -926,6 +1004,7 @@ class MainWindow(QMainWindow):
                                     [int(r) for r in residues],
                                     padding=self.gridbox_widget.padding.value())
             self.gridbox_widget.set_box(box)
+            self._set_gridbox_assumption("residues (user-curated)")
             self._log(f"grid box from residues {residues}: "
                       f"center {tuple(round(v, 1) for v in box.center)}", "ok")
         except ValueError as exc:

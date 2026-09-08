@@ -1,2 +1,25 @@
 pdb_id,ligand,target,status,num_poses,best_affinity_kcal_mol,best_crystal_rmsd_a,best_pose_rank,success,engine,docking_backend,runtime_s,run_dir
-1HVR,XK2,HIV-1 protease (cyclic urea inhibitor),ok,9,-11.129,1.078,1,True,openbabel,python,508.3,examples/results/1HVR
+1DWD,MID,HIV-1 protease,ok,9,-10.3,2.520435764923726,4,False,openbabel,python,85.4,1DWD_benchmark
+1F0R,815,human coagulation factor Xa (RPR208815),ok,9,-10.253,2.6874017969493376,3,False,openbabel,python,35.5,1F0R_benchmark
+1SNC,THP,staphylococcal nuclease (thymidine 3'5'-diphosphate),ok,9,-6.916,0.9945804897744491,2,True,openbabel,python,33.7,1SNC_benchmark
+1STP,BTN,streptavidin (biotin),ok,9,-7.432,0.6195762505016255,1,True,openbabel,python,14.0,1STP_benchmark
+1CBX,BZS,carboxypeptidase A (benzylsuccinate),ok,9,-7.542,0.35307263731605776,1,True,openbabel,python,12.0,1CBX_benchmark
+1TNG,AMC,serine protease (benzamidine derivative),ok,9,-4.741,0.0929080018395049,6,True,openbabel,python,5.5,1TNG_benchmark
+1BTY,BEN,beta-trypsin (benzamidine),ok,9,-5.549,0.10504634663352398,9,True,openbabel,python,5.6,1BTY_benchmark
+1MQ6,XLD,3-chloro-pyridyl inhibitor complex,ok,9,-9.522,2.861993478414952,1,False,openbabel,python,58.3,1MQ6_benchmark
+1JAP,HOA,pro-leu-gly-hydroxylamine complex,ok,9,-2.383,0.0231909365549253,9,True,openbabel,python,4.5,1JAP_benchmark
+1YGC,905,factor VIIa (small molecule inhibitor),ok,9,-9.778,3.6732009760233124,6,False,openbabel,python,82.6,1YGC_benchmark
+1SL3,170,thrombin (P1 heteroaryl inhibitor),ok,9,-10.184,0.9693145514895312,1,True,openbabel,python,79.3,1SL3_benchmark
+1HSG,MK1,"HIV-1 protease (L-735,524 saquinavir analog)",ok,9,-11.335,4.014009285023169,2,False,openbabel,python,128.3,1HSG_benchmark
+1HPV,478,HIV-1 protease (VX-478 amprenavir),ok,9,-8.834,0.9528074296985022,3,True,openbabel,python,64.9,1HPV_benchmark
+1MUI,AB1,HIV-1 protease (lopinavir),ok,9,-10.545,1.4741098305270353,1,True,openbabel,python,165.2,1MUI_benchmark
+1AZM,AZM,human carbonic anhydrase II (acetazolamide),ok,9,-6.082,0.6216538150954772,2,True,openbabel,python,6.8,1AZM_benchmark
+1E66,HUX,acetylcholinesterase (huprine X),ok,2,-11.402,0.2620362079179434,1,True,openbabel,python,8.8,1E66_benchmark
+3ERT,OHT,human estrogen receptor alpha (4-hydroxytamoxifen),ok,7,-9.706,1.8838853268130749,7,True,openbabel,python,37.5,3ERT_benchmark
+1N8Q,DHB,lipoxygenase (protocatechuic acid),ok,9,-5.563,0.6778568503692559,7,True,openbabel,python,7.4,1N8Q_benchmark
+1NVQ,UCN,checkpoint kinase Chk1 (UCN-01),ok,2,-12.506,0.835806561284782,1,True,openbabel,python,16.9,1NVQ_benchmark
+1Q41,IXM,GSK-3 beta (indirubin-3'-monoxime),ok,9,-10.56,0.24658560290039105,3,True,openbabel,python,7.1,1Q41_benchmark
+1XLZ,FIL,human phosphodiesterase 4B (filaminast),ok,9,-8.191,1.0128497948143123,9,True,openbabel,python,16.0,1XLZ_benchmark
+1N46,PFA,thyroid hormone receptor beta,ok,2,-11.527,0.17512448640784525,1,True,openbabel,python,17.9,1N46_benchmark
+1HVR,XK2,HIV-1 protease (cyclic urea inhibitor),ok,9,-11.18,1.0603900895441916,2,True,openbabel,python,242.6,1HVR_benchmark
+1HTG,G37,HIV-1 protease (penicillin-derived inhibitor),ok,9,-10.562,3.6353240830658877,1,False,openbabel,python,269.0,1HTG_benchmark

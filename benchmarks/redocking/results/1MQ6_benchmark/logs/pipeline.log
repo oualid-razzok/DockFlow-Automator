@@ -1,0 +1,24 @@
+2026-09-08 01:34:06,756 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1MQ6_benchmark
+2026-09-08 01:34:06,756 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:34:06,757 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1MQ6.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MQ6_benchmark/raw/1mq6.pdb
+2026-09-08 01:34:07,617 | INFO    | dockflow.pipeline. | pipeline step download: done 1MQ6
+2026-09-08 01:34:07,620 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:34:07,636 | WARNING | dockflow.preparator. | removed hetero species: 1 CA, 18 GOL, 36 XLD. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:34:07,641 | WARNING | dockflow.preparator. | Receptor has 2 missing residues (chain A: 148; chain A: 219). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:34:07,887 | INFO    | dockflow.preparator. | receptor prepared: 2439 -> 2724 atoms (engine=openbabel, +2149H) -> receptor.pdbqt
+2026-09-08 01:34:07,888 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2724 atoms
+2026-09-08 01:34:07,888 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:34:07,889 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/XLD_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MQ6_benchmark/raw/xld.sdf
+2026-09-08 01:34:10,385 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:34:10,386 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:34:10,428 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:XLD
+2026-09-08 01:34:10,428 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:35:05,000 | INFO    | dockflow.engine. | docked xld_redock with python backend in 54.5s, best affinity -9.52
+2026-09-08 01:35:05,001 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:35:05,001 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:35:05,079 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MQ6_benchmark/docking/xld_redock_poses.sdf
+2026-09-08 01:35:05,079 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:35:05,079 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:35:05,079 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:35:05,094 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MQ6_benchmark/report.md
+2026-09-08 01:35:05,105 | INFO    | dockflow.pipeline. | run 1MQ6_benchmark finished in 58.3s (ok=True)

@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "thp_redock": {
+      "ligand_name": "thp_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1SNC_benchmark/docking/thp_redock_out.pdbqt",
+      "best_affinity": -6.916,
+      "runtime": 30.17,
+      "backend": "python"
+    }
+  }
+}

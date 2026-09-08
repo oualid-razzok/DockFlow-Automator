@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "bzs_redock": {
+      "ligand_name": "bzs_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1CBX_benchmark/docking/bzs_redock_out.pdbqt",
+      "best_affinity": -7.542,
+      "runtime": 8.66,
+      "backend": "python"
+    }
+  }
+}

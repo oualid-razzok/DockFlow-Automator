@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "hoa_redock": {
+      "ligand_name": "hoa_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/hoa_redock_out.pdbqt",
+      "best_affinity": -2.383,
+      "runtime": 1.34,
+      "backend": "python"
+    }
+  }
+}

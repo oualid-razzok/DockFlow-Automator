@@ -1,0 +1,23 @@
+2026-09-08 03:49:52,829 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1HTG_benchmark
+2026-09-08 03:49:52,829 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 03:49:52,829 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1HTG.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HTG_benchmark/raw/1htg.pdb
+2026-09-08 03:49:53,748 | INFO    | dockflow.pipeline. | pipeline step download: done 1HTG
+2026-09-08 03:49:53,750 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 03:49:53,762 | WARNING | dockflow.preparator. | removed hetero species: 110 G37. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 03:49:53,957 | INFO    | dockflow.preparator. | receptor prepared: 1750 -> 1839 atoms (engine=openbabel, +1606H) -> receptor.pdbqt
+2026-09-08 03:49:53,957 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1839 atoms
+2026-09-08 03:49:53,958 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 03:49:53,958 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/G37_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HTG_benchmark/raw/g37.sdf
+2026-09-08 03:49:56,104 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 03:49:56,104 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 03:49:56,132 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:G37
+2026-09-08 03:49:56,133 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 03:54:21,648 | INFO    | dockflow.engine. | docked g37_redock with python backend in 265.5s, best affinity -10.56
+2026-09-08 03:54:21,649 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 03:54:21,649 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 03:54:21,790 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HTG_benchmark/docking/g37_redock_poses.sdf
+2026-09-08 03:54:21,790 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 03:54:21,790 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 03:54:21,790 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 03:54:21,808 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HTG_benchmark/report.md
+2026-09-08 03:54:21,822 | INFO    | dockflow.pipeline. | run 1HTG_benchmark finished in 269.0s (ok=True)

@@ -222,7 +222,7 @@ def _parse_atom_line(line: str, model: int) -> Atom:
         resname=resname or "UNK",
         chain=line[21:22].strip(),
         resseq=_safe_int(line[22:26]),
-        icode=line[26:27].strip(),
+        icode=line[26:27].replace("\x00", "").strip(),
         x=_safe_float(line[30:38]),
         y=_safe_float(line[38:46]),
         z=_safe_float(line[46:54]),
@@ -457,7 +457,7 @@ def format_pdb_line(atom: Atom, serial: int | None = None) -> str:
     serial = serial if serial is not None else atom.serial
     altloc = (atom.altloc or " ")[:1]
     chain = (atom.chain or " ")[:1]
-    icode = (atom.icode or " ")[:1]
+    icode = ((atom.icode or " ").replace("\x00", "").strip() or " ")[:1]
     head = (
         f"{record:<6}"
         f"{serial:5d}"

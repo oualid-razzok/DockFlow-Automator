@@ -203,6 +203,32 @@ def build_parser() -> argparse.ArgumentParser:
     enrich.add_argument("--json", action="store_true",
                         help="also print the metrics as JSON")
 
+    # ---------------------------------------------------------------------- ifp
+    ifp = subparsers.add_parser(
+        "ifp", parents=[common],
+        help="interaction fingerprints: pose similarity + clustering",
+    )
+    ifp.add_argument("--run-dir", required=True,
+                     help="run directory containing analysis/interactions.json")
+    ifp.add_argument("--threshold", type=float, default=0.7,
+                     help="IFP Tanimoto single-linkage cluster threshold "
+                          "(default 0.7)")
+    ifp.add_argument("--json", action="store_true",
+                     help="print the full report as JSON")
+
+    # --------------------------------------------------------------------- rank
+    rank = subparsers.add_parser(
+        "rank", parents=[common],
+        help="consensus pose ranking (score z + IFP + geometry)",
+    )
+    rank.add_argument("--run-dir", required=True,
+                      help="run directory (summary.csv + interactions.json)")
+    rank.add_argument("--score-weight", type=float, default=0.5)
+    rank.add_argument("--ifp-weight", type=float, default=0.3)
+    rank.add_argument("--geometry-weight", type=float, default=0.2)
+    rank.add_argument("--top", type=int, default=10,
+                      help="print only the top N poses (default 10)")
+
     # --------------------------------------------------------------------- info
     subparsers.add_parser("info", help="print an environment report")
 
@@ -679,8 +705,31 @@ def cmd_info(_args: argparse.Namespace) -> int:
 
     engine = select_engine("auto")
     report.add("prep engine", engine.name)
+    _report_hpc(report)
     print(report.as_text())
     return 0
+
+
+def _report_hpc(report) -> None:
+    """Batch-environment notes (work-order item 22 / ADR-0007).
+
+    Detects slurm-style batch contexts and warns about the classic
+    cpu-oversubscription mistake (each array task must not also use
+    --parallel > 1).
+    """
+    import os
+
+    hints = [key for key in ("SLURM_JOB_ID", "SLURM_ARRAY_TASK_ID",
+                             "PBS_JOBID", "LSB_JOBID")
+             if os.environ.get(key)]
+    if hints:
+        detail = f"batch env: {', '.join(hints)}"
+        if "SLURM_ARRAY_TASK_ID" in hints:
+            detail += " (array task; keep batch_dock --parallel 1)"
+        report.add("hpc", "slurm", detail)
+    else:
+        report.add("hpc", "interactive",
+                   "no scheduler env; see scripts/generate_sbatch.py")
 
 
 def cmd_gui(_args: argparse.Namespace) -> int:
@@ -692,6 +741,80 @@ def cmd_gui(_args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# ifp / rank (peer items 18c, 19)
+# ---------------------------------------------------------------------------
+def cmd_ifp(args: argparse.Namespace) -> int:
+    """Interaction-fingerprint similarity + clustering between poses."""
+    import json
+
+    from .ranking import ifp_similarity_report
+
+    try:
+        report = ifp_similarity_report(args.run_dir, threshold=args.threshold)
+    except DockFlowError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(report, indent=2))
+        return 0
+    print(f"interaction fingerprints: {len(report)} ligand(s) "
+          f"(clustering threshold {args.threshold})")
+    for ligand, entry in report.items():
+        print()
+        print(f"{ligand}: {entry['n_poses']} poses, {entry['n_bits']} IFP bits, "
+              f"{len(entry['clusters'])} cluster(s)")
+        for cluster in entry["clusters"]:
+            print(f"  cluster {cluster['cluster']}: poses "
+                  f"{', '.join(map(str, cluster['poses']))}")
+        for pose_a, pose_b, similarity in entry["pairwise_tanimoto"][:8]:
+            print(f"  tanimoto(pose {pose_a}, pose {pose_b}) = {similarity}")
+        if len(entry["pairwise_tanimoto"]) > 8:
+            print(f"  ... {len(entry['pairwise_tanimoto']) - 8} more pairs "
+                  f"(full table: analysis/ifp_similarity.csv)")
+    print()
+    print("note: " + next(iter(report.values()))["note"])
+    return 0
+
+
+def cmd_rank(args: argparse.Namespace) -> int:
+    """Consensus ranking over score z-score, IFP centrality, geometry."""
+    from .ranking import consensus_ranking
+
+    total = args.score_weight + args.ifp_weight + args.geometry_weight
+    if total <= 0:
+        print("error: weights must sum to a positive number", file=sys.stderr)
+        return 2
+    try:
+        ranked = consensus_ranking(
+            args.run_dir, score_weight=args.score_weight,
+            ifp_weight=args.ifp_weight,
+            geometry_weight=args.geometry_weight)
+    except DockFlowError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"consensus ranking: {len(ranked)} poses "
+          f"(weights: score {args.score_weight}, ifp {args.ifp_weight}, "
+          f"geometry {args.geometry_weight} - all heuristic components)")
+    print()
+    header = (f"{'rank':>4}  {'ligand':<24} {'pose':>4}  {'affinity':>9}  "
+              f"{'score_z':>8}  {'ifp_rep':>8}  {'geom':>6}  {'consensus':>9}")
+    print(header)
+    print("-" * len(header))
+    for row in ranked[: max(1, args.top)]:
+        print(f"{row['rank']:>4}  {row['ligand']:<24} {row['pose_index']:>4}  "
+              f"{row['affinity_kcal_mol']:>9.2f}  {row['score_z']:>8.3f}  "
+              f"{row['ifp_representativeness']:>8.3f}  "
+              f"{row['geometry_closeness']:>6.3f}  {row['consensus']:>9.4f}")
+    print()
+    print("full table: docking/ranked.csv")
+    print("components are heuristic: score z over analysed poses, mean IFP "
+          "Tanimoto to sibling poses, 1 - rmsd_to_cluster_centroid/4A")
+    return 0
+
+
 _COMMANDS = {
     "download": cmd_download,
     "prep": cmd_prep,
@@ -701,6 +824,8 @@ _COMMANDS = {
     "visualize": cmd_visualize,
     "run": cmd_run,
     "enrich": cmd_enrich,
+    "ifp": cmd_ifp,
+    "rank": cmd_rank,
     "info": cmd_info,
     "gui": cmd_gui,
 }

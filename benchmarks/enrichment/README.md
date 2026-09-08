@@ -3,6 +3,22 @@
 Quantifies the "decoys score worse" claim with a standardised
 active/decoy panel instead of arbitrary aspirin/caffeine controls.
 
+## Status: RUN on the real DUD-E hivpr panel (2026-09)
+
+`run_enrichment.py` docked a seeded subsample (40/536 actives,
+93/35,750 decoys - single-CPU budget; ratio recorded in the summary)
+against the 1HVR benchmark receptor with the XK2-derived box,
+exhaustiveness 1, num_modes 1, seed 2026.  Results in `results/`:
+
+* **ROC AUC 0.665** | EF@1 % 3.33 | EF@5 % 2.38 | BEDROC (α = 20) 0.665
+  (133 ligands scored; per-ligand scores in `results/enrichment_results.csv`,
+  ROC plot `results/roc.png`, machine-readable `results/enrichment_metrics.json`);
+* interpretation: AUC > 0.5 means the Vina score ranks actives above
+  decoys more often than chance.  These are **heuristic screening
+  statistics, not binding free energies**;
+* re-run / extend: `python benchmarks/enrichment/run_enrichment.py`
+  (resumable; `--report-only` recomputes the metrics).
+
 ## Panel: DUD-E HIV-1 protease
 
 The recommended panel is the **DUD-E** set for the example's target

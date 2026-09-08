@@ -117,23 +117,41 @@ definition, AutoDock Vina docking, interaction analysis, rendering and reporting
   heavy-atom `crystal_rmsd` to the co-crystallized pose with a
   PASS/FAIL banner), `docking_score_efficiency` (score-per-heavy-atom
   proxy, explicitly not experimental ligand efficiency), CSV/JSON export
-  with a JSON Schema (`docs/schemas/`), and docked poses exported to SDF
-  with score SD fields.
+  with a JSON Schema (`docs/schemas/`), docked poses exported to SDF
+  with score SD fields, plus post-run **interaction fingerprints**
+  (`dockflow ifp`: Tanimoto similarity + pose clustering) and
+  **consensus pose ranking** (`dockflow rank`: score + IFP + geometry,
+  weights echoed in every output — all labelled as heuristics).
 - **Enrichment metrics**: `dockflow enrich` computes ROC AUC, EF@1%,
   EF@5% and BEDROC (α=20, RDKit-verified) for actives+decoys panels
   straight from `summary.csv`, with an optional ROC PNG.
 - **Visualization**: headless PyMOL (ray-traced PNG + `.pse` sessions + CGO
   wire-frame grid box, in-process or subprocess) with an automatic matplotlib
-  fallback renderer for minimal installs; "Open in PyMOL" from the GUI.
+  fallback renderer for minimal installs; "Open in PyMOL" from the GUI;
+  and a **self-contained interactive 3D viewer** (`visualization/`
+  `interactive.html`, 3Dmol.js) with pose switching, grid box, contacts
+  and crystal overlay for every completed run.
+- **Structure quality & advanced protocols**: missing-residue, disulfide,
+  reduced-Cys and metal-coordination checks recorded in the manifest;
+  Vina two-file **flexible side-chain docking**; GNINA **covalent docking**;
+  ligand-state provenance (protonation/tautomers/stereo/salts recorded by
+  default, opt-in enumeration via dimorphite-dl and RDKit).
+- **Scale**: 100k+ ligand libraries via chunked SDF streaming with
+  checkpoint resume (`scripts/batch_dock.py`); slurm array-job templates
+  for clusters (`scripts/generate_sbatch.py`, ADR-0007).
 - **Reproducibility & provenance**: every run writes a `manifest.json`
   (per-stage audit trail: wall time, ISO start/stop, exit status,
   resolved engine/backend; total `duration_s`), an
-  **`environment.json` fingerprint** of the full scientific stack, a
-  markdown `report.md` (results, pose clustering, warnings, and an
+  **`environment.json` fingerprint** of the full scientific stack,
+  **SHA-256 checksums** of every key input/output file
+  (`manifest.checksums`), preparation **decision provenance**
+  (engine comparability sets, removed species, ligand state chemistry),
+  a markdown `report.md` (results, pose clustering, warnings, and an
   "Assumptions this run made" footer), structured `--log-format json`
   logs; Docker image pins the whole stack; seeds are configurable and
   the CI `reproducibility` workflow asserts same-seed byte-identical
-  `summary.csv`.
+  `summary.csv`; the GUI ships a **first-run tutorial** and exposes the
+  same decision provenance the manifest records.
 
 ## Quick start
 
@@ -320,11 +338,25 @@ config twice with the same seed and byte-compares `summary.csv`.  A
 cross-docking example (XK2 docked into a different HIV-1 PR structure,
 1HSG) lives at `examples/configs/hiv1_cross_docking_1HSG.yaml`.
 
+## Validation track: measured, not promised (v0.3.0)
+
+All three benchmarks have been **run for real** (nightly CI re-runs them;
+see `.github/workflows/nightly.yml`):
+
+| benchmark | result | artifacts |
+|---|---|---|
+| 24-complex redocking (exh. 8, seed 2026) | **24/24 completed, 18/24 success (75%)**, mean RMSD 1.32 Å / median 0.96 Å | `benchmarks/redocking/results/` |
+| DUD-E hivpr enrichment (133 ligands) | **ROC AUC 0.665**, EF@1% 3.33, EF@5% 2.38, BEDROC 0.665 | `benchmarks/enrichment/results/` |
+| MGLTools 1.5.7 comparison (same box/seed) | DockFlow 16/21 vs MGLTools 14/21 pose recovery; mean RMSD delta +0.45 Å; 3 genuine MGLTools crashes recorded | `benchmarks/mgltools_comparison/results/` |
+
+Failures are recorded with reasons and full run directories - a
+benchmark that drops its failures is not a benchmark.
+
 ## Scientific validation vs software tests (item: what "tested" means)
 
 Two different claims must not be conflated:
 
-* **Software tests** — `~210` fast, offline, no network, no real
+* **Software tests** — `~250` fast, offline, no network, no real
   docking (`pytest -m "not network and not gui and not scientific"`).
   They pin parsing, typing, CLI contracts, the GUI smoke surface and the
   analytic RMSD/clustering/enrichment maths.  Run on every push, 3 OS ×
@@ -335,10 +367,13 @@ Two different claims must not be conflated:
     pose within 2.0 A; the same seed must reproduce identical scores;
   * the `reproducibility` workflow: the full example config runs twice,
     `summary.csv` must be byte-identical (documented 1e-6 fallback);
-  * `benchmarks/redocking/`: a 24-complex redocking benchmark suite
-    (PDBbind/Astex classics) with success-rate reporting;
-  * `benchmarks/mgltools_comparison/`: protocol comparing DockFlow to
-    the conventional MGLTools workflow on the same set;
+  * `benchmarks/redocking/`: the 24-complex redocking benchmark
+    (PDBbind/Astex classics) - **run in full** (see the table above),
+    re-run nightly in CI;
+  * `benchmarks/mgltools_comparison/`: DockFlow vs the conventional
+    MGLTools workflow on the same inputs/box/seed - **run in full**;
+  * `benchmarks/enrichment/`: real DUD-E actives/decoys enrichment -
+    **run in full**;
   * `docs/preparation_validation.md`: cross-engine preparation numbers
     (atom counts, charges, typing) computed, not asserted.
 

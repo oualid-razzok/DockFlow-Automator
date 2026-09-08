@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "fil_redock": {
+      "ligand_name": "fil_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1XLZ_benchmark/docking/fil_redock_out.pdbqt",
+      "best_affinity": -8.191,
+      "runtime": 12.83,
+      "backend": "python"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "xld_redock": {
+      "ligand_name": "xld_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MQ6_benchmark/docking/xld_redock_out.pdbqt",
+      "best_affinity": -9.522,
+      "runtime": 54.52,
+      "backend": "python"
+    }
+  }
+}

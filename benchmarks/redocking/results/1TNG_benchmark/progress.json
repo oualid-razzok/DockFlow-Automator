@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "amc_redock": {
+      "ligand_name": "amc_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/docking/amc_redock_out.pdbqt",
+      "best_affinity": -4.741,
+      "runtime": 2.25,
+      "backend": "python"
+    }
+  }
+}

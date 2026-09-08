@@ -78,6 +78,9 @@ EXTERNAL_TOOLS: list[dict[str, str]] = [
     {"tool": "MGLTools (comparison only)", "license": "custom (MGLTools)",
      "role": "benchmark comparison harness, never a runtime dependency",
      "invoked": "external python2 environment, opt-in"},
+    {"tool": "3Dmol.js (CDN)", "license": "BSD-3-Clause",
+     "role": "interactive 3D viewer script inside generated interactive.html",
+     "invoked": "loaded from cdn.jsdelivr.net at view time; never bundled"},
 ]
 
 

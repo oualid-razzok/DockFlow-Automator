@@ -1,0 +1,500 @@
+{
+  "hoa_redock": [
+    {
+      "pose_index": 1,
+      "affinity": -2.383,
+      "num_contacts": 12,
+      "num_geom_hbond_contacts": 11,
+      "num_hydrophobic_contacts": 0,
+      "num_ionic_contacts": 1,
+      "num_metal_contacts": 0,
+      "docking_score_efficiency": -1.1915,
+      "crystal_rmsd": 0.023558409653310932,
+      "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
+      "contacts": [
+        {
+          "ligand_atom_index": 0,
+          "ligand_atom_name": "N",
+          "ligand_atom_type": "NA",
+          "receptor_atom_name": "H",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "HD",
+          "distance": 2.24,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 4,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "N",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "N",
+          "distance": 2.24,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 1,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "N",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "N",
+          "distance": 2.27,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 0,
+          "ligand_atom_name": "N",
+          "ligand_atom_type": "NA",
+          "receptor_atom_name": "H",
+          "receptor_resname": "LEU",
+          "receptor_chain": "A",
+          "receptor_resseq": 160,
+          "receptor_atom_type": "HD",
+          "distance": 2.33,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 1,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "N",
+          "receptor_resname": "LEU",
+          "receptor_chain": "A",
+          "receptor_resseq": 160,
+          "receptor_atom_type": "N",
+          "distance": 2.48,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 3,
+          "ligand_atom_name": "O",
+          "ligand_atom_type": "OA",
+          "receptor_atom_name": "H",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "HD",
+          "distance": 2.51,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 1,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "O",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "OA",
+          "distance": 2.53,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 2,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "O",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "OA",
+          "distance": 2.59,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 4,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "O",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "OA",
+          "distance": 2.76,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 4,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "OE2",
+          "receptor_resname": "GLU",
+          "receptor_chain": "A",
+          "receptor_resseq": 198,
+          "receptor_atom_type": "OA",
+          "distance": 3.15,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 3,
+          "ligand_atom_name": "O",
+          "ligand_atom_type": "OA",
+          "receptor_atom_name": "H",
+          "receptor_resname": "LEU",
+          "receptor_chain": "A",
+          "receptor_resseq": 160,
+          "receptor_atom_type": "HD",
+          "distance": 3.32,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 0,
+          "ligand_atom_name": "N",
+          "ligand_atom_type": "NA",
+          "receptor_atom_name": "OE2",
+          "receptor_resname": "GLU",
+          "receptor_chain": "A",
+          "receptor_resseq": 198,
+          "receptor_atom_type": "OA",
+          "distance": 4.18,
+          "kind": "ionic"
+        }
+      ],
+      "residues": [
+        {
+          "chain": "A",
+          "resname": "ALA",
+          "resseq": 161,
+          "geom_hbond_contacts": 7,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 0,
+          "metal_contacts": 0,
+          "closest": 2.24
+        },
+        {
+          "chain": "A",
+          "resname": "LEU",
+          "resseq": 160,
+          "geom_hbond_contacts": 3,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 0,
+          "metal_contacts": 0,
+          "closest": 2.33
+        },
+        {
+          "chain": "A",
+          "resname": "GLU",
+          "resseq": 198,
+          "geom_hbond_contacts": 1,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 1,
+          "metal_contacts": 0,
+          "closest": 3.15
+        }
+      ]
+    },
+    {
+      "pose_index": 2,
+      "affinity": -2.375,
+      "num_contacts": 12,
+      "num_geom_hbond_contacts": 11,
+      "num_hydrophobic_contacts": 0,
+      "num_ionic_contacts": 1,
+      "num_metal_contacts": 0,
+      "docking_score_efficiency": -1.1875,
+      "crystal_rmsd": 0.023353975137465822,
+      "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
+      "contacts": [
+        {
+          "ligand_atom_index": 4,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "O",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "OA",
+          "distance": 2.05,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 3,
+          "ligand_atom_name": "O",
+          "ligand_atom_type": "OA",
+          "receptor_atom_name": "H",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "HD",
+          "distance": 2.16,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 3,
+          "ligand_atom_name": "O",
+          "ligand_atom_type": "OA",
+          "receptor_atom_name": "H",
+          "receptor_resname": "LEU",
+          "receptor_chain": "A",
+          "receptor_resseq": 160,
+          "receptor_atom_type": "HD",
+          "distance": 2.27,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 1,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "N",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "N",
+          "distance": 2.53,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 0,
+          "ligand_atom_name": "N",
+          "ligand_atom_type": "NA",
+          "receptor_atom_name": "H",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "HD",
+          "distance": 2.6,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 4,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "N",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "N",
+          "distance": 2.89,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 0,
+          "ligand_atom_name": "N",
+          "ligand_atom_type": "NA",
+          "receptor_atom_name": "OE2",
+          "receptor_resname": "GLU",
+          "receptor_chain": "A",
+          "receptor_resseq": 198,
+          "receptor_atom_type": "OA",
+          "distance": 2.96,
+          "kind": "ionic"
+        },
+        {
+          "ligand_atom_index": 1,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "O",
+          "receptor_resname": "ALA",
+          "receptor_chain": "A",
+          "receptor_resseq": 161,
+          "receptor_atom_type": "OA",
+          "distance": 3.2,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 1,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "OE2",
+          "receptor_resname": "GLU",
+          "receptor_chain": "A",
+          "receptor_resseq": 198,
+          "receptor_atom_type": "OA",
+          "distance": 3.29,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 0,
+          "ligand_atom_name": "N",
+          "ligand_atom_type": "NA",
+          "receptor_atom_name": "H",
+          "receptor_resname": "LEU",
+          "receptor_chain": "A",
+          "receptor_resseq": 160,
+          "receptor_atom_type": "HD",
+          "distance": 3.33,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 2,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "OE2",
+          "receptor_resname": "GLU",
+          "receptor_chain": "A",
+          "receptor_resseq": 198,
+          "receptor_atom_type": "OA",
+          "distance": 3.34,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 4,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "N",
+          "receptor_resname": "LEU",
+          "receptor_chain": "A",
+          "receptor_resseq": 160,
+          "receptor_atom_type": "N",
+          "distance": 3.43,
+          "kind": "hbond"
+        }
+      ],
+      "residues": [
+        {
+          "chain": "A",
+          "resname": "ALA",
+          "resseq": 161,
+          "geom_hbond_contacts": 6,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 0,
+          "metal_contacts": 0,
+          "closest": 2.05
+        },
+        {
+          "chain": "A",
+          "resname": "LEU",
+          "resseq": 160,
+          "geom_hbond_contacts": 3,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 0,
+          "metal_contacts": 0,
+          "closest": 2.27
+        },
+        {
+          "chain": "A",
+          "resname": "GLU",
+          "resseq": 198,
+          "geom_hbond_contacts": 2,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 1,
+          "metal_contacts": 0,
+          "closest": 2.96
+        }
+      ]
+    },
+    {
+      "pose_index": 3,
+      "affinity": -2.241,
+      "num_contacts": 5,
+      "num_geom_hbond_contacts": 5,
+      "num_hydrophobic_contacts": 0,
+      "num_ionic_contacts": 0,
+      "num_metal_contacts": 0,
+      "docking_score_efficiency": -1.1205,
+      "crystal_rmsd": 0.02360585637673527,
+      "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
+      "contacts": [
+        {
+          "ligand_atom_index": 2,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "O",
+          "receptor_resname": "GLY",
+          "receptor_chain": "I",
+          "receptor_resseq": 3,
+          "receptor_atom_type": "OA",
+          "distance": 2.54,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 2,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "NE2",
+          "receptor_resname": "HIS",
+          "receptor_chain": "A",
+          "receptor_resseq": 197,
+          "receptor_atom_type": "NA",
+          "distance": 2.75,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 1,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "O",
+          "receptor_resname": "PRO",
+          "receptor_chain": "A",
+          "receptor_resseq": 217,
+          "receptor_atom_type": "OA",
+          "distance": 2.93,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 2,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "NE2",
+          "receptor_resname": "HIS",
+          "receptor_chain": "A",
+          "receptor_resseq": 207,
+          "receptor_atom_type": "NA",
+          "distance": 3.12,
+          "kind": "hbond"
+        },
+        {
+          "ligand_atom_index": 1,
+          "ligand_atom_name": "H",
+          "ligand_atom_type": "HD",
+          "receptor_atom_name": "O",
+          "receptor_resname": "GLY",
+          "receptor_chain": "I",
+          "receptor_resseq": 3,
+          "receptor_atom_type": "OA",
+          "distance": 3.35,
+          "kind": "hbond"
+        }
+      ],
+      "residues": [
+        {
+          "chain": "I",
+          "resname": "GLY",
+          "resseq": 3,
+          "geom_hbond_contacts": 2,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 0,
+          "metal_contacts": 0,
+          "closest": 2.54
+        },
+        {
+          "chain": "A",
+          "resname": "HIS",
+          "resseq": 197,
+          "geom_hbond_contacts": 1,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 0,
+          "metal_contacts": 0,
+          "closest": 2.75
+        },
+        {
+          "chain": "A",
+          "resname": "PRO",
+          "resseq": 217,
+          "geom_hbond_contacts": 1,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 0,
+          "metal_contacts": 0,
+          "closest": 2.93
+        },
+        {
+          "chain": "A",
+          "resname": "HIS",
+          "resseq": 207,
+          "geom_hbond_contacts": 1,
+          "hydrophobic_contacts": 0,
+          "ionic_contacts": 0,
+          "metal_contacts": 0,
+          "closest": 3.12
+        }
+      ]
+    }
+  ]
+}

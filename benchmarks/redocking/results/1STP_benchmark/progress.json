@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "btn_redock": {
+      "ligand_name": "btn_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1STP_benchmark/docking/btn_redock_out.pdbqt",
+      "best_affinity": -7.432,
+      "runtime": 9.67,
+      "backend": "python"
+    }
+  }
+}

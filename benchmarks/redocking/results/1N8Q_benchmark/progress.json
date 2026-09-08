@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "dhb_redock": {
+      "ligand_name": "dhb_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1N8Q_benchmark/docking/dhb_redock_out.pdbqt",
+      "best_affinity": -5.563,
+      "runtime": 4.08,
+      "backend": "python"
+    }
+  }
+}

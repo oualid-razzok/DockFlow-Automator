@@ -1,0 +1,24 @@
+2026-09-08 01:35:20,261 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1YGC_benchmark
+2026-09-08 01:35:20,261 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:35:20,262 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1YGC.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1YGC_benchmark/raw/1ygc.pdb
+2026-09-08 01:35:21,121 | INFO    | dockflow.pipeline. | pipeline step download: done 1YGC
+2026-09-08 01:35:21,123 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:35:21,140 | WARNING | dockflow.preparator. | removed hetero species: 38 905, 2 CA, 35 SO4. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:35:21,146 | WARNING | dockflow.preparator. | Receptor has 11 missing residues (chain H: 36; chain H: 130-133; chain H: 148; chain H: 171-174 (+1 more)). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:35:21,401 | INFO    | dockflow.preparator. | receptor prepared: 2703 -> 2879 atoms (engine=openbabel, +2321H) -> receptor.pdbqt
+2026-09-08 01:35:21,402 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2879 atoms
+2026-09-08 01:35:21,403 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:35:21,403 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/905_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1YGC_benchmark/raw/905.sdf
+2026-09-08 01:35:23,492 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:35:23,492 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:35:23,567 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:905
+2026-09-08 01:35:23,568 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:36:42,718 | INFO    | dockflow.engine. | docked 905_redock with python backend in 79.1s, best affinity -9.78
+2026-09-08 01:36:42,719 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:36:42,719 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:36:42,808 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1YGC_benchmark/docking/905_redock_poses.sdf
+2026-09-08 01:36:42,809 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:36:42,809 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:36:42,809 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:36:42,824 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1YGC_benchmark/report.md
+2026-09-08 01:36:42,838 | INFO    | dockflow.pipeline. | run 1YGC_benchmark finished in 82.6s (ok=True)

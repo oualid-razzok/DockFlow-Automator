@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "azm_redock": {
+      "ligand_name": "azm_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1AZM_benchmark/docking/azm_redock_out.pdbqt",
+      "best_affinity": -6.082,
+      "runtime": 4.19,
+      "backend": "python"
+    }
+  }
+}

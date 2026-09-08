@@ -1,0 +1,55 @@
+2026-09-08 01:36:43,651 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1N46_benchmark
+2026-09-08 01:36:43,652 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:36:43,652 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1N46.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1N46_benchmark/raw/1n46.pdb
+2026-09-08 01:36:44,562 | INFO    | dockflow.pipeline. | pipeline step download: done 1N46
+2026-09-08 01:36:44,564 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:36:44,589 | WARNING | dockflow.preparator. | removed hetero species: 54 PFA. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:36:44,597 | WARNING | dockflow.preparator. | Receptor has 15 missing residues (chain A: 236-238; chain B: 236-238; chain B: 254-262). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:36:44,597 | WARNING | dockflow.preparator. | Cys308/Cys309, Cys308/Cys309 appear(s) reduced (free SG, no S-S partner, another free Cys within 8 A); may need protonation state review. (Heuristic: see manifest.receptor.decisions.reduced_cysteines.)
+2026-09-08 01:36:45,002 | INFO    | dockflow.preparator. | receptor prepared: 4040 -> 4680 atoms (engine=openbabel, +3901H) -> receptor.pdbqt
+2026-09-08 01:36:45,005 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 4680 atoms
+2026-09-08 01:36:45,005 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:36:45,006 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/PFA_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1N46_benchmark/raw/pfa.sdf
+2026-09-08 01:36:47,117 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:36:47,118 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:36:47,191 | ERROR   | dockflow.pipeline. | grid box volume 69698 A^3 exceeds AutoDock Vina's hard cap of 27000 A^3 (30 x 30 x 30 A); refusing to run - shrink the box (gridbox.padding) or set an explicit center/size
+2026-09-08 01:36:47,191 | ERROR   | dockflow.pipeline. | pipeline failed: grid box volume 69698 A^3 exceeds AutoDock Vina's hard cap of 27000 A^3 (30 x 30 x 30 A); refusing to run - shrink the box (gridbox.padding) or set an explicit center/size
+2026-09-08 01:36:47,201 | INFO    | dockflow.pipeline. | run 1N46_benchmark finished in 3.5s (ok=False)
+2026-09-08 01:53:34,644 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1N46_benchmark
+2026-09-08 01:53:34,644 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:53:35,184 | INFO    | dockflow.pipeline. | pipeline step download: done 1N46
+2026-09-08 01:53:35,185 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:53:35,210 | WARNING | dockflow.preparator. | removed hetero species: 54 PFA. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:53:35,218 | WARNING | dockflow.preparator. | Receptor has 15 missing residues (chain A: 236-238; chain B: 236-238; chain B: 254-262). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:53:35,218 | WARNING | dockflow.preparator. | Cys308/Cys309, Cys308/Cys309 appear(s) reduced (free SG, no S-S partner, another free Cys within 8 A); may need protonation state review. (Heuristic: see manifest.receptor.decisions.reduced_cysteines.)
+2026-09-08 01:53:35,624 | INFO    | dockflow.preparator. | receptor prepared: 4040 -> 4680 atoms (engine=openbabel, +3901H) -> receptor.pdbqt
+2026-09-08 01:53:35,627 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 4680 atoms
+2026-09-08 01:53:35,627 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:53:37,409 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:53:37,410 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:53:37,482 | ERROR   | dockflow.pipeline. | grid box volume 69698 A^3 exceeds AutoDock Vina's hard cap of 27000 A^3 (30 x 30 x 30 A); refusing to run - shrink the box (gridbox.padding) or set an explicit center/size
+2026-09-08 01:53:37,482 | ERROR   | dockflow.pipeline. | pipeline failed: grid box volume 69698 A^3 exceeds AutoDock Vina's hard cap of 27000 A^3 (30 x 30 x 30 A); refusing to run - shrink the box (gridbox.padding) or set an explicit center/size
+2026-09-08 01:53:37,492 | INFO    | dockflow.pipeline. | run 1N46_benchmark finished in 2.8s (ok=False)
+2026-09-08 01:56:19,085 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1N46_benchmark
+2026-09-08 01:56:19,085 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:56:19,609 | INFO    | dockflow.pipeline. | pipeline step download: done 1N46
+2026-09-08 01:56:19,610 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:56:19,635 | WARNING | dockflow.preparator. | removed hetero species: 54 PFA. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:56:19,643 | WARNING | dockflow.preparator. | Receptor has 15 missing residues (chain A: 236-238; chain B: 236-238; chain B: 254-262). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:56:19,643 | WARNING | dockflow.preparator. | Cys308/Cys309, Cys308/Cys309 appear(s) reduced (free SG, no S-S partner, another free Cys within 8 A); may need protonation state review. (Heuristic: see manifest.receptor.decisions.reduced_cysteines.)
+2026-09-08 01:56:20,053 | INFO    | dockflow.preparator. | receptor prepared: 4040 -> 4680 atoms (engine=openbabel, +3901H) -> receptor.pdbqt
+2026-09-08 01:56:20,055 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 4680 atoms
+2026-09-08 01:56:20,056 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:56:21,851 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:56:21,851 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:56:21,913 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:PFA
+2026-09-08 01:56:21,914 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:56:36,880 | INFO    | dockflow.engine. | docked pfa_redock with python backend in 15.0s, best affinity -11.53
+2026-09-08 01:56:36,881 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:56:36,881 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:56:36,947 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1N46_benchmark/docking/pfa_redock_poses.sdf
+2026-09-08 01:56:36,947 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:56:36,947 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:56:36,947 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:56:36,957 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1N46_benchmark/report.md
+2026-09-08 01:56:36,969 | INFO    | dockflow.pipeline. | run 1N46_benchmark finished in 17.9s (ok=True)

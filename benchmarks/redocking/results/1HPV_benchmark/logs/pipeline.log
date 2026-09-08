@@ -1,0 +1,74 @@
+2026-09-08 01:30:19,468 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1HPV_benchmark
+2026-09-08 01:30:19,469 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:30:19,469 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1HPV.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HPV_benchmark/raw/1hpv.pdb
+2026-09-08 01:30:20,318 | INFO    | dockflow.pipeline. | pipeline step download: done 1HPV
+2026-09-08 01:30:20,321 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:30:20,332 | WARNING | dockflow.preparator. | removed hetero species: 35 478. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:30:20,530 | INFO    | dockflow.preparator. | receptor prepared: 1631 -> 1838 atoms (engine=openbabel, +1608H) -> receptor.pdbqt
+2026-09-08 01:30:20,531 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1838 atoms
+2026-09-08 01:30:20,531 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:30:20,531 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/478_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HPV_benchmark/raw/478.sdf
+2026-09-08 01:30:22,539 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:30:22,539 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:30:22,567 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:478
+2026-09-08 01:30:22,567 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:30:22,581 | ERROR   | dockflow.pipeline. | unexpected pipeline failure
+Traceback (most recent call last):
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 384, in run
+    results = self._maybe_run(
+              ^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 448, in _maybe_run
+    result = method(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 1046, in _dock
+    results = engine.dock_batch(
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 475, in dock_batch
+    _finish(index, _run(index, lig_path, record))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 454, in _run
+    return self.dock(receptor_pdbqt, lig_path, out_path, record)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 382, in dock
+    log_text = self._dock_python(receptor, ligand, out, mode)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 532, in _dock_python
+    vina_obj.set_receptor(str(receptor))
+  File "/home/z/my-project/bindings-venv/lib/python3.12/site-packages/vina/vina.py", line 157, in set_receptor
+    self._vina.set_receptor(rigid_pdbqt_filename)
+  File "/home/z/my-project/bindings-venv/lib/python3.12/site-packages/vina/vina_wrapper.py", line 704, in set_receptor
+    return _vina_wrapper.Vina_set_receptor(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 
+
+PDBQT parsing error: Atom type HS is not a valid AutoDock type (atom types are case-sensitive).
+ > ATOM   1627  H   CYS A  67
+Additional information:
+Wrong number or type of arguments for overloaded function 'Vina_set_receptor'.
+  Possible C/C++ prototypes are:
+    Vina::set_receptor(std::string const &,std::string const &)
+    Vina::set_receptor(std::string const &)
+    Vina::set_receptor()
+
+2026-09-08 01:30:22,591 | INFO    | dockflow.pipeline. | run 1HPV_benchmark finished in 3.1s (ok=False)
+2026-09-08 01:46:13,457 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1HPV_benchmark
+2026-09-08 01:46:13,457 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:46:13,976 | INFO    | dockflow.pipeline. | pipeline step download: done 1HPV
+2026-09-08 01:46:13,977 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:46:13,988 | WARNING | dockflow.preparator. | removed hetero species: 35 478. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:46:14,181 | INFO    | dockflow.preparator. | receptor prepared: 1631 -> 1838 atoms (engine=openbabel, +1608H) -> receptor.pdbqt
+2026-09-08 01:46:14,182 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1838 atoms
+2026-09-08 01:46:14,182 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:46:15,959 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:46:15,959 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:46:15,986 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:478
+2026-09-08 01:46:15,987 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:47:18,267 | INFO    | dockflow.engine. | docked 478_redock with python backend in 62.3s, best affinity -8.83
+2026-09-08 01:47:18,267 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:47:18,268 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:47:18,338 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HPV_benchmark/docking/478_redock_poses.sdf
+2026-09-08 01:47:18,339 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:47:18,339 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:47:18,339 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:47:18,353 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HPV_benchmark/report.md
+2026-09-08 01:47:18,366 | INFO    | dockflow.pipeline. | run 1HPV_benchmark finished in 64.9s (ok=True)

@@ -1,0 +1,76 @@
+2026-09-08 01:35:10,750 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1NVQ_benchmark
+2026-09-08 01:35:10,750 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:35:10,751 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1NVQ.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1NVQ_benchmark/raw/1nvq.pdb
+2026-09-08 01:35:11,628 | INFO    | dockflow.pipeline. | pipeline step download: done 1NVQ
+2026-09-08 01:35:11,631 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:35:11,647 | WARNING | dockflow.preparator. | removed hetero species: 5 SO4, 36 UCN. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:35:11,652 | WARNING | dockflow.preparator. | Receptor has 7 missing residues (chain A: 44-50). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:35:11,894 | INFO    | dockflow.preparator. | receptor prepared: 2402 -> 2639 atoms (engine=openbabel, +2176H) -> receptor.pdbqt
+2026-09-08 01:35:11,895 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2639 atoms
+2026-09-08 01:35:11,895 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:35:11,896 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/UCN_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1NVQ_benchmark/raw/ucn.sdf
+2026-09-08 01:35:14,008 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:35:14,008 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:35:14,046 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:UCN
+2026-09-08 01:35:14,046 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:35:14,094 | ERROR   | dockflow.pipeline. | unexpected pipeline failure
+Traceback (most recent call last):
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 384, in run
+    results = self._maybe_run(
+              ^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 448, in _maybe_run
+    result = method(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 1046, in _dock
+    results = engine.dock_batch(
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 475, in dock_batch
+    _finish(index, _run(index, lig_path, record))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 454, in _run
+    return self.dock(receptor_pdbqt, lig_path, out_path, record)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 382, in dock
+    log_text = self._dock_python(receptor, ligand, out, mode)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 532, in _dock_python
+    vina_obj.set_receptor(str(receptor))
+  File "/home/z/my-project/bindings-venv/lib/python3.12/site-packages/vina/vina.py", line 157, in set_receptor
+    self._vina.set_receptor(rigid_pdbqt_filename)
+  File "/home/z/my-project/bindings-venv/lib/python3.12/site-packages/vina/vina_wrapper.py", line 704, in set_receptor
+    return _vina_wrapper.Vina_set_receptor(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 
+
+PDBQT parsing error: Atom type HS is not a valid AutoDock type (atom types are case-sensitive).
+ > ATOM   2251  H   CYS A  57
+Additional information:
+Wrong number or type of arguments for overloaded function 'Vina_set_receptor'.
+  Possible C/C++ prototypes are:
+    Vina::set_receptor(std::string const &,std::string const &)
+    Vina::set_receptor(std::string const &)
+    Vina::set_receptor()
+
+2026-09-08 01:35:14,105 | INFO    | dockflow.pipeline. | run 1NVQ_benchmark finished in 3.4s (ok=False)
+2026-09-08 01:53:16,907 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1NVQ_benchmark
+2026-09-08 01:53:16,907 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:53:17,438 | INFO    | dockflow.pipeline. | pipeline step download: done 1NVQ
+2026-09-08 01:53:17,439 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:53:17,454 | WARNING | dockflow.preparator. | removed hetero species: 5 SO4, 36 UCN. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:53:17,459 | WARNING | dockflow.preparator. | Receptor has 7 missing residues (chain A: 44-50). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:53:17,701 | INFO    | dockflow.preparator. | receptor prepared: 2402 -> 2639 atoms (engine=openbabel, +2176H) -> receptor.pdbqt
+2026-09-08 01:53:17,702 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2639 atoms
+2026-09-08 01:53:17,702 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:53:19,476 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:53:19,476 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:53:19,513 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:UCN
+2026-09-08 01:53:19,513 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:53:33,762 | INFO    | dockflow.engine. | docked ucn_redock with python backend in 14.2s, best affinity -12.51
+2026-09-08 01:53:33,762 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:53:33,763 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:53:33,809 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1NVQ_benchmark/docking/ucn_redock_poses.sdf
+2026-09-08 01:53:33,809 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:53:33,809 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:53:33,809 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:53:33,819 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1NVQ_benchmark/report.md
+2026-09-08 01:53:33,829 | INFO    | dockflow.pipeline. | run 1NVQ_benchmark finished in 16.9s (ok=True)

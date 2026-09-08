@@ -1,0 +1,11 @@
+{
+  "complexes_attempted": 24,
+  "mgl_arm_completed": 21,
+  "mgl_arm_success_within_2a": 14,
+  "dockflow_arm_success_within_2a": 16,
+  "mean_rmsd_delta_a": 0.446,
+  "mean_affinity_delta": -0.086,
+  "mean_receptor_atom_delta": 0.0,
+  "exhaustiveness": 8,
+  "seed": 2026
+}

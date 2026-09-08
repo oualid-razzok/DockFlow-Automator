@@ -79,6 +79,11 @@ class VinaConfig:
     # GNINA-only options (audit item 32): CNN scoring mode + model.
     cnn_scoring: str | None = None  # "rescore" | "all" | "none" (gnina only)
     cnn: str | None = None          # CNN model name (default, dense, ...)
+    # Flexible receptor (peer item 8): path to the flex PDBQT; the
+    # ``receptor`` path then refers to the rigid part.
+    flex_pdbqt: str | None = None
+    # Covalent docking (peer item 9): gnina/vina-reactive only.
+    covalent_residue: str | None = None  # "A:145:SG" (gnina --covalent_residue)
 
     @classmethod
     def from_gridbox(cls, box: GridBox, **kwargs) -> VinaConfig:
@@ -149,6 +154,10 @@ class VinaConfig:
             args += ["--seed", str(self.seed)]
         if self.cpu:
             args += ["--cpu", str(self.cpu)]
+        if self.flex_pdbqt:
+            args += ["--flex", self.flex_pdbqt]
+        if self.covalent_residue:
+            args += ["--covalent_residue", self.covalent_residue]
         for key, value in self.weight_terms.items():
             args += [f"--weight_{key}", str(value)]
         return args
@@ -529,7 +538,11 @@ class VinaEngine:
         if cfg.seed is not None:
             kwargs["seed"] = cfg.seed
         vina_obj = Vina(**kwargs)
-        vina_obj.set_receptor(str(receptor))
+        if cfg.flex_pdbqt:
+            # flexible receptor: two-file set_receptor (rigid, flex)
+            vina_obj.set_receptor(str(receptor), cfg.flex_pdbqt)
+        else:
+            vina_obj.set_receptor(str(receptor))
         vina_obj.set_ligand_from_file(str(ligand))
         vina_obj.compute_vina_maps(center=list(cfg.center), box_size=list(cfg.size))
         log_lines: list[str] = []
@@ -640,17 +653,45 @@ def write_summary_csv(results: Sequence[DockingResult], path: str | Path) -> Pat
     target.parent.mkdir(parents=True, exist_ok=True)
     with open(target, "w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh)
-        writer.writerow(
-            ["ligand", "pose", "affinity_kcal_mol", "rmsd_lb", "rmsd_ub",
-             "crystal_rmsd", "docking_score_efficiency", "num_heavy_atoms",
-             "runtime_s", "backend", "error"]
-        )
+        # Consensus scoring columns (peer item 16): one column per extra
+        # scoring function present on any result + the rank-by-rank
+        # consensus_rank over the available scorings.
+        extra_names: list[str] = []
+        for result in results:
+            for name in (result.extra_scores or {}):
+                if name not in extra_names:
+                    extra_names.append(name)
+        ranks: dict[str, float] = {}
+        if extra_names:
+            for name in ["primary", *extra_names]:
+                scored = [
+                    (r.ligand_name, r.best_affinity if name == "primary"
+                     else r.extra_scores.get(name))
+                    for r in results if r.ok
+                    and (r.best_affinity if name == "primary"
+                         else r.extra_scores.get(name)) is not None
+                ]
+                scored.sort(key=lambda kv: kv[1])
+                for position, (ligand_name, _) in enumerate(scored, start=1):
+                    ranks.setdefault(ligand_name, 0.0)
+                    ranks[ligand_name] += position
+        header = ["ligand", "pose", "affinity_kcal_mol", "rmsd_lb", "rmsd_ub",
+                  "crystal_rmsd", "docking_score_efficiency", "num_heavy_atoms"]
+        header += [f"{name}_affinity" for name in extra_names]
+        header += ["consensus_rank", "runtime_s", "backend", "error"]
+        writer.writerow(header)
         for result in results:
             heavy = result.ligand.num_heavy_atoms if result.ligand else None
+            extras = [f"{result.extra_scores[name]:.3f}"
+                      if result.extra_scores.get(name) is not None else ""
+                      for name in extra_names]
+            rank = (f"{ranks[result.ligand_name] / (1 + len(extra_names)):.2f}"
+                    if result.ligand_name in ranks else "")
             if not result.poses:
                 writer.writerow(
-                    [result.ligand_name, "", "", "", "", "", "", heavy or "",
-                     f"{result.runtime:.1f}", result.backend, result.error or ""]
+                    [result.ligand_name, "", "", "", "", "", "", heavy or ""]
+                    + extras + [rank, f"{result.runtime:.1f}",
+                                result.backend, result.error or ""]
                 )
                 continue
             for pose in result.poses:
@@ -661,7 +702,8 @@ def write_summary_csv(results: Sequence[DockingResult], path: str | Path) -> Pat
                     [result.ligand_name, pose.model, f"{pose.affinity:.3f}",
                      f"{pose.rmsd_lb:.3f}", f"{pose.rmsd_ub:.3f}",
                      f"{pose.crystal_rmsd:.3f}" if pose.crystal_rmsd is not None else "",
-                     efficiency, heavy or "", f"{result.runtime:.1f}",
+                     efficiency, heavy or ""]
+                    + extras + [rank, f"{result.runtime:.1f}",
                      result.backend, ""]
                 )
     return target

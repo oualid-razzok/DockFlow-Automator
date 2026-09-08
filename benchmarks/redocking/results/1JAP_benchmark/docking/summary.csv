@@ -1,0 +1,10 @@
+ligand,pose,affinity_kcal_mol,rmsd_lb,rmsd_ub,crystal_rmsd,docking_score_efficiency,num_heavy_atoms,runtime_s,backend,error
+hoa_redock,1,-2.383,0.000,0.000,0.024,-1.1915,2,1.3,python,
+hoa_redock,2,-2.375,1.452,1.452,0.023,-1.1875,2,1.3,python,
+hoa_redock,3,-2.241,3.720,3.720,0.024,-1.1205,2,1.3,python,
+hoa_redock,4,-2.223,5.265,5.265,0.023,-1.1115,2,1.3,python,
+hoa_redock,5,-2.213,4.310,4.310,0.024,-1.1065,2,1.3,python,
+hoa_redock,6,-2.028,5.074,5.074,0.023,-1.0140,2,1.3,python,
+hoa_redock,7,-1.560,7.853,7.853,0.024,-0.7800,2,1.3,python,
+hoa_redock,8,-1.550,2.800,2.800,0.023,-0.7750,2,1.3,python,
+hoa_redock,9,-1.505,3.837,3.837,0.023,-0.7525,2,1.3,python,

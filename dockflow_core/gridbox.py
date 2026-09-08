@@ -151,6 +151,33 @@ def box_from_reference_ligand(
     return box_from_atoms(atoms, padding=padding, source=f"ligand:{Path(ligand_path).name}")
 
 
+def _single_ligand_instance(atoms: Sequence[Atom]) -> tuple[list[Atom], str]:
+    """Reduce a ligand selection to ONE residue instance.
+
+    PDB structures of homodimers / multi-copy entries often contain the
+    same co-crystallized ligand twice (chains A and B).  A docking box or
+    an RMSD reference must describe ONE binding site, not the union of
+    both copies (the union inflates the box past Vina's 30 A cap and
+    doubles the reference atom count, breaking crystal RMSD entirely).
+
+    Picks the instance with the most atoms (ties: first by chain/resseq)
+    and returns ``(atoms, instance_label)``.
+    """
+    instances: dict[tuple[str, int], list[Atom]] = {}
+    for atom in atoms:
+        key = (atom.chain.strip(), int(atom.resseq))
+        instances.setdefault(key, []).append(atom)
+    if len(instances) <= 1:
+        label = next(iter(instances), ("", 0))
+        return atoms, f"{label[0]}{label[1]}" if atoms else ""
+    # largest instance wins (highest-occupancy altlocs were already
+    # resolved upstream by extract/parse layers where applicable)
+    best = max(instances.items(),
+               key=lambda kv: (len(kv[1]), -kv[0][1]))
+    label = f"{best[0][0]}{best[0][1]}"
+    return best[1], label
+
+
 def box_from_pocket(
     structure_path: str | Path,
     resname: str,
@@ -166,6 +193,10 @@ def box_from_pocket(
         chain: optional chain restriction.
         resseq: optional residue-number restriction (disambiguation).
         padding: padding added around the ligand bounding box.
+
+    When the ligand appears in several copies (e.g. a homodimer with two
+    binding sites), the box is derived from ONE instance (the largest),
+    and the source records which one (``pocket:IXM(A451)``).
     """
     atoms = _load_atoms(structure_path)
     selected = [
@@ -181,7 +212,9 @@ def box_from_pocket(
             f"ligand residue {resname!r} not found in {structure_path} "
             f"(chain={chain!r}, resseq={resseq!r})"
         )
-    return box_from_atoms(selected, padding=padding, source=f"pocket:{resname}")
+    selected, instance = _single_ligand_instance(selected)
+    source = f"pocket:{resname}({instance})" if instance else f"pocket:{resname}"
+    return box_from_atoms(selected, padding=padding, source=source)
 
 
 def box_from_residues(
@@ -221,6 +254,36 @@ def box_from_structure(
     if not atoms:
         raise ValueError(f"no atoms in {structure_path}")
     return box_from_atoms(atoms, padding=padding, source="structure")
+
+
+# ---------------------------------------------------------------------------
+# Box provenance (peer item 15)
+# ---------------------------------------------------------------------------
+def assumption_strength(source: str) -> str:
+    """How trustworthy the box derivation is for the science.
+
+    * ``"strong"`` - derived from a co-crystallized ligand of THIS
+      receptor (``ligand:*`` / ``pocket:*`` sources): the pocket is
+      experimentally observed in the exact target.
+    * ``"medium"`` - derived from a homologous ligand (another PDB's
+      ligand, cross-docking style): same fold, possibly different pocket
+      boundaries.
+    * ``"weak"`` - derived with no pocket knowledge (whole-structure
+      fallback, sequence-only predictions).
+    * ``"user-explicit"`` - the researcher supplied the box directly
+      (center/size config, vina config file, or a curated residue list):
+      the assumption is the researcher's, not the pipeline's.
+    """
+    text = (source or "").strip().lower()
+    if text.startswith(("ligand:", "pocket:")):
+        return "strong"
+    if text.startswith(("homolog", "external")):
+        return "medium"
+    if text.startswith("structure"):
+        return "weak"
+    if text in ("explicit", "residues") or text.startswith("config"):
+        return "user-explicit"
+    return "medium"  # unknown derivation: do not claim trust we cannot show
 
 
 def box_union(boxes: Sequence[GridBox]) -> GridBox:

@@ -15,7 +15,7 @@
 # =============================================================================
 pdb_id,ligand_resname,target,note
 1HVR,XK2,HIV-1 protease (cyclic urea inhibitor),DockFlow example / PDBbind
-1HSG,MK1,HIV-1 protease (L-735,524 saquinavir analog),classic PR redocking
+1HSG,MK1,"HIV-1 protease (L-735,524 saquinavir analog)",classic PR redocking
 1HTG,G37,HIV-1 protease (penicillin-derived inhibitor),classic PR redocking
 1HPV,478,HIV-1 protease (VX-478 amprenavir),classic PR redocking
 1MUI,AB1,HIV-1 protease (lopinavir),classic PR redocking

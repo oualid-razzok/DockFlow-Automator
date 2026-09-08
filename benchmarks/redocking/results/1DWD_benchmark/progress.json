@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "mid_redock": {
+      "ligand_name": "mid_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1DWD_benchmark/docking/mid_redock_out.pdbqt",
+      "best_affinity": -10.3,
+      "runtime": 81.43,
+      "backend": "python"
+    }
+  }
+}

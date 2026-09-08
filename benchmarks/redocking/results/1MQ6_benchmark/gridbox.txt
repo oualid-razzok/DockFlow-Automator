@@ -1,0 +1,8 @@
+# DockFlow-Automator grid box config
+center_x = 7.809
+center_y = 5.318
+center_z = 21.170
+size_x = 20.125
+size_y = 17.534
+size_z = 20.288
+exhaustiveness = 8

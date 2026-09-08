@@ -67,7 +67,7 @@ def test_box_from_pocket(receptor_pdb_path: Path):
     box = box_from_pocket(receptor_pdb_path, "BEN", padding=4.0)
     # benzene carbons span roughly x 11.2-13.7
     assert box.min_corner[0] <= 11.0 and box.max_corner[0] >= 14.0
-    assert box.source == "pocket:BEN"
+    assert box.source.startswith("pocket:BEN")
     with pytest.raises(ValueError):
         box_from_pocket(receptor_pdb_path, "XXX")
 
@@ -123,3 +123,64 @@ def test_corner_points():
     corners = box.corner_points()
     assert corners.shape == (8, 3)
     assert set(np.unique(corners[:, 0])) == {-1.0, 1.0}
+
+
+# -- Box provenance (peer item 15) ------------------------------------------
+def test_assumption_strength_classification():
+    from dockflow_core.gridbox import assumption_strength
+
+    assert assumption_strength("ligand:XK2") == "strong"
+    assert assumption_strength("pocket:XK2") == "strong"
+    assert assumption_strength("homologous ligand from 1HSG") == "medium"
+    assert assumption_strength("structure (fallback)") == "weak"
+    assert assumption_strength("explicit") == "user-explicit"
+    assert assumption_strength("residues") == "user-explicit"
+    assert assumption_strength("config:gridbox.txt") == "user-explicit"
+    # unknown derivations never claim trust
+    assert assumption_strength("") == "medium"
+    assert assumption_strength("prediction-v4") == "medium"
+
+
+def test_assumption_strength_values_are_documented_words():
+    from dockflow_core.gridbox import assumption_strength
+
+    allowed = {"strong", "medium", "weak", "user-explicit"}
+    for source in ("ligand:A", "structure", "explicit", "residues",
+                   "config:x", "homolog-1", "weird-thing"):
+        assert assumption_strength(source) in allowed
+
+
+# -- Multi-instance ligands (redocking benchmark finding) -------------------
+def _ligand_pdb(tmp_path, copies=2):
+    """A PDB with `copies` instances of ligand XXX, 20 A apart."""
+    lines = []
+    serial = 1
+    for copy in range(copies):
+        x_offset = copy * 20.0
+        for i in range(4):
+            lines.append(
+                f"ATOM  {serial:5d}  C{i+1}  XXX {'AB'[copy]}  {100 + copy:3d}    "
+                f"{x_offset + i * 1.5:8.3f}    0.000    0.000  1.00  0.00           C"
+            )
+            serial += 1
+    path = tmp_path / "multi.pdb"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def test_box_from_pocket_single_instance(tmp_path):
+    from dockflow_core.gridbox import box_from_pocket
+
+    box = box_from_pocket(_ligand_pdb(tmp_path, copies=2), "XXX", padding=4.0)
+    # one instance: 4 atoms spanning 4.5 A + 2*4 padding = ~12.5 A, not 20+.
+    assert max(box.size) < 16.0, box.size
+    assert "XXX" in box.source and "(" in box.source
+
+
+def test_box_from_pocket_two_instances_volume_differs(tmp_path):
+    from dockflow_core.gridbox import box_from_pocket
+
+    one = box_from_pocket(_ligand_pdb(tmp_path, copies=1), "XXX", padding=4.0)
+    two = box_from_pocket(_ligand_pdb(tmp_path, copies=2), "XXX", padding=4.0)
+    # union of both copies would inflate the volume massively; now equal
+    assert one.volume == two.volume

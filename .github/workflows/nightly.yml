@@ -1,0 +1,158 @@
+# =============================================================================
+# DockFlow-Automator - NIGHTLY scientific validation.
+#
+# Work-order item 28: slow, real-science benchmarks do NOT belong in the
+# per-PR path.  This workflow runs them on a schedule (and on demand):
+#
+#   1. redocking-benchmark : the full 24-complex suite (item 1)
+#   2. enrichment          : DUD-E hivpr actives/decoys panel (item 3)
+#   3. mgltools-comparison : DockFlow vs MGLTools 1.5.7 arms (item 2,
+#                            bioconda mgltools with bundled python2)
+#
+# PR-level CI (build.yml) stays fast: offline unit tests + schema checks
+# + GUI smoke + the 1HVR reproducibility pair (reproducibility.yml).
+# =============================================================================
+name: nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC daily
+  workflow_dispatch:
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  redocking-benchmark:
+    name: 24-complex redocking benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install full scientific stack
+        run: python -m pip install -e ".[prep,engine,viz,test]"
+
+      - name: Environment fingerprint
+        run: python -m dockflow_core.cli info
+
+      - name: Run all 24 complexes (exhaustiveness 8, seed 2026)
+        run: |
+          python benchmarks/redocking/run_benchmark.py \
+            --exhaustiveness 8 --max-seconds 12000
+
+      - name: Assert the suite completed (no complex dropped)
+        run: |
+          python - << 'EOF'
+          import json
+          stats = json.load(open("benchmarks/redocking/results/summary_stats.json"))
+          assert stats["complexes_attempted"] == 24, stats
+          assert stats["completed"] == 24, stats
+          print("redocking:", stats)
+          EOF
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: redocking-benchmark
+          path: |
+            benchmarks/redocking/results/redocking_results.csv
+            benchmarks/redocking/results/summary.md
+            benchmarks/redocking/results/summary_stats.json
+            benchmarks/redocking/results/scatter.png
+          retention-days: 90
+
+  enrichment:
+    name: DUD-E enrichment panel (hivpr)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install full scientific stack
+        run: python -m pip install -e ".[prep,engine,viz,test]"
+
+      - name: Dock the panel and compute enrichment metrics
+        run: |
+          python benchmarks/enrichment/run_enrichment.py \
+            --max-seconds 9000
+
+      - name: Assert metrics are above the random baseline
+        run: |
+          python - << 'EOF'
+          import json
+          m = json.load(open("benchmarks/enrichment/results/enrichment_metrics.json"))
+          assert m["roc_auc"] > 0.5, m  # chance ranking would be a failure
+          print("enrichment:", m)
+          EOF
+
+      - name: Upload enrichment results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: enrichment-benchmark
+          path: |
+            benchmarks/enrichment/results/enrichment_metrics.json
+            benchmarks/enrichment/results/enrichment_results.csv
+            benchmarks/enrichment/results/roc.png
+            benchmarks/enrichment/results/summary.md
+          retention-days: 90
+
+  mgltools-comparison:
+    name: DockFlow vs MGLTools (subset)
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install full scientific stack
+        run: python -m pip install -e ".[prep,engine,viz,test]"
+
+      - name: Fetch the redocking benchmark artifacts (DockFlow arm inputs)
+        run: |
+          python benchmarks/redocking/run_benchmark.py --limit 8 \
+            --exhaustiveness 8 --max-seconds 3000
+
+      - name: Set up MGLTools 1.5.7 (bioconda, bundled python2)
+        run: |
+          curl -sL --retry 3 -o /tmp/mgltools.tar.bz2 \
+            "https://api.anaconda.org/download/bioconda/mgltools/1.5.7/linux-64/mgltools-1.5.7-0.tar.bz2"
+          mkdir -p "$HOME/mgltools" \
+            && tar xjf /tmp/mgltools.tar.bz2 -C "$HOME/mgltools" \
+            --strip-components=0
+          python scripts/fix_mgltools_prefix.py \
+            --root "$HOME/mgltools" || true
+          "$HOME/mgltools/bin/python2.7" --version
+
+      - name: Run the comparison (first 8 complexes, both arms)
+        run: |
+          python benchmarks/mgltools_comparison/compare_workflow.py \
+            --mgltools "$HOME/mgltools" --limit 8 --max-seconds 6000
+
+      - name: Upload comparison results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mgltools-comparison
+          path: |
+            benchmarks/mgltools_comparison/results/comparison.csv
+            benchmarks/mgltools_comparison/results/summary.md
+            benchmarks/mgltools_comparison/results/comparison_stats.json
+          retention-days: 90

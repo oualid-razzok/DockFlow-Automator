@@ -1,0 +1,52 @@
+2026-09-08 01:32:38,658 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1Q41_benchmark
+2026-09-08 01:32:38,658 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:32:38,659 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1Q41.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1Q41_benchmark/raw/1q41.pdb
+2026-09-08 01:32:39,631 | INFO    | dockflow.pipeline. | pipeline step download: done 1Q41
+2026-09-08 01:32:39,633 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:32:39,669 | WARNING | dockflow.preparator. | removed hetero species: 42 IXM. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:32:39,678 | WARNING | dockflow.preparator. | Receptor has 19 missing residues (chain A: 120-125; chain A: 285-291; chain B: 120-125). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:32:40,223 | INFO    | dockflow.preparator. | receptor prepared: 5617 -> 6611 atoms (engine=openbabel, +5489H) -> receptor.pdbqt
+2026-09-08 01:32:40,226 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 6611 atoms
+2026-09-08 01:32:40,226 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:32:40,227 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/IXM_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1Q41_benchmark/raw/ixm.sdf
+2026-09-08 01:32:42,313 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:32:42,313 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:32:42,408 | ERROR   | dockflow.pipeline. | grid box volume 51458 A^3 exceeds AutoDock Vina's hard cap of 27000 A^3 (30 x 30 x 30 A); refusing to run - shrink the box (gridbox.padding) or set an explicit center/size
+2026-09-08 01:32:42,408 | ERROR   | dockflow.pipeline. | pipeline failed: grid box volume 51458 A^3 exceeds AutoDock Vina's hard cap of 27000 A^3 (30 x 30 x 30 A); refusing to run - shrink the box (gridbox.padding) or set an explicit center/size
+2026-09-08 01:32:42,418 | INFO    | dockflow.pipeline. | run 1Q41_benchmark finished in 3.8s (ok=False)
+2026-09-08 01:52:22,855 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1Q41_benchmark
+2026-09-08 01:52:22,855 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:52:23,392 | INFO    | dockflow.pipeline. | pipeline step download: done 1Q41
+2026-09-08 01:52:23,393 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:52:23,427 | WARNING | dockflow.preparator. | removed hetero species: 42 IXM. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:52:23,436 | WARNING | dockflow.preparator. | Receptor has 19 missing residues (chain A: 120-125; chain A: 285-291; chain B: 120-125). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:52:23,976 | INFO    | dockflow.preparator. | receptor prepared: 5617 -> 6611 atoms (engine=openbabel, +5489H) -> receptor.pdbqt
+2026-09-08 01:52:23,979 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 6611 atoms
+2026-09-08 01:52:23,980 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:52:25,663 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:52:25,663 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:52:25,759 | ERROR   | dockflow.pipeline. | grid box volume 51458 A^3 exceeds AutoDock Vina's hard cap of 27000 A^3 (30 x 30 x 30 A); refusing to run - shrink the box (gridbox.padding) or set an explicit center/size
+2026-09-08 01:52:25,759 | ERROR   | dockflow.pipeline. | pipeline failed: grid box volume 51458 A^3 exceeds AutoDock Vina's hard cap of 27000 A^3 (30 x 30 x 30 A); refusing to run - shrink the box (gridbox.padding) or set an explicit center/size
+2026-09-08 01:52:25,769 | INFO    | dockflow.pipeline. | run 1Q41_benchmark finished in 2.9s (ok=False)
+2026-09-08 01:55:54,353 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1Q41_benchmark
+2026-09-08 01:55:54,353 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:55:54,897 | INFO    | dockflow.pipeline. | pipeline step download: done 1Q41
+2026-09-08 01:55:54,899 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:55:54,933 | WARNING | dockflow.preparator. | removed hetero species: 42 IXM. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:55:54,942 | WARNING | dockflow.preparator. | Receptor has 19 missing residues (chain A: 120-125; chain A: 285-291; chain B: 120-125). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:55:55,502 | INFO    | dockflow.preparator. | receptor prepared: 5617 -> 6611 atoms (engine=openbabel, +5489H) -> receptor.pdbqt
+2026-09-08 01:55:55,505 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 6611 atoms
+2026-09-08 01:55:55,506 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:55:57,252 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:55:57,252 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:55:57,338 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:IXM
+2026-09-08 01:55:57,339 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:56:01,331 | INFO    | dockflow.engine. | docked ixm_redock with python backend in 4.0s, best affinity -10.56
+2026-09-08 01:56:01,332 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:56:01,332 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:56:01,429 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1Q41_benchmark/docking/ixm_redock_poses.sdf
+2026-09-08 01:56:01,430 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:56:01,430 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:56:01,430 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:56:01,442 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1Q41_benchmark/report.md
+2026-09-08 01:56:01,453 | INFO    | dockflow.pipeline. | run 1Q41_benchmark finished in 7.1s (ok=True)

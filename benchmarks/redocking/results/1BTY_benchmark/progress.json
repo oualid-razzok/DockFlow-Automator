@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "ben_redock": {
+      "ligand_name": "ben_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1BTY_benchmark/docking/ben_redock_out.pdbqt",
+      "best_affinity": -5.549,
+      "runtime": 2.3,
+      "backend": "python"
+    }
+  }
+}

@@ -120,6 +120,15 @@ class ReceptorPrepResult:
     removed_resnames: dict[str, int] = field(default_factory=dict)
     hydrogens_added: int = 0
     warnings: list[str] = field(default_factory=list)
+    # Structure quality checks (work order items 6, 7, 10):
+    missing_residues: list[dict] = field(default_factory=list)
+    disulfides: list[dict] = field(default_factory=list)
+    reduced_cysteines: list[dict] = field(default_factory=list)
+    # Flexible-receptor split (peer item 8): rigid + flex PDBQT pair.
+    rigid_pdbqt_path: Path | None = None
+    flex_pdbqt_path: Path | None = None
+    flexible_residues: list[dict] = field(default_factory=list)
+    metal_coordination: list[dict] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
@@ -135,7 +144,16 @@ class LigandPrepOptions:
     minimize_steps: int = 500
     keep_largest_fragment: bool = True
     remove_salts: bool = True
-    protonate: bool = False                  # dimorphite-dl at pH 7.4 (optional dep)
+    # pH-aware protonation (peer item 11): True = major microspecies at
+    # ``ph`` via dimorphite-dl; "enumerate" = dock every populated state.
+    protonate: bool | str = False
+    ph: float = 7.4                          # target pH +/- 0.5
+    # Tautomer enumeration (peer item 12)
+    enumerate_tautomers: bool = False
+    max_tautomers: int = 16
+    # Stereochemistry (peer item 13)
+    enumerate_stereoisomers: bool = False
+    max_stereoisomers: int = 8
     charge_model: str = "gasteiger"
     random_seed: int = 42
 
@@ -159,6 +177,12 @@ class LigandPrepResult:
     num_protonation_variants: int = 1
     warnings: list[str] = field(default_factory=list)
     error: str | None = None
+    # State-chemistry provenance (work order items 11-14):
+    variants: list[dict] = field(default_factory=list)
+    protonation: dict | None = None
+    tautomers: dict | None = None
+    stereocenters: dict | None = None
+    salt_stripping: dict | None = None
 
     @property
     def ok(self) -> bool:
@@ -481,7 +505,10 @@ class OpenBabelPythonEngine(BaseEngine):
                 resseq = int(res.GetNum() or 0)
                 get_icode = getattr(res, "GetInsertionCode", None)
                 if callable(get_icode):
-                    icode = (get_icode() or "").strip()
+                    # openbabel 3.1.1.23 returns the C terminator '\x00'
+                    # for empty insertion codes - strip it or every NUL
+                    # leaks into written PDBQT files.
+                    icode = (get_icode() or "").replace("\x00", "").strip()
             charge = 0.0
             if charge_model == "gasteiger":
                 try:
@@ -625,6 +652,38 @@ def _engine_chain(preferred: str = "auto") -> list[BaseEngine]:
     return chain
 
 
+# ---------------------------------------------------------------------------
+# Engine comparability (peer item 4)
+# ---------------------------------------------------------------------------
+# Engines listed in ``comparable_to`` produce scientifically equivalent
+# receptors for the same input (same toolkit, different binding); engines
+# in ``incomparable_to`` produce hydrogens/charges that differ enough that
+# docking scores are NOT comparable across them (README section "Known
+# scientific differences per preparation engine").
+_ENGINE_COMPARABILITY: dict[str, tuple[list[str], list[str]]] = {
+    "openbabel": (["openbabel", "openbabel-cli"], ["rdkit", "none"]),
+    "openbabel-cli": (["openbabel", "openbabel-cli"], ["rdkit", "none"]),
+    "rdkit": (["rdkit"], ["openbabel", "openbabel-cli", "none"]),
+    "none": ([], ["openbabel", "openbabel-cli", "rdkit"]),
+}
+
+
+def engine_comparability(engine_name: str) -> dict:
+    """Which engines this run's results are (in)comparable with (item 4).
+
+    ``engine_name`` is the *resolved* engine recorded in the manifest
+    (``"rdkit"``, ``"openbabel"``, ``"none (hydrogens disabled)"`` ...);
+    the base token decides the comparability sets.
+    """
+    base = (engine_name or "none").split()[0].strip().lower()
+    comparable, incomparable = _ENGINE_COMPARABILITY.get(base, ([base], []))
+    return {
+        "resolved_engine": base,
+        "comparable_to": comparable,
+        "incomparable_to": incomparable,
+    }
+
+
 def select_engine(preferred: str = "auto") -> BaseEngine:
     """Pick a hydration engine by name or automatically by availability."""
     if preferred != "auto":
@@ -650,7 +709,7 @@ def select_engine(preferred: str = "auto") -> BaseEngine:
 # AD4 atom typing (mirrors MGLTools' fuse/smarts typing, pragmatic subset)
 # ---------------------------------------------------------------------------
 _VINA_ATOM_TYPES = {
-    "H", "HD", "HS", "C", "A", "N", "NA", "NS", "O", "OA", "OS",
+    "H", "HD", "C", "A", "N", "NA", "NS", "O", "OA", "OS",
     "F", "Mg", "P", "S", "SA", "Cl", "Ca", "Mn", "Fe", "Zn", "Br", "I",
 }
 
@@ -667,10 +726,12 @@ def assign_ad4_types(graph: Sequence[EngineAtom], keep_unknown: bool = True) -> 
         if element == "H":
             heavy = next((graph[j] for j in atom.neighbors if not graph[j].is_hydrogen), None)
             heavy_element = heavy.element.upper() if heavy else "C"
-            if heavy_element in ("N", "O"):
+            if heavy_element in ("N", "O", "S"):
+                # S-attached hydrogens are typed HD (not the AD4-only HS
+                # type): Vina 1.2.x PDBQT parsers reject HS, and OpenBabel
+                # itself types S-H as HD.  Vina has no separate S-H donor
+                # term, so the H is treated as a generic polar hydrogen.
                 atom.atom_type = "HD"
-            elif heavy_element == "S":
-                atom.atom_type = "HS"
             else:
                 atom.atom_type = "H"
         elif element == "C":
@@ -812,6 +873,28 @@ class ReceptorPreparator:
         result.warnings.extend(stats["warnings"])
         result.removed_resnames = dict(stats["removed_resnames"])
 
+        # Structure quality checks (work order items 6, 7, 10) - run on the
+        # filtered atom set (the actual docking receptor) so kept metals are
+        # the ones whose coordination is recorded.
+        from .structure_qc import (
+            detect_disulfides,
+            detect_metal_coordination,
+            detect_missing_residues,
+            detect_reduced_cysteines,
+            missing_residue_warning,
+            reduced_cys_warning,
+        )
+        result.missing_residues = detect_missing_residues(atoms)
+        result.disulfides = detect_disulfides(atoms)
+        result.reduced_cysteines = detect_reduced_cysteines(
+            atoms, result.disulfides)
+        result.metal_coordination = detect_metal_coordination(atoms)
+        for message in (missing_residue_warning(result.missing_residues),
+                        reduced_cys_warning(result.reduced_cysteines)):
+            if message:
+                result.warnings.append(message)
+                logger.warning("%s", message)
+
         engines = _engine_chain(options.engine) if options.add_hydrogens \
             else [PassThroughEngine()]
         graph: list[EngineAtom] | None = None
@@ -843,8 +926,10 @@ class ReceptorPreparator:
         result.engine = engine.name if options.add_hydrogens else "none (hydrogens disabled)"
         if engine.name == "none" and options.add_hydrogens:
             result.warnings.append(
-                "no chemistry toolkit available: hydrogens were NOT added and "
-                "partial charges are set to 0.0 (install openbabel-wheel or rdkit)"
+                "Receptor prepared with the `none` engine: charges are 0.0 "
+                "and hydrogens are absent. Results are geometry-only and "
+                "not comparable to a charged, protonated receptor "
+                "(install openbabel-wheel or rdkit)."
             )
 
         hydrogens_before = sum(1 for a in atoms if a.element.upper() == "H")
@@ -865,6 +950,14 @@ class ReceptorPreparator:
         result.atoms_out = len(atoms_out)
         if not atoms_out:
             raise PreparationError("receptor is empty after preparation")
+
+        # Disulfide preservation check (peer item 7b): every detected S-S
+        # bridge must survive preparation with both SG atoms intact.
+        from .structure_qc import broken_disulfide_warning
+        broken = broken_disulfide_warning(atoms_out, result.disulfides)
+        if broken:
+            result.warnings.append(broken)
+            logger.warning("%s", broken)
 
         result.pdbqt_path = output_dir / f"{basename}.pdbqt"
         write_pdbqt(
@@ -1037,21 +1130,43 @@ class LigandPreparator:
                 )
             except Exception:  # noqa: BLE001 - provenance must never fail a run
                 result.input_had_explicit_hydrogens = None
-            variants = self._protonation_variants(mol, result)
-            result.num_protonation_variants = len(variants)
+            # Salt / fragment provenance BEFORE stripping (peer item 14):
+            # what was removed is recorded, and suspiciously large
+            # counter-ions raise a warning.
+            from .ligand_states import salt_report
+            result.salt_stripping = salt_report(mol)
+            if result.salt_stripping:
+                warning = result.salt_stripping.get("large_fragment_warning")
+                if warning:
+                    result.warnings.append(warning)
+            # State chemistry (peer items 11-13): protonation -> tautomers
+            # -> stereoisomers, each level optional, cartesian product capped.
+            states = self._state_variants(mol, result)
+            result.num_protonation_variants = sum(
+                1 for state in states if "prot" in state.tag.split("_")) or 1
             outputs: list[Path] = []
-            for index, variant in enumerate(variants):
-                suffix = "" if len(variants) == 1 else f"_v{index + 1}"
+            for index, state in enumerate(states):
+                suffix = "" if len(states) == 1 else f"_{state.tag}"
                 variant_name = f"{name}{suffix}"
-                pdbqt_path, sdf_path = self._prepare_variant(variant, output_dir, variant_name,
-                                                              result)
+                pdbqt_path, sdf_path = self._prepare_variant(
+                    state.mol, output_dir, variant_name, result)
                 outputs.append(pdbqt_path)
                 if sdf_path is not None and result.sdf_path is None:
                     result.sdf_path = sdf_path
+                result.variants.append({
+                    "name": variant_name,
+                    "kind": state.kind,
+                    "tag": state.tag,
+                    "index": index + 1,
+                    "smiles": state.smiles,
+                    "num_heavy_atoms": result.num_heavy_atoms,
+                    "num_rotatable_bonds": result.num_rotatable_bonds,
+                    "pdbqt": str(pdbqt_path),
+                })
             result.pdbqt_path = outputs[0]
             if len(outputs) > 1:
                 result.warnings.append(
-                    f"{len(outputs)} protonation variants prepared "
+                    f"{len(outputs)} ligand states prepared "
                     f"({' '.join(p.stem for p in outputs)})"
                 )
         except PreparationError as exc:
@@ -1142,38 +1257,106 @@ class LigandPreparator:
             raise PreparationError(f"no valid molecules parsed from {path}")
         return mols
 
-    def _protonation_variants(self, mol: Any, result: LigandPrepResult) -> list[Any]:
-        """Optionally enumerate protonation states with dimorphite-dl."""
-        if not self.options.protonate:
-            result.protonation_source = "input protonation state (no pH adjustment)"
-            return [mol]
-        if not is_importable("dimorphite_dl"):
-            result.protonation_source = (
-                "input protonation state (dimorphite-dl not installed)"
-            )
-            result.warnings.append(
-                "protonate=True requested but dimorphite-dl is not installed; "
-                "using the input protonation state"
-            )
-            return [mol]
-        try:
-            from dimorphite_dl import protonate_smiles
-            from rdkit import Chem
+    def _state_variants(self, mol: Any, result: LigandPrepResult) -> list[Any]:
+        """Protonation -> tautomer -> stereo chain (peer items 11-13).
 
-            smiles = Chem.MolToSmiles(mol)
-            variants = protonate_smiles(smiles)
-            mols = [Chem.MolFromSmiles(v) for v in variants]
-            mols = [m for m in mols if m is not None]
-            if mols:
-                result.protonation_source = "dimorphite-dl pH 7.4 enumeration"
-                return mols
-            result.protonation_source = "input state (dimorphite-dl returned nothing usable)"
-            result.warnings.append("dimorphite-dl returned no usable states")
-            return [mol]
-        except Exception as exc:  # noqa: BLE001
-            result.protonation_source = f"input state (protonation failed: {exc})"
-            result.warnings.append(f"protonation failed ({exc}); using input state")
-            return [mol]
+        Each level is optional; the cartesian product is capped by the
+        per-level maxima.  The chain order matches the chemistry: choose
+        the protonation state first, then tautomer, then stereoisomer.
+        All state reports are written onto ``result`` for the manifest.
+        """
+        from .ligand_states import (
+            StateVariant,
+            protonation_states,
+            stereocenter_report,
+            stereoisomer_states,
+            tautomer_states,
+        )
+        options = self.options
+
+        # -- level 1: protonation --------------------------------------
+        mode = None
+        if options.protonate:
+            mode = "enumerate" if options.protonate == "enumerate" else "major"
+        if mode:
+            mols, report = protonation_states(
+                mol, mode=mode, ph=options.ph)
+            result.protonation = report
+            result.protonation_source = report["source"]
+            if report.get("note"):
+                result.warnings.append(f"protonation: {report['note']}")
+            level1 = [
+                StateVariant(mol=m, tag=f"prot{i}" if len(mols) > 1 else "",
+                             kind="protonation", index=i,
+                             smiles=report["states"][i - 1]["smiles"],
+                             detail={"net_charge":
+                                     report["states"][i - 1].get("net_charge")})
+                for i, m in enumerate(mols, start=1)
+            ]
+        else:
+            result.protonation = {
+                "mode": "off",
+                "source": "input protonation state (no pH adjustment)",
+            }
+            result.protonation_source = "input protonation state (no pH adjustment)"
+            level1 = [StateVariant(mol=mol, kind="input", index=1,
+                                   smiles=result.smiles or _quick_smiles(mol))]
+
+        # -- level 2: tautomers -----------------------------------------
+        if options.enumerate_tautomers:
+            expanded: list = []
+            for state in level1:
+                mols, report = tautomer_states(
+                    state.mol, max_tautomers=options.max_tautomers)
+                if result.tautomers is None:
+                    result.tautomers = report
+                for j, t in enumerate(mols, start=1):
+                    tag = "_".join(part for part in (state.tag, f"taut{j}")
+                                    if part) if len(mols) > 1 else state.tag
+                    expanded.append(StateVariant(
+                        mol=t, tag=tag,
+                        kind="tautomer" if len(mols) > 1 else state.kind,
+                        index=j, smiles=report["tautomers"][j - 1]["smiles"],
+                        detail={"tautomer": j}))
+            level1 = expanded
+        else:
+            result.tautomers = {
+                "source": "single input tautomer (no enumeration)",
+                "tautomers": [],
+            }
+
+        # -- level 3: stereoisomers --------------------------------------
+        report = stereocenter_report(mol)
+        result.stereocenters = report
+        if report["undefined"] and not options.enumerate_stereoisomers:
+            count = report["possible_stereoisomers"]
+            result.warnings.append(
+                f"Ligand {result.identifier} has "
+                f"{report['undefined']} undefined stereocenters; docking "
+                f"will use the deposited geometry but the result is one of "
+                f"{count} possible stereoisomers. Consider "
+                f"enumerate_stereoisomers: true."
+            )
+        if options.enumerate_stereoisomers and report["undefined"]:
+            expanded = []
+            for state in level1:
+                mols, stereo_report = stereoisomer_states(
+                    state.mol, max_isomers=options.max_stereoisomers)
+                enumerated = stereo_report.get("enumerated") or []
+                if not enumerated:
+                    continue
+                if result.stereocenters is not None:
+                    result.stereocenters = {
+                        **result.stereocenters, "enumeration": stereo_report}
+                for k, iso in enumerate(mols, start=1):
+                    tag = "_".join(part for part in (state.tag, f"stereo{k}")
+                                    if part) if len(mols) > 1 else state.tag
+                    expanded.append(StateVariant(
+                        mol=iso, tag=tag, kind="stereoisomer", index=k,
+                        smiles=enumerated[k - 1]["smiles"],
+                        detail={"stereoisomer": k}))
+            level1 = expanded
+        return level1
 
     def _prepare_variant(
         self,
@@ -1225,21 +1408,24 @@ class LigandPreparator:
             Chem.SanitizeMol(mol)
         except Exception as exc:  # noqa: BLE001
             raise PreparationError(f"RDKit sanitisation failed: {exc}") from exc
-        if options.remove_salts:
+        if options.remove_salts or options.keep_largest_fragment:
             fragments = list(Chem.GetMolFrags(mol, asMols=True, sanitizeFrags=False))
             if len(fragments) > 1:
-                result.warnings.append(
-                    f"removed {len(fragments) - 1} salt/solvent fragment(s)"
-                )
+                # Salt stripping provenance was captured before this call
+                # (prepare() records result.salt_stripping); the warning
+                # text for the removed count stays actionable.
+                removed = len(fragments) - 1
+                if not any("salt/solvent fragment" in w for w in result.warnings):
+                    result.warnings.append(
+                        f"removed {removed} salt/solvent fragment(s); see "
+                        f"manifest ligands[*].prep.salt_stripping for what "
+                        f"was kept and dropped"
+                    )
                 mol = max(fragments, key=lambda m: m.GetNumAtoms())
                 try:
                     Chem.SanitizeMol(mol)
                 except Exception:  # noqa: BLE001
                     pass
-        elif options.keep_largest_fragment and mol.GetNumAtoms() > 1:
-            fragments = list(Chem.GetMolFrags(mol, asMols=True, sanitizeFrags=False))
-            if len(fragments) > 1:
-                mol = max(fragments, key=lambda m: m.GetNumAtoms())
         mol = Chem.AddHs(mol)
         return mol
 
@@ -1319,6 +1505,16 @@ class LigandPreparator:
         if not is_ok:
             raise PreparationError(f"Meeko failed to write PDBQT: {error_msg}")
         return pdbqt_text
+
+
+def _quick_smiles(mol: Any) -> str:
+    """Best-effort SMILES for provenance records (empty on failure)."""
+    try:
+        from rdkit import Chem
+
+        return Chem.MolToSmiles(mol)
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _derive_identifier(source: str | Path) -> str:

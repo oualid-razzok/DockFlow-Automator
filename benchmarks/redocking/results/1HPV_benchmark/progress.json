@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "478_redock": {
+      "ligand_name": "478_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HPV_benchmark/docking/478_redock_out.pdbqt",
+      "best_affinity": -8.834,
+      "runtime": 62.27,
+      "backend": "python"
+    }
+  }
+}

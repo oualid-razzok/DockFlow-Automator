@@ -71,21 +71,52 @@ and JSON contact tables are designed to be importable for such workflows.
   headings and cutoffs in the header.
 * CLI (`dockflow analyze`) — prints "geometric H-bond contacts" counts.
 
-## Redocking RMSD conventions (audit item 18)
+## Redocking RMSD conventions (audit item 18, peer item 17)
 
 `crystal_rmsd` in `summary.csv`, `interactions.json` and `report.md` is:
 
 * **heavy-atom** (hydrogens excluded on both sides),
-* **symmetry-tolerant**: chemically equivalent atoms (same element) may
-  be permuted — a 180° flip of a symmetric carboxylate or ring nitrogen
-  permutation costs 0 Å, matching standard redocking-benchmark practice,
-* computed after optimal **Kabsch superposition** (rotation + translation
-  removed),
+* **symmetry-aware** (peer item 17): with RDKit available the RMSD is
+  `GetBestRMS` — the exact minimum over all automorphisms of the
+  molecular graph (carboxylate flips, ring-atom permutations, terminal
+  group swaps), which is the standard symmetry-correct ligand RMSD;
+  without RDKit a greedy element-matching Kabsch fallback is used.  The
+  method actually used is recorded per pose
+  (`interactions.json` → `poses[*].crystal_rmsd_method`) and per run
+  (`manifest.analysis.crystal_rmsd_method`),
+* computed after optimal **superposition** (rotation + translation
+  removed; reflections are not considered),
 * reported against the co-crystallized ligand pose extracted from the
   target PDB (highest-occupancy altLoc resolved),
 * undefined (`null`) when the docked ligand and the reference ligand have
   different heavy-atom element sets (e.g. decoys) — never an error.
 
-Success threshold for pose recovery: best pose RMSD ≤ 2.0 Å (the
-conventional redocking criterion; the report banner states it
-explicitly).
+## Conventions vs validated thresholds (peer item 5)
+
+Every threshold DockFlow applies falls into one of two classes.  The
+report labels heuristic outputs explicitly so no number is mistaken for
+a validated result.
+
+| Threshold | Value | Class | Where used |
+|---|---|---|---|
+| Redocking success | ≤ 2.0 Å | **Convention** (community redocking practice; not validated for any specific target) | report banner, benchmark summary |
+| Pose clustering | 2.0 Å Kabsch RMSD | **Heuristic** (no thermodynamic meaning; cluster membership is geometry only) | report "Heuristic pose clustering" |
+| Docking score efficiency | affinity / heavy atoms | **Heuristic proxy** (Vina-score-derived, not experimental ligand efficiency) | report results table |
+| Geometric H-bond contact | ≤ 3.5 Å | **Geometric convention** (distance only, no angle) | contacts CSV/JSON |
+| Hydrophobic contact | ≤ 4.5 Å | **Geometric convention** | contacts CSV/JSON |
+| Ionic contact | ≤ 4.5 Å | **Geometric convention** (residue-name qualified) | contacts CSV/JSON |
+| Metal contact | ≤ 3.0 Å | **Geometric convention** | contacts CSV/JSON |
+| Disulfide detection | S–S < 2.5 Å | **Geometric convention** (standard S–S bond length range) | manifest, warnings |
+| Metal coordination | ≤ 2.8 Å | **Heuristic** (coordination number only; geometry label is a count heuristic) | manifest, warnings |
+| Reduced Cys flagging | free SG within 8 Å of free SG | **Heuristic** (no redox context modelled) | manifest, warnings |
+| Grid box ligand padding | 4 Å default | **Convention** (covers typical pose spread; no target validation) | grid box derivation |
+| Box volume sanity | > 8 000 Å³ warn / > 27 000 Å³ error | **Heuristic guardrail** (typical binding-site scale) | grid box validation |
+
+None of these values are experimentally validated for a specific
+target/target-class.  The only numbers in a DockFlow run that come from
+outside this codebase are the Vina/GNINA scoring-function parameters,
+and those are *empirical scoring functions*, not experimental
+measurements.  When a threshold matters for a decision (publication,
+go/no-go on a series), validate it against reference ligands for that
+target — e.g. `benchmarks/redocking/` shows the pipeline's own
+pose-recovery distribution on 24 public complexes.

@@ -1,0 +1,3 @@
+mode  affinity  intra  torsions (python backend energies)
+   1    -9.022   -14.033     5.011
+REMARK VINA RESULT:    -9.022      0.000      0.000

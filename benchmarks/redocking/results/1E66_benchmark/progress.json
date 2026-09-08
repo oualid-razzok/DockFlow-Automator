@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "hux_redock": {
+      "ligand_name": "hux_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1E66_benchmark/docking/hux_redock_out.pdbqt",
+      "best_affinity": -11.402,
+      "runtime": 5.91,
+      "backend": "python"
+    }
+  }
+}

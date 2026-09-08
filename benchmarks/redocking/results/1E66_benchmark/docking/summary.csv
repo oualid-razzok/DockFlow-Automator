@@ -1,0 +1,3 @@
+ligand,pose,affinity_kcal_mol,rmsd_lb,rmsd_ub,crystal_rmsd,docking_score_efficiency,num_heavy_atoms,runtime_s,backend,error
+hux_redock,1,-11.402,0.000,0.000,0.262,-0.5430,21,5.9,python,
+hux_redock,2,-8.725,3.730,5.765,0.468,-0.4155,21,5.9,python,

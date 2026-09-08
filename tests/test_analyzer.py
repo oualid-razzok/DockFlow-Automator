@@ -525,3 +525,98 @@ def test_kabsch_rmsd_matches_bindings_both_paths():
         from dockflow_core import analyzer as _analyzer
 
         assert _analyzer.kabsch_rmsd(coords, b) == pytest.approx(0.0, abs=1e-9)
+
+
+# -- Symmetry-aware RMSD via RDKit GetBestRMS (peer item 17) ---------------
+def test_crystal_rmsd_with_method_prefers_rdkit_path():
+    """With RDKit importable the graph-automorphism method must be used."""
+    import math
+
+    from dockflow_core.analyzer import crystal_rmsd_with_method
+
+    radius = 1.39 / (2 * math.sin(math.pi / 6))
+    ring = _atoms_from_coords(
+        [(radius * math.cos(i * math.pi / 3), radius * math.sin(i * math.pi / 3),
+          0.0) for i in range(6)]
+    )
+    shifted = _atoms_from_coords(
+        [(radius * math.cos((i + 1) * math.pi / 3),
+          radius * math.sin((i + 1) * math.pi / 3), 0.0) for i in range(6)]
+    )
+    value, method = crystal_rmsd_with_method(shifted, ring)
+    assert method == "rdkit-getbestrms-graph-automorphism"
+    # a 60-degree ring relabel is the same chemistry: RMSD ~ 0
+    assert value == pytest.approx(0.0, abs=1e-3)
+
+
+def test_crystal_rmsd_falls_back_when_rdkit_unavailable(monkeypatch):
+    """Without RDKit the element-greedy Kabsch heuristic is used and named."""
+    from dockflow_core import analyzer
+
+    monkeypatch.setattr(analyzer, "rdkit_symmetry_rmsd",
+                        lambda pose, ref: None)
+    coords = [(0.0, 0.0, 0.0), (1.5, 0.2, 0.0), (0.3, 1.4, 0.7)]
+    a = _atoms_from_coords(coords)
+    value, method = analyzer.crystal_rmsd_with_method(a, a)
+    assert method == "element-greedy-kabsch"
+    assert value == pytest.approx(0.0, abs=1e-9)
+
+
+def test_crystal_rmsd_getbestrms_benzoate_symmetry():
+    """Benzoate-like ligand: swapped carboxylate oxygens cost ~0 RMSD.
+
+    The two terminal oxygens of a carboxylate are graph-equivalent, so a
+    180-degree flip of the COO group is the same chemistry (peer item 17:
+    "a benzoic acid flipped 180 degrees").  Fixed-correspondence Kabsch
+    would report >1 A; the automorphism-aware RMSD must report ~0.
+    """
+    import math
+
+    from dockflow_core.analyzer import crystal_rmsd_with_method, kabsch_rmsd
+
+    radius = 1.39 / (2 * math.sin(math.pi / 6))
+    ring = [(radius * math.cos(i * math.pi / 3),
+             radius * math.sin(i * math.pi / 3), 0.0) for i in range(6)]
+    carboxy = [(0.0, 2.80, 0.0)]
+    oxygens = [(1.2, 3.5, 0.0), (-1.2, 3.5, 0.0)]
+    reference = (_atoms_from_coords(ring)
+                 + _atoms_from_coords(carboxy)
+                 + _atoms_from_coords(oxygens, element="O"))
+    # pose: identical geometry, terminal oxygens swapped
+    pose = (_atoms_from_coords(ring)
+            + _atoms_from_coords(carboxy)
+            + _atoms_from_coords(oxygens[::-1], element="O"))
+    # fixed-correspondence Kabsch would penalise the swap
+    fixed = kabsch_rmsd(
+        [(a.x, a.y, a.z) for a in pose], [(a.x, a.y, a.z) for a in reference])
+    assert fixed > 0.5
+    value, method = crystal_rmsd_with_method(pose, reference)
+    assert method == "rdkit-getbestrms-graph-automorphism"
+    assert value == pytest.approx(0.0, abs=1e-3)
+
+
+def test_crystal_rmsd_with_method_incomparable_returns_none():
+    from dockflow_core.analyzer import crystal_rmsd_with_method
+
+    a = _atoms_from_coords([(0.0, 0.0, 0.0), (1.5, 0.0, 0.0)], element="C")
+    b = _atoms_from_coords([(0.0, 0.0, 0.0)], element="N")
+    assert crystal_rmsd_with_method(a, b) == (None, None)
+
+
+def test_extract_reference_atoms_single_instance(tmp_path):
+    """Two copies of the ligand: reference is ONE instance (largest)."""
+    from dockflow_core.analyzer import extract_reference_atoms
+
+    lines = []
+    serial = 1
+    for copy, chain in enumerate("AB"):
+        for i in range(4):
+            lines.append(
+                f"ATOM  {serial:5d}  C{i+1}  XXX {chain}  {100 + copy:3d}    "
+                f"{copy * 20.0 + i * 1.5:8.3f}    0.000    0.000  1.00  0.00           C"
+            )
+            serial += 1
+    path = tmp_path / "multi.pdb"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    reference = extract_reference_atoms(path, "XXX")
+    assert len(reference) == 4  # one instance only

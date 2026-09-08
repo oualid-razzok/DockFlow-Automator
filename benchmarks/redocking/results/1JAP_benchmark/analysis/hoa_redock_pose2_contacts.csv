@@ -1,0 +1,13 @@
+kind,distance,ligand_atom,ligand_type,receptor_chain,receptor_resname,receptor_resseq,receptor_atom,receptor_type
+hbond,2.05,H,HD,A,ALA,161,O,OA
+hbond,2.16,O,OA,A,ALA,161,H,HD
+hbond,2.27,O,OA,A,LEU,160,H,HD
+hbond,2.53,H,HD,A,ALA,161,N,N
+hbond,2.60,N,NA,A,ALA,161,H,HD
+hbond,2.89,H,HD,A,ALA,161,N,N
+ionic,2.96,N,NA,A,GLU,198,OE2,OA
+hbond,3.20,H,HD,A,ALA,161,O,OA
+hbond,3.29,H,HD,A,GLU,198,OE2,OA
+hbond,3.33,N,NA,A,LEU,160,H,HD
+hbond,3.34,H,HD,A,GLU,198,OE2,OA
+hbond,3.43,H,HD,A,LEU,160,N,N

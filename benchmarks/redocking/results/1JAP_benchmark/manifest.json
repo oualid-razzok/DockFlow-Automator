@@ -1,0 +1,1011 @@
+{
+  "run_id": "1JAP_benchmark",
+  "run_dir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark",
+  "ok": true,
+  "error": null,
+  "cancelled": false,
+  "config": {
+    "workdir": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results",
+    "run_id": "1JAP_benchmark",
+    "target": {
+      "pdb_id": "1JAP"
+    },
+    "ligands": [
+      {
+        "id": "hoa_redock",
+        "pdb_ligand": "HOA"
+      }
+    ],
+    "receptor": {
+      "engine": "auto",
+      "charge_model": "gasteiger"
+    },
+    "gridbox": {
+      "source": "ligand",
+      "reference_ligand_resname": "HOA",
+      "padding": 4.0
+    },
+    "docking": {
+      "backend": "auto",
+      "scoring": "vina",
+      "exhaustiveness": 8,
+      "num_modes": 9,
+      "seed": 2026,
+      "cpu": 0,
+      "timeout": 3600,
+      "parallel": 1
+    },
+    "analysis": {
+      "top_poses": 3
+    },
+    "visualization": {
+      "enabled": false
+    }
+  },
+  "timings": {
+    "download": 0.87,
+    "prepare_receptor": 0.18,
+    "prepare_ligands": 2.06,
+    "gridbox": 0.02,
+    "docking": 1.35,
+    "analysis": 0.03,
+    "total": 4.53
+  },
+  "duration_s": 4.53,
+  "stages": [
+    {
+      "name": "download",
+      "status": "done",
+      "started_at": "2026-09-08T01:35:14Z",
+      "ended_at": "2026-09-08T01:35:15Z",
+      "duration_s": 0.871,
+      "engine": null,
+      "backend": null,
+      "detail": null
+    },
+    {
+      "name": "prepare_receptor",
+      "status": "done",
+      "started_at": "2026-09-08T01:35:15Z",
+      "ended_at": "2026-09-08T01:35:15Z",
+      "duration_s": 0.179,
+      "engine": "openbabel",
+      "backend": null,
+      "detail": null
+    },
+    {
+      "name": "prepare_ligands",
+      "status": "done",
+      "started_at": "2026-09-08T01:35:15Z",
+      "ended_at": "2026-09-08T01:35:18Z",
+      "duration_s": 2.06,
+      "engine": "meeko",
+      "backend": null,
+      "detail": null
+    },
+    {
+      "name": "gridbox",
+      "status": "done",
+      "started_at": "2026-09-08T01:35:18Z",
+      "ended_at": "2026-09-08T01:35:18Z",
+      "duration_s": 0.021,
+      "engine": null,
+      "backend": null,
+      "detail": null
+    },
+    {
+      "name": "docking",
+      "status": "done",
+      "started_at": "2026-09-08T01:35:18Z",
+      "ended_at": "2026-09-08T01:35:19Z",
+      "duration_s": 1.354,
+      "engine": null,
+      "backend": "python",
+      "detail": null
+    },
+    {
+      "name": "analysis",
+      "status": "done",
+      "started_at": "2026-09-08T01:35:19Z",
+      "ended_at": "2026-09-08T01:35:19Z",
+      "duration_s": 0.03,
+      "engine": null,
+      "backend": null,
+      "detail": null
+    },
+    {
+      "name": "visualization",
+      "status": "skipped",
+      "started_at": "2026-09-08T01:35:19Z",
+      "ended_at": "2026-09-08T01:35:19Z",
+      "duration_s": 0.0,
+      "engine": null,
+      "backend": null,
+      "detail": "disabled in config"
+    },
+    {
+      "name": "report",
+      "status": "done",
+      "started_at": "2026-09-08T01:35:19Z",
+      "ended_at": "2026-09-08T01:35:19Z",
+      "duration_s": 0.01,
+      "engine": null,
+      "backend": null,
+      "detail": null
+    }
+  ],
+  "environment": {
+    "dockflow": "0.2.1",
+    "python": "3.12.14",
+    "python_executable": "/home/z/my-project/bindings-venv/bin/python",
+    "platform": "Linux 5.10.134-013.8.3.kangaroo.al8.x86_64 (x86_64)",
+    "numpy": "2.5.3",
+    "vina": "1.2.7",
+    "meeko": "0.8.0",
+    "rdkit": "2025.9.6",
+    "gemmi": "0.7.5",
+    "openbabel_wheel": "3.1.1.23",
+    "pandas": "3.0.5",
+    "dockflow_bindings": {
+      "importable": true,
+      "version": "0.1.0"
+    },
+    "git_sha": null,
+    "captured_at": "2026-09-08T01:35:19Z"
+  },
+  "target": {
+    "identifier": "1JAP",
+    "source": "pdb",
+    "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/1jap.pdb",
+    "title": "COMPLEX OF PRO-LEU-GLY-HYDROXYLAMINE WITH THE CATALYTIC DOMAIN OF MATRIX METALLO PROTEINASE-8 (MET80 FORM)",
+    "resolution": 1.82,
+    "uniprot_ids": [],
+    "ligand_codes": [
+      "HOA",
+      "CA",
+      "ZN"
+    ]
+  },
+  "receptor": {
+    "pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/prepared/receptor.pdbqt",
+    "pdb": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/prepared/receptor_clean.pdb",
+    "engine": "openbabel",
+    "atoms_in": 1414,
+    "atoms_out": 1530,
+    "hydrogens_added": 1175,
+    "removed": {
+      "HOA": 2,
+      "CA": 2,
+      "ZN": 2,
+      "HOH": 148
+    },
+    "decisions": {
+      "rigid_receptor": true,
+      "protonation": "as deposited (PDB); polar hydrogens added by the openbabel engine (pH 7.4 convention)",
+      "tautomer": "n/a (protein receptor)",
+      "hydrogen_addition": "1175 hydrogens added by openbabel; non-polar hydrogens merged into heavy atoms",
+      "charge_model": "gasteiger",
+      "waters": "removed (148 water oxygen atoms)",
+      "metals_cofactors": {
+        "removed": {
+          "HOA": 2,
+          "CA": 2,
+          "ZN": 2
+        },
+        "kept": "none"
+      },
+      "alternate_conformations": "altloc policy: best",
+      "chains": "all",
+      "comparable_to": [
+        "openbabel",
+        "openbabel-cli"
+      ],
+      "incomparable_to": [
+        "rdkit",
+        "none"
+      ],
+      "missing_residues": "none",
+      "disulfides": "none",
+      "reduced_cysteines": "none",
+      "metal_coordination": "none"
+    },
+    "warnings": [
+      "removed hetero species: 2 CA, 2 HOA, 2 ZN. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site"
+    ]
+  },
+  "ligands": [
+    {
+      "identifier": "hoa_redock",
+      "source": "pdb_ligand",
+      "value": "HOA",
+      "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/hoa.sdf",
+      "pdbqt_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/prepared/hoa_redock.pdbqt",
+      "status": "prepared",
+      "error": null,
+      "num_rotatable_bonds": 1,
+      "num_heavy_atoms": 2,
+      "prep": {
+        "engine": "meeko",
+        "charge_model": "gasteiger",
+        "input_had_explicit_hydrogens": true,
+        "hydrogen_source": "explicit in input",
+        "protonation": "input protonation state (no pH adjustment)",
+        "num_protonation_variants": 1,
+        "tautomer": "single input tautomer (no enumeration)",
+        "warnings": [],
+        "protonation_detail": {
+          "mode": "off",
+          "source": "input protonation state (no pH adjustment)"
+        },
+        "tautomers": {
+          "source": "single input tautomer (no enumeration)",
+          "tautomers": []
+        },
+        "stereocenters": {
+          "defined": 0,
+          "undefined": 0,
+          "undefined_centers": [],
+          "possible_stereoisomers": 0
+        },
+        "variant": {
+          "name": "hoa_redock",
+          "kind": "input",
+          "tag": "",
+          "index": 1,
+          "smiles": "[H]ON([H])[H]",
+          "num_heavy_atoms": 2,
+          "num_rotatable_bonds": 1
+        }
+      }
+    }
+  ],
+  "gridbox": {
+    "center": [
+      25.326500000000003,
+      58.9805,
+      53.492000000000004
+    ],
+    "size": [
+      10.0,
+      10.0,
+      10.0
+    ],
+    "source": "pocket:HOA",
+    "padding": 4.0,
+    "vina_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/gridbox.txt",
+    "warnings": [],
+    "assumption_strength": "strong",
+    "receptor_coverage_pct": 3.6
+  },
+  "docking": {
+    "backend": "python",
+    "num_ligands": 1,
+    "num_ok": 1,
+    "resumed": 0,
+    "warnings": [],
+    "results": [
+      {
+        "ligand": {
+          "identifier": "hoa_redock",
+          "source": "pdb_ligand",
+          "value": "HOA",
+          "path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/hoa.sdf",
+          "pdbqt_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/prepared/hoa_redock.pdbqt",
+          "status": "docked",
+          "error": null,
+          "num_rotatable_bonds": 1,
+          "num_heavy_atoms": 2,
+          "prep": {
+            "engine": "meeko",
+            "charge_model": "gasteiger",
+            "input_had_explicit_hydrogens": true,
+            "hydrogen_source": "explicit in input",
+            "protonation": "input protonation state (no pH adjustment)",
+            "num_protonation_variants": 1,
+            "tautomer": "single input tautomer (no enumeration)",
+            "warnings": [],
+            "protonation_detail": {
+              "mode": "off",
+              "source": "input protonation state (no pH adjustment)"
+            },
+            "tautomers": {
+              "source": "single input tautomer (no enumeration)",
+              "tautomers": []
+            },
+            "stereocenters": {
+              "defined": 0,
+              "undefined": 0,
+              "undefined_centers": [],
+              "possible_stereoisomers": 0
+            },
+            "variant": {
+              "name": "hoa_redock",
+              "kind": "input",
+              "tag": "",
+              "index": 1,
+              "smiles": "[H]ON([H])[H]",
+              "num_heavy_atoms": 2,
+              "num_rotatable_bonds": 1
+            }
+          }
+        },
+        "ligand_name": "hoa_redock",
+        "poses": [
+          {
+            "model": 1,
+            "affinity": -2.383,
+            "rmsd_lb": 0.0,
+            "rmsd_ub": 0.0,
+            "crystal_rmsd": 0.023558409653310932,
+            "remarks": [
+              "REMARK VINA RESULT:    -2.383      0.000      0.000",
+              "REMARK INTER + INTRA:          -2.383",
+              "REMARK INTER:                  -2.383",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          },
+          {
+            "model": 2,
+            "affinity": -2.375,
+            "rmsd_lb": 1.452,
+            "rmsd_ub": 1.452,
+            "crystal_rmsd": 0.023353975137465822,
+            "remarks": [
+              "REMARK VINA RESULT:    -2.375      1.452      1.452",
+              "REMARK INTER + INTRA:          -2.375",
+              "REMARK INTER:                  -2.375",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          },
+          {
+            "model": 3,
+            "affinity": -2.241,
+            "rmsd_lb": 3.72,
+            "rmsd_ub": 3.72,
+            "crystal_rmsd": 0.02360585637673527,
+            "remarks": [
+              "REMARK VINA RESULT:    -2.241      3.720      3.720",
+              "REMARK INTER + INTRA:          -2.241",
+              "REMARK INTER:                  -2.241",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          },
+          {
+            "model": 4,
+            "affinity": -2.223,
+            "rmsd_lb": 5.265,
+            "rmsd_ub": 5.265,
+            "crystal_rmsd": 0.023405046201086122,
+            "remarks": [
+              "REMARK VINA RESULT:    -2.223      5.265      5.265",
+              "REMARK INTER + INTRA:          -2.223",
+              "REMARK INTER:                  -2.223",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          },
+          {
+            "model": 5,
+            "affinity": -2.213,
+            "rmsd_lb": 4.31,
+            "rmsd_ub": 4.31,
+            "crystal_rmsd": 0.023752302852585373,
+            "remarks": [
+              "REMARK VINA RESULT:    -2.213      4.310      4.310",
+              "REMARK INTER + INTRA:          -2.213",
+              "REMARK INTER:                  -2.213",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          },
+          {
+            "model": 6,
+            "affinity": -2.028,
+            "rmsd_lb": 5.074,
+            "rmsd_ub": 5.074,
+            "crystal_rmsd": 0.023436684341257123,
+            "remarks": [
+              "REMARK VINA RESULT:    -2.028      5.074      5.074",
+              "REMARK INTER + INTRA:          -2.028",
+              "REMARK INTER:                  -2.028",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          },
+          {
+            "model": 7,
+            "affinity": -1.56,
+            "rmsd_lb": 7.853,
+            "rmsd_ub": 7.853,
+            "crystal_rmsd": 0.023635766827682335,
+            "remarks": [
+              "REMARK VINA RESULT:    -1.560      7.853      7.853",
+              "REMARK INTER + INTRA:          -1.560",
+              "REMARK INTER:                  -1.560",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          },
+          {
+            "model": 8,
+            "affinity": -1.55,
+            "rmsd_lb": 2.8,
+            "rmsd_ub": 2.8,
+            "crystal_rmsd": 0.023348816195932525,
+            "remarks": [
+              "REMARK VINA RESULT:    -1.550      2.800      2.800",
+              "REMARK INTER + INTRA:          -1.550",
+              "REMARK INTER:                  -1.550",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          },
+          {
+            "model": 9,
+            "affinity": -1.505,
+            "rmsd_lb": 3.837,
+            "rmsd_ub": 3.837,
+            "crystal_rmsd": 0.0231909365549253,
+            "remarks": [
+              "REMARK VINA RESULT:    -1.505      3.837      3.837",
+              "REMARK INTER + INTRA:          -1.505",
+              "REMARK INTER:                  -1.505",
+              "REMARK INTRA:                   0.000",
+              "REMARK UNBOUND:                 0.000",
+              "REMARK SMILES NO",
+              "REMARK SMILES IDX 1 1 2 4",
+              "REMARK H PARENT 1 2 1 3 2 5"
+            ]
+          }
+        ],
+        "out_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/hoa_redock_out.pdbqt",
+        "log_path": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/hoa_redock_out.log",
+        "runtime": 1.34,
+        "backend": "python",
+        "error": null,
+        "best_affinity": -2.383
+      }
+    ],
+    "summary_csv": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/summary.csv"
+  },
+  "analysis": {
+    "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
+    "poses": {
+      "hoa_redock": [
+        {
+          "pose_index": 1,
+          "affinity": -2.383,
+          "num_contacts": 12,
+          "num_geom_hbond_contacts": 11,
+          "num_hydrophobic_contacts": 0,
+          "num_ionic_contacts": 1,
+          "num_metal_contacts": 0,
+          "docking_score_efficiency": -1.1915,
+          "crystal_rmsd": 0.023558409653310932,
+          "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
+          "contacts": [
+            {
+              "ligand_atom_index": 0,
+              "ligand_atom_name": "N",
+              "ligand_atom_type": "NA",
+              "receptor_atom_name": "H",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "HD",
+              "distance": 2.24,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 4,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "N",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "N",
+              "distance": 2.24,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 1,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "N",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "N",
+              "distance": 2.27,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 0,
+              "ligand_atom_name": "N",
+              "ligand_atom_type": "NA",
+              "receptor_atom_name": "H",
+              "receptor_resname": "LEU",
+              "receptor_chain": "A",
+              "receptor_resseq": 160,
+              "receptor_atom_type": "HD",
+              "distance": 2.33,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 1,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "N",
+              "receptor_resname": "LEU",
+              "receptor_chain": "A",
+              "receptor_resseq": 160,
+              "receptor_atom_type": "N",
+              "distance": 2.48,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 3,
+              "ligand_atom_name": "O",
+              "ligand_atom_type": "OA",
+              "receptor_atom_name": "H",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "HD",
+              "distance": 2.51,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 1,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "O",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "OA",
+              "distance": 2.53,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 2,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "O",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "OA",
+              "distance": 2.59,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 4,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "O",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "OA",
+              "distance": 2.76,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 4,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "OE2",
+              "receptor_resname": "GLU",
+              "receptor_chain": "A",
+              "receptor_resseq": 198,
+              "receptor_atom_type": "OA",
+              "distance": 3.15,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 3,
+              "ligand_atom_name": "O",
+              "ligand_atom_type": "OA",
+              "receptor_atom_name": "H",
+              "receptor_resname": "LEU",
+              "receptor_chain": "A",
+              "receptor_resseq": 160,
+              "receptor_atom_type": "HD",
+              "distance": 3.32,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 0,
+              "ligand_atom_name": "N",
+              "ligand_atom_type": "NA",
+              "receptor_atom_name": "OE2",
+              "receptor_resname": "GLU",
+              "receptor_chain": "A",
+              "receptor_resseq": 198,
+              "receptor_atom_type": "OA",
+              "distance": 4.18,
+              "kind": "ionic"
+            }
+          ],
+          "residues": [
+            {
+              "chain": "A",
+              "resname": "ALA",
+              "resseq": 161,
+              "geom_hbond_contacts": 7,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 0,
+              "metal_contacts": 0,
+              "closest": 2.24
+            },
+            {
+              "chain": "A",
+              "resname": "LEU",
+              "resseq": 160,
+              "geom_hbond_contacts": 3,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 0,
+              "metal_contacts": 0,
+              "closest": 2.33
+            },
+            {
+              "chain": "A",
+              "resname": "GLU",
+              "resseq": 198,
+              "geom_hbond_contacts": 1,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 1,
+              "metal_contacts": 0,
+              "closest": 3.15
+            }
+          ]
+        },
+        {
+          "pose_index": 2,
+          "affinity": -2.375,
+          "num_contacts": 12,
+          "num_geom_hbond_contacts": 11,
+          "num_hydrophobic_contacts": 0,
+          "num_ionic_contacts": 1,
+          "num_metal_contacts": 0,
+          "docking_score_efficiency": -1.1875,
+          "crystal_rmsd": 0.023353975137465822,
+          "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
+          "contacts": [
+            {
+              "ligand_atom_index": 4,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "O",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "OA",
+              "distance": 2.05,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 3,
+              "ligand_atom_name": "O",
+              "ligand_atom_type": "OA",
+              "receptor_atom_name": "H",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "HD",
+              "distance": 2.16,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 3,
+              "ligand_atom_name": "O",
+              "ligand_atom_type": "OA",
+              "receptor_atom_name": "H",
+              "receptor_resname": "LEU",
+              "receptor_chain": "A",
+              "receptor_resseq": 160,
+              "receptor_atom_type": "HD",
+              "distance": 2.27,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 1,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "N",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "N",
+              "distance": 2.53,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 0,
+              "ligand_atom_name": "N",
+              "ligand_atom_type": "NA",
+              "receptor_atom_name": "H",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "HD",
+              "distance": 2.6,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 4,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "N",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "N",
+              "distance": 2.89,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 0,
+              "ligand_atom_name": "N",
+              "ligand_atom_type": "NA",
+              "receptor_atom_name": "OE2",
+              "receptor_resname": "GLU",
+              "receptor_chain": "A",
+              "receptor_resseq": 198,
+              "receptor_atom_type": "OA",
+              "distance": 2.96,
+              "kind": "ionic"
+            },
+            {
+              "ligand_atom_index": 1,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "O",
+              "receptor_resname": "ALA",
+              "receptor_chain": "A",
+              "receptor_resseq": 161,
+              "receptor_atom_type": "OA",
+              "distance": 3.2,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 1,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "OE2",
+              "receptor_resname": "GLU",
+              "receptor_chain": "A",
+              "receptor_resseq": 198,
+              "receptor_atom_type": "OA",
+              "distance": 3.29,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 0,
+              "ligand_atom_name": "N",
+              "ligand_atom_type": "NA",
+              "receptor_atom_name": "H",
+              "receptor_resname": "LEU",
+              "receptor_chain": "A",
+              "receptor_resseq": 160,
+              "receptor_atom_type": "HD",
+              "distance": 3.33,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 2,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "OE2",
+              "receptor_resname": "GLU",
+              "receptor_chain": "A",
+              "receptor_resseq": 198,
+              "receptor_atom_type": "OA",
+              "distance": 3.34,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 4,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "N",
+              "receptor_resname": "LEU",
+              "receptor_chain": "A",
+              "receptor_resseq": 160,
+              "receptor_atom_type": "N",
+              "distance": 3.43,
+              "kind": "hbond"
+            }
+          ],
+          "residues": [
+            {
+              "chain": "A",
+              "resname": "ALA",
+              "resseq": 161,
+              "geom_hbond_contacts": 6,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 0,
+              "metal_contacts": 0,
+              "closest": 2.05
+            },
+            {
+              "chain": "A",
+              "resname": "LEU",
+              "resseq": 160,
+              "geom_hbond_contacts": 3,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 0,
+              "metal_contacts": 0,
+              "closest": 2.27
+            },
+            {
+              "chain": "A",
+              "resname": "GLU",
+              "resseq": 198,
+              "geom_hbond_contacts": 2,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 1,
+              "metal_contacts": 0,
+              "closest": 2.96
+            }
+          ]
+        },
+        {
+          "pose_index": 3,
+          "affinity": -2.241,
+          "num_contacts": 5,
+          "num_geom_hbond_contacts": 5,
+          "num_hydrophobic_contacts": 0,
+          "num_ionic_contacts": 0,
+          "num_metal_contacts": 0,
+          "docking_score_efficiency": -1.1205,
+          "crystal_rmsd": 0.02360585637673527,
+          "crystal_rmsd_method": "rdkit-getbestrms-graph-automorphism",
+          "contacts": [
+            {
+              "ligand_atom_index": 2,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "O",
+              "receptor_resname": "GLY",
+              "receptor_chain": "I",
+              "receptor_resseq": 3,
+              "receptor_atom_type": "OA",
+              "distance": 2.54,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 2,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "NE2",
+              "receptor_resname": "HIS",
+              "receptor_chain": "A",
+              "receptor_resseq": 197,
+              "receptor_atom_type": "NA",
+              "distance": 2.75,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 1,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "O",
+              "receptor_resname": "PRO",
+              "receptor_chain": "A",
+              "receptor_resseq": 217,
+              "receptor_atom_type": "OA",
+              "distance": 2.93,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 2,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "NE2",
+              "receptor_resname": "HIS",
+              "receptor_chain": "A",
+              "receptor_resseq": 207,
+              "receptor_atom_type": "NA",
+              "distance": 3.12,
+              "kind": "hbond"
+            },
+            {
+              "ligand_atom_index": 1,
+              "ligand_atom_name": "H",
+              "ligand_atom_type": "HD",
+              "receptor_atom_name": "O",
+              "receptor_resname": "GLY",
+              "receptor_chain": "I",
+              "receptor_resseq": 3,
+              "receptor_atom_type": "OA",
+              "distance": 3.35,
+              "kind": "hbond"
+            }
+          ],
+          "residues": [
+            {
+              "chain": "I",
+              "resname": "GLY",
+              "resseq": 3,
+              "geom_hbond_contacts": 2,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 0,
+              "metal_contacts": 0,
+              "closest": 2.54
+            },
+            {
+              "chain": "A",
+              "resname": "HIS",
+              "resseq": 197,
+              "geom_hbond_contacts": 1,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 0,
+              "metal_contacts": 0,
+              "closest": 2.75
+            },
+            {
+              "chain": "A",
+              "resname": "PRO",
+              "resseq": 217,
+              "geom_hbond_contacts": 1,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 0,
+              "metal_contacts": 0,
+              "closest": 2.93
+            },
+            {
+              "chain": "A",
+              "resname": "HIS",
+              "resseq": 207,
+              "geom_hbond_contacts": 1,
+              "hydrophobic_contacts": 0,
+              "ionic_contacts": 0,
+              "metal_contacts": 0,
+              "closest": 3.12
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "visualization": {},
+  "paths": {
+    "target_structure": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/1jap.pdb",
+    "receptor_pdbqt": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/prepared/receptor.pdbqt",
+    "gridbox_config": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/gridbox.txt",
+    "docking_summary": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/summary.csv",
+    "analysis_json": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/analysis/interactions.json",
+    "crystal_rmsd_reference": "HOA in 1jap.pdb",
+    "report": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/report.md"
+  }
+}

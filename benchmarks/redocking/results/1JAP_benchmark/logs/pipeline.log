@@ -1,0 +1,23 @@
+2026-09-08 01:35:14,893 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1JAP_benchmark
+2026-09-08 01:35:14,893 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:35:14,894 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1JAP.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/1jap.pdb
+2026-09-08 01:35:15,762 | INFO    | dockflow.pipeline. | pipeline step download: done 1JAP
+2026-09-08 01:35:15,765 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:35:15,775 | WARNING | dockflow.preparator. | removed hetero species: 2 CA, 2 HOA, 2 ZN. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:35:15,943 | INFO    | dockflow.preparator. | receptor prepared: 1414 -> 1530 atoms (engine=openbabel, +1175H) -> receptor.pdbqt
+2026-09-08 01:35:15,944 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1530 atoms
+2026-09-08 01:35:15,944 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:35:15,945 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/HOA_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/raw/hoa.sdf
+2026-09-08 01:35:18,004 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:35:18,004 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:35:18,025 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:HOA
+2026-09-08 01:35:18,025 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:35:19,378 | INFO    | dockflow.engine. | docked hoa_redock with python backend in 1.3s, best affinity -2.38
+2026-09-08 01:35:19,379 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:35:19,379 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:35:19,408 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/docking/hoa_redock_poses.sdf
+2026-09-08 01:35:19,409 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:35:19,409 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:35:19,409 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:35:19,419 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1JAP_benchmark/report.md
+2026-09-08 01:35:19,428 | INFO    | dockflow.pipeline. | run 1JAP_benchmark finished in 4.5s (ok=True)

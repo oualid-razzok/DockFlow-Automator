@@ -1,0 +1,23 @@
+2026-09-08 01:33:41,258 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1CBX_benchmark
+2026-09-08 01:33:41,258 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:33:41,258 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1CBX.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1CBX_benchmark/raw/1cbx.pdb
+2026-09-08 01:33:42,150 | INFO    | dockflow.pipeline. | pipeline step download: done 1CBX
+2026-09-08 01:33:42,152 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:33:42,169 | WARNING | dockflow.preparator. | removed hetero species: 15 BZS, 1 ZN. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:33:42,429 | INFO    | dockflow.preparator. | receptor prepared: 2631 -> 2975 atoms (engine=openbabel, +2352H) -> receptor.pdbqt
+2026-09-08 01:33:42,431 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2975 atoms
+2026-09-08 01:33:42,431 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:33:42,431 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/BZS_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1CBX_benchmark/raw/bzs.sdf
+2026-09-08 01:33:44,458 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:33:44,458 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:33:44,528 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:BZS
+2026-09-08 01:33:44,528 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:33:53,203 | INFO    | dockflow.engine. | docked bzs_redock with python backend in 8.7s, best affinity -7.54
+2026-09-08 01:33:53,204 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:33:53,204 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:33:53,262 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1CBX_benchmark/docking/bzs_redock_poses.sdf
+2026-09-08 01:33:53,262 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:33:53,262 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:33:53,262 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:33:53,274 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1CBX_benchmark/report.md
+2026-09-08 01:33:53,284 | INFO    | dockflow.pipeline. | run 1CBX_benchmark finished in 12.0s (ok=True)

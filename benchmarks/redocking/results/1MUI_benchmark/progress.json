@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "ab1_redock": {
+      "ligand_name": "ab1_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MUI_benchmark/docking/ab1_redock_out.pdbqt",
+      "best_affinity": -10.545,
+      "runtime": 162.4,
+      "backend": "python"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "xk2_redock": {
+      "ligand_name": "xk2_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HVR_benchmark/docking/xk2_redock_out.pdbqt",
+      "best_affinity": -11.18,
+      "runtime": 239.18,
+      "backend": "python"
+    }
+  }
+}

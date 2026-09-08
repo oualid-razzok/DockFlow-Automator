@@ -144,3 +144,69 @@ def test_renders_of_distinct_poses_differ_in_pixels(
     # measurable fraction of pixels (observed on the mini fixture: ~0.1%;
     # on real receptors: >1%; threshold an order of magnitude below)
     assert changed > 2e-4, f"renders are near-identical ({changed:.2%} pixels)"
+
+
+# -- interactive 3D viewer (peer item 20) ------------------------------------
+def _manifest_run(tmp_path, poses=2):
+    """Minimal completed-run directory for the viewer generator."""
+    import json as json_mod
+
+    (tmp_path / "prepared").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "docking").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "raw").mkdir(parents=True, exist_ok=True)
+    receptor = tmp_path / "prepared" / "receptor.pdbqt"
+    receptor.write_text(
+        "ATOM      1  CA  ASP A  25       1.000   2.000   3.000"
+        "  1.00  0.00     0.100 C\nEND\n", encoding="utf-8")
+    pose_text = "MODEL     1\n" + "".join(
+        f"ATOM      {i}  C   LIG A   1      {i * 0.5:.3f}   0.000   0.000"
+        "  1.00  0.00     0.100 C\n" for i in range(1, 4)) + "ENDMDL\n"
+    out = tmp_path / "docking" / "lig1_out.pdbqt"
+    out.write_text(pose_text * poses, encoding="utf-8")
+    manifest = {
+        "run_id": "test_run",
+        "receptor": {"pdbqt": str(receptor), "engine": "test"},
+        "gridbox": {"center": [0, 0, 0], "size": [20, 20, 20],
+                    "source": "ligand:XK2"},
+        "docking": {"backend": "test", "results": [{
+            "ligand_name": "lig1",
+            "poses": [{"model": 1, "affinity": -9.5, "crystal_rmsd": 1.2},
+                      {"model": 2, "affinity": -8.1, "crystal_rmsd": 2.4}],
+        }]},
+        "analysis": {"poses": {"lig1": [{
+            "pose_index": 1,
+            "residues": [{"chain": "A", "resname": "ASP", "resseq": 25,
+                          "geom_hbond_contacts": 2,
+                          "hydrophobic_contacts": 1,
+                          "ionic_contacts": 0, "metal_contacts": 0,
+                          "closest": 3.1}],
+        }]}},
+        "paths": {},
+    }
+    (tmp_path / "manifest.json").write_text(
+        json_mod.dumps(manifest), encoding="utf-8")
+    return tmp_path
+
+
+def test_interactive_viewer_html_generated(tmp_path):
+    from dockflow_core.interactive_viewer import build_interactive_html
+
+    path = build_interactive_html(_manifest_run(tmp_path))
+    assert path is not None and path.is_file()
+    text = path.read_text(encoding="utf-8")
+    assert "3Dmol" in text
+    # gridbox coords are serialised as rounded floats ([0.0, 0.0, 0.0])
+    assert '"center": [0.0, 0.0, 0.0]' in text
+    assert "lig1" in text
+    import json as json_mod
+
+    start = text.index("const DATA = ") + len("const DATA = ")
+    data, _ = json_mod.JSONDecoder().raw_decode(text[start:])
+    assert len(data["poses"]) == 2
+    assert data["contacts"] and data["contacts"][0]["resname"] == "ASP"
+
+
+def test_interactive_viewer_skips_incomplete_runs(tmp_path):
+    from dockflow_core.interactive_viewer import build_interactive_html
+
+    assert build_interactive_html(tmp_path) is None  # no manifest

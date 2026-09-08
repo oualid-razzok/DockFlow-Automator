@@ -26,8 +26,15 @@
           "anyOf": [{ "type": "number" }, { "type": "null" }]
         },
         "crystal_rmsd": {
-          "description": "Symmetry-tolerant heavy-atom Kabsch RMSD to the co-crystallized pose (A); null when no comparable reference exists.",
+          "description": "Symmetry-aware heavy-atom RMSD to the co-crystallized pose (A); null when no comparable reference exists.",
           "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }]
+        },
+        "crystal_rmsd_method": {
+          "description": "Which RMSD method produced crystal_rmsd: 'rdkit-getbestrms-graph-automorphism' (exact minimisation over molecular graph symmetries) or 'element-greedy-kabsch' (dependency-free fallback); null when no reference was analysed.",
+          "anyOf": [
+            { "type": "string", "enum": ["rdkit-getbestrms-graph-automorphism", "element-greedy-kabsch"] },
+            { "type": "null" }
+          ]
         },
         "contacts": {
           "type": "array",

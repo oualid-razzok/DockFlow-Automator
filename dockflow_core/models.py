@@ -80,6 +80,9 @@ class DockingResult:
     runtime: float = 0.0
     backend: str = "unknown"
     error: str | None = None
+    # Consensus scoring (peer item 16): best affinity per additional
+    # scoring function, e.g. {"vinardo": -9.2, "gnina_affinity": -8.7}.
+    extra_scores: dict[str, float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.ligand_name and self.ligand is not None:

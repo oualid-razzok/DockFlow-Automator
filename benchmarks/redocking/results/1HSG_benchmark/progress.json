@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "mk1_redock": {
+      "ligand_name": "mk1_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HSG_benchmark/docking/mk1_redock_out.pdbqt",
+      "best_affinity": -11.335,
+      "runtime": 125.42,
+      "backend": "python"
+    }
+  }
+}

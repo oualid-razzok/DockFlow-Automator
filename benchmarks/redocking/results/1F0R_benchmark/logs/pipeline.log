@@ -1,0 +1,24 @@
+2026-09-08 01:32:02,346 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1F0R_benchmark
+2026-09-08 01:32:02,346 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:32:02,346 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1F0R.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/raw/1f0r.pdb
+2026-09-08 01:32:03,424 | INFO    | dockflow.pipeline. | pipeline step download: done 1F0R
+2026-09-08 01:32:03,426 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:32:03,442 | WARNING | dockflow.preparator. | removed hetero species: 31 815, 1 CA. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:32:03,448 | WARNING | dockflow.preparator. | Receptor has 2 missing residues (chain A: 146; chain A: 218). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:32:03,692 | INFO    | dockflow.preparator. | receptor prepared: 2429 -> 2732 atoms (engine=openbabel, +2151H) -> receptor.pdbqt
+2026-09-08 01:32:03,693 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2732 atoms
+2026-09-08 01:32:03,694 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:32:03,694 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/815_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/raw/815.sdf
+2026-09-08 01:32:05,881 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:32:05,881 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:32:05,923 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:815
+2026-09-08 01:32:05,924 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:32:37,774 | INFO    | dockflow.engine. | docked 815_redock with python backend in 31.8s, best affinity -10.25
+2026-09-08 01:32:37,774 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:32:37,775 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:32:37,850 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/docking/815_redock_poses.sdf
+2026-09-08 01:32:37,850 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:32:37,850 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:32:37,850 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:32:37,864 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1F0R_benchmark/report.md
+2026-09-08 01:32:37,876 | INFO    | dockflow.pipeline. | run 1F0R_benchmark finished in 35.5s (ok=True)

@@ -1,0 +1,24 @@
+2026-09-08 01:33:54,045 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1TNG_benchmark
+2026-09-08 01:33:54,046 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:33:54,046 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1TNG.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/raw/1tng.pdb
+2026-09-08 01:33:54,937 | INFO    | dockflow.pipeline. | pipeline step download: done 1TNG
+2026-09-08 01:33:54,939 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:33:54,955 | WARNING | dockflow.preparator. | removed hetero species: 11 AMC, 1 CA. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:33:54,961 | WARNING | dockflow.preparator. | Receptor has 10 missing residues (chain A: 35-36; chain A: 68; chain A: 126; chain A: 131 (+2 more)). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:33:55,155 | INFO    | dockflow.preparator. | receptor prepared: 2512 -> 2024 atoms (engine=openbabel, +1225H) -> receptor.pdbqt
+2026-09-08 01:33:55,156 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2024 atoms
+2026-09-08 01:33:55,157 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:33:55,157 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/AMC_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/raw/amc.sdf
+2026-09-08 01:33:57,163 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:33:57,163 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:33:57,196 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:AMC
+2026-09-08 01:33:57,196 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:33:59,462 | INFO    | dockflow.engine. | docked amc_redock with python backend in 2.3s, best affinity -4.74
+2026-09-08 01:33:59,463 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:33:59,463 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:33:59,543 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/docking/amc_redock_poses.sdf
+2026-09-08 01:33:59,543 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:33:59,544 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:33:59,544 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:33:59,555 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1TNG_benchmark/report.md
+2026-09-08 01:33:59,565 | INFO    | dockflow.pipeline. | run 1TNG_benchmark finished in 5.5s (ok=True)

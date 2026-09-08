@@ -1,0 +1,23 @@
+2026-09-08 01:33:26,518 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1STP_benchmark
+2026-09-08 01:33:26,518 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:33:26,518 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1STP.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1STP_benchmark/raw/1stp.pdb
+2026-09-08 01:33:28,594 | INFO    | dockflow.pipeline. | pipeline step download: done 1STP
+2026-09-08 01:33:28,596 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:33:28,604 | WARNING | dockflow.preparator. | removed hetero species: 16 BTN. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:33:28,739 | INFO    | dockflow.preparator. | receptor prepared: 1001 -> 1110 atoms (engine=openbabel, +846H) -> receptor.pdbqt
+2026-09-08 01:33:28,740 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1110 atoms
+2026-09-08 01:33:28,740 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:33:28,740 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/BTN_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1STP_benchmark/raw/btn.sdf
+2026-09-08 01:33:30,756 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:33:30,756 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:33:30,774 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:BTN
+2026-09-08 01:33:30,774 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:33:40,461 | INFO    | dockflow.engine. | docked btn_redock with python backend in 9.7s, best affinity -7.43
+2026-09-08 01:33:40,461 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:33:40,461 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:33:40,500 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1STP_benchmark/docking/btn_redock_poses.sdf
+2026-09-08 01:33:40,500 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:33:40,501 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:33:40,501 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:33:40,512 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1STP_benchmark/report.md
+2026-09-08 01:33:40,524 | INFO    | dockflow.pipeline. | run 1STP_benchmark finished in 14.0s (ok=True)

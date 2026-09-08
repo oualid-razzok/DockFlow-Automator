@@ -1,0 +1,86 @@
+2026-09-08 01:30:23,324 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1MUI_benchmark
+2026-09-08 01:30:23,325 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:30:23,325 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1MUI.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MUI_benchmark/raw/1mui.pdb
+2026-09-08 01:30:24,407 | INFO    | dockflow.pipeline. | pipeline step download: done 1MUI
+2026-09-08 01:30:24,409 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:30:24,420 | WARNING | dockflow.preparator. | removed hetero species: 46 AB1. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:30:24,607 | INFO    | dockflow.preparator. | receptor prepared: 1608 -> 1836 atoms (engine=openbabel, +1604H) -> receptor.pdbqt
+2026-09-08 01:30:24,608 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1836 atoms
+2026-09-08 01:30:24,608 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:30:24,608 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/AB1_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MUI_benchmark/raw/ab1.sdf
+2026-09-08 01:30:26,794 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:30:26,794 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:30:26,821 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:AB1
+2026-09-08 01:30:26,821 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:30:26,836 | ERROR   | dockflow.pipeline. | unexpected pipeline failure
+Traceback (most recent call last):
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 384, in run
+    results = self._maybe_run(
+              ^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 448, in _maybe_run
+    result = method(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/pipeline.py", line 1046, in _dock
+    results = engine.dock_batch(
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 475, in dock_batch
+    _finish(index, _run(index, lig_path, record))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 454, in _run
+    return self.dock(receptor_pdbqt, lig_path, out_path, record)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 382, in dock
+    log_text = self._dock_python(receptor, ligand, out, mode)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/benchmark-run/dockflow_core/docker_engine.py", line 532, in _dock_python
+    vina_obj.set_receptor(str(receptor))
+  File "/home/z/my-project/bindings-venv/lib/python3.12/site-packages/vina/vina.py", line 157, in set_receptor
+    self._vina.set_receptor(rigid_pdbqt_filename)
+  File "/home/z/my-project/bindings-venv/lib/python3.12/site-packages/vina/vina_wrapper.py", line 704, in set_receptor
+    return _vina_wrapper.Vina_set_receptor(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 
+
+PDBQT parsing error: Atom type HS is not a valid AutoDock type (atom types are case-sensitive).
+ > ATOM   1627  H   CYS B  67
+Additional information:
+Wrong number or type of arguments for overloaded function 'Vina_set_receptor'.
+  Possible C/C++ prototypes are:
+    Vina::set_receptor(std::string const &,std::string const &)
+    Vina::set_receptor(std::string const &)
+    Vina::set_receptor()
+
+2026-09-08 01:30:26,846 | INFO    | dockflow.pipeline. | run 1MUI_benchmark finished in 3.5s (ok=False)
+2026-09-08 01:47:19,186 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1MUI_benchmark
+2026-09-08 01:47:19,186 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:47:19,694 | INFO    | dockflow.pipeline. | pipeline step download: done 1MUI
+2026-09-08 01:47:19,696 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:47:19,707 | WARNING | dockflow.preparator. | removed hetero species: 46 AB1. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:47:19,903 | INFO    | dockflow.preparator. | receptor prepared: 1608 -> 1836 atoms (engine=openbabel, +1604H) -> receptor.pdbqt
+2026-09-08 01:47:19,904 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1836 atoms
+2026-09-08 01:47:19,904 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:47:21,825 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:47:21,825 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:47:21,853 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:AB1
+2026-09-08 01:47:21,854 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:49:18,529 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1MUI_benchmark
+2026-09-08 01:49:18,529 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:49:19,042 | INFO    | dockflow.pipeline. | pipeline step download: done 1MUI
+2026-09-08 01:49:19,043 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:49:19,054 | WARNING | dockflow.preparator. | removed hetero species: 46 AB1. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:49:19,247 | INFO    | dockflow.preparator. | receptor prepared: 1608 -> 1836 atoms (engine=openbabel, +1604H) -> receptor.pdbqt
+2026-09-08 01:49:19,248 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 1836 atoms
+2026-09-08 01:49:19,248 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:49:21,163 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:49:21,163 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:49:21,190 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:AB1
+2026-09-08 01:49:21,190 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:52:03,605 | INFO    | dockflow.engine. | docked ab1_redock with python backend in 162.4s, best affinity -10.54
+2026-09-08 01:52:03,606 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:52:03,606 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:52:03,737 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MUI_benchmark/docking/ab1_redock_poses.sdf
+2026-09-08 01:52:03,738 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:52:03,738 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:52:03,738 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:52:03,754 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1MUI_benchmark/report.md
+2026-09-08 01:52:03,768 | INFO    | dockflow.pipeline. | run 1MUI_benchmark finished in 165.2s (ok=True)

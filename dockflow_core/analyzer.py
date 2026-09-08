@@ -224,7 +224,8 @@ def symmetry_tolerant_rmsd(
     pose_atoms: Sequence[Atom],
     reference_atoms: Sequence[Atom],
     max_refinements: int = 4,
-) -> float:
+    return_correspondence: bool = False,
+) -> float | list[tuple[int, int]]:
     """Symmetry-aware heavy-atom Kabsch RMSD between a pose and a reference.
 
     Standard Kabsch RMSD assumes a fixed 1:1 atom correspondence, which
@@ -240,6 +241,9 @@ def symmetry_tolerant_rmsd(
     The result is the RMSD of the best correspondence found, i.e. the
     smallest RMSD over chemically equivalent atom mappings - the same
     convention used by redocking benchmarks (``compute_rmsd``-style tools).
+    With ``return_correspondence=True`` the final (pose_idx, ref_idx)
+    correspondence over the heavy-atom lists is returned instead (used to
+    seed the graph-automorphism RMSD, peer item 17).
     """
     pose_heavy = [a for a in pose_atoms
                   if chemical_element(a) not in (None, "H")]
@@ -299,18 +303,23 @@ def symmetry_tolerant_rmsd(
         if new_correspondence == correspondence:
             break
         correspondence = new_correspondence
+    if return_correspondence:
+        return sorted(correspondence)
     return best_rmsd
 
 
 def extract_reference_atoms(
     structure_path: str | Path, resname: str, chain: str | None = None
 ) -> list[Atom]:
-    """Heavy atoms of one ligand residue extracted from a structure file.
+    """Heavy atoms of ONE ligand residue instance extracted from a structure.
 
     The co-crystallized pose of the reference ligand (e.g. ``XK2`` inside
     ``1HVR.pdb``) is the ground truth for redocking validation.  Alternate
     conformations (altLoc) are resolved to the highest-occupancy variant so
-    duplicated atoms do not corrupt the atom count.
+    duplicated atoms do not corrupt the atom count.  When the ligand is
+    present in several copies (homodimers, multi-copy entries), ONE
+    instance is used (the largest) - the reference must describe a single
+    binding site, not the union of two.
     """
 
     atoms = parse_pdb(structure_path)
@@ -334,23 +343,145 @@ def extract_reference_atoms(
         if key not in best or atom.occupancy > best[key].occupancy:
             best[key] = atom
     selected = list(best.values())
+    # One residue instance only (largest) when several copies exist.
+    instances: dict[tuple[str, int], list[Atom]] = {}
+    for atom in selected:
+        instances.setdefault((atom.chain.strip(), int(atom.resseq)), []).append(atom)
+    if len(instances) > 1:
+        selected = max(instances.values(), key=len)
     return selected
 
 
 def crystal_rmsd(
     pose_atoms: Sequence[Atom], reference_atoms: Sequence[Atom]
 ) -> float | None:
-    """Symmetry-tolerant heavy-atom RMSD of a pose vs the crystal pose.
+    """Symmetry-aware heavy-atom RMSD of a pose vs the crystal pose.
+
+    Uses RDKit ``GetBestRMS`` (graph-automorphism aware, peer item 17) when
+    RDKit is importable and both atom sets can be converted into a
+    proximity-bonded molecule; otherwise falls back to the element-greedy
+    Kabsch heuristic.  See :func:`crystal_rmsd_with_method` for the variant
+    that also reports which method was used.
 
     Returns ``None`` (with a logged debug note) when the pose and reference
     are not comparable, so callers can treat redocking validation as
     optional rather than fatal.
     """
+    return crystal_rmsd_with_method(pose_atoms, reference_atoms)[0]
+
+
+def _rdkit_mol_from_heavy_atoms(atoms: Sequence[Atom]):
+    """Build an RDKit molecule from heavy ``Atom`` records.
+
+    The atoms are written to an in-memory PDB block (real element symbols)
+    and parsed with ``proximityBonding=True`` so connectivity is inferred
+    from the 3D coordinates.  Returns ``None`` when RDKit is unavailable,
+    the block cannot be parsed, or the result is bondless.
+    """
     try:
-        return symmetry_tolerant_rmsd(pose_atoms, reference_atoms)
+        from rdkit import Chem
+    except ImportError:
+        return None
+    lines = []
+    for serial, atom in enumerate(atoms, start=1):
+        element = chemical_element(atom)
+        if element is None:
+            return None
+        name = f" {element}  " if len(element) == 1 else f"{element}  "
+        lines.append(
+            f"ATOM  {serial:5d} {name} LIG A   1    "
+            f"{atom.x:8.3f}{atom.y:8.3f}{atom.z:8.3f}"
+            f"{1.0:6.2f}{0.0:6.2f}          {element:>2s}  "
+        )
+    block = "\n".join(lines) + "\nEND\n"
+    mol = Chem.MolFromPDBBlock(block, sanitize=False, removeHs=False,
+                               proximityBonding=True)
+    if mol is None or mol.GetNumAtoms() != len(atoms) or mol.GetNumBonds() == 0:
+        return None
+    try:
+        mol.UpdatePropertyCache(strict=False)
+        Chem.SanitizeMol(mol, catchErrors=True)
+        Chem.FastFindRings(mol)
+    except Exception:  # noqa: BLE001
+        return None
+    return mol
+
+
+def rdkit_symmetry_rmsd(
+    pose_atoms: Sequence[Atom], reference_atoms: Sequence[Atom]
+) -> float | None:
+    """Graph-automorphism-aware RMSD via RDKit ``GetBestRMS`` (item 17).
+
+    The reference's proximity-bonded molecular graph is transplanted onto
+    the pose: pose coordinates are assigned to reference atoms through the
+    *geometry-matched* element correspondence (the greedy Kabsch matching
+    from :func:`symmetry_tolerant_rmsd`, so the initial assignment is
+    chemically sensible rather than input-ordered), and ``GetBestRMS``
+    then minimises the RMSD over all automorphisms of the shared graph
+    (ring flips, carboxylate turns, terminal permutations).  This is the
+    standard symmetry-correct ligand RMSD.  Returns ``None`` when the
+    RDKit path is not usable.
+    """
+    try:
+        from rdkit import Chem
+        from rdkit.Chem import rdMolAlign
+    except ImportError:
+        return None
+    pose_heavy = [a for a in pose_atoms
+                  if chemical_element(a) not in (None, "H")]
+    ref_heavy = [a for a in reference_atoms
+                 if chemical_element(a) not in (None, "H")]
+    ref_elements = sorted(chemical_element(a) for a in ref_heavy)
+    pose_elements = sorted(chemical_element(a) for a in pose_heavy)
+    if pose_elements != ref_elements or not ref_heavy:
+        return None
+    ref_mol = _rdkit_mol_from_heavy_atoms(ref_heavy)
+    if ref_mol is None:
+        return None
+    # Seed assignment with the geometry-matched element correspondence
+    # (the greedy Kabsch matching): the pairing decides which pose
+    # coordinate lands on which reference atom.  GetBestRMS re-permutes
+    # via graph automorphisms, but a sensible seed keeps even asymmetric
+    # ligands correct (input-order seeding scrambles them).
+    try:
+        correspondence = symmetry_tolerant_rmsd(
+            pose_atoms, reference_atoms, return_correspondence=True)
+    except ValueError:
+        return None
+    conf = Chem.Conformer(ref_mol.GetNumAtoms())
+    for pose_index, ref_index in correspondence:
+        pose_atom = pose_heavy[pose_index]
+        conf.SetAtomPosition(ref_index,
+                             (float(pose_atom.x), float(pose_atom.y),
+                              float(pose_atom.z)))
+    pose_mol = Chem.Mol(ref_mol)
+    pose_mol.RemoveAllConformers()
+    pose_mol.AddConformer(conf, assignId=True)
+    return float(rdMolAlign.GetBestRMS(pose_mol, ref_mol))
+
+
+def crystal_rmsd_with_method(
+    pose_atoms: Sequence[Atom], reference_atoms: Sequence[Atom]
+) -> tuple[float | None, str | None]:
+    """Symmetry-aware RMSD plus the method actually used (peer item 17).
+
+    Returns ``(rmsd, method)`` where method is
+    ``"rdkit-getbestrms-graph-automorphism"`` (preferred: exact minimisation
+    over molecular graph symmetries) or ``"element-greedy-kabsch"`` (the
+    dependency-free fallback).  ``(None, None)`` when not computable.
+    """
+    try:
+        rmsd = rdkit_symmetry_rmsd(pose_atoms, reference_atoms)
+        if rmsd is not None:
+            return rmsd, "rdkit-getbestrms-graph-automorphism"
+    except Exception:  # noqa: BLE001
+        logger.debug("rdkit GetBestRMS path failed", exc_info=True)
+    try:
+        return (symmetry_tolerant_rmsd(pose_atoms, reference_atoms),
+                "element-greedy-kabsch")
     except ValueError as exc:
         logger.debug("crystal RMSD not computable: %s", exc)
-        return None
+        return None, None
 
 
 # ---------------------------------------------------------------------------
@@ -585,9 +716,12 @@ class PoseAnalysis:
     # Proxy: docking score / heavy-atom count, NOT experimental ligand
     # efficiency (renamed in 0.2.0; audit item 14).
     docking_score_efficiency: float | None = None
-    # Symmetry-tolerant heavy-atom RMSD to the co-crystallized reference
+    # Symmetry-aware heavy-atom RMSD to the co-crystallized reference
     # pose (None when no reference was available; audit item 18).
     crystal_rmsd: float | None = None
+    # Which RMSD method produced crystal_rmsd (peer item 17):
+    # "rdkit-getbestrms-graph-automorphism" or "element-greedy-kabsch".
+    crystal_rmsd_method: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -600,6 +734,7 @@ class PoseAnalysis:
             "num_metal_contacts": self.num_metal,
             "docking_score_efficiency": self.docking_score_efficiency,
             "crystal_rmsd": self.crystal_rmsd,
+            "crystal_rmsd_method": self.crystal_rmsd_method,
             "contacts": [c.to_dict() for c in self.contacts],
             "residues": [
                 {
@@ -635,13 +770,19 @@ def analyze_docking_result(
     pose_files = split_pdbqt_models(result.out_path, Path(result.out_path).parent,
                                     result.ligand_name or "pose")
     analyses: list[PoseAnalysis] = []
+    rmsd_method: str | None = None
     for index, pose_file in enumerate(pose_files):
         pose_data = parse_pdbqt(pose_file)
         pose_atoms = pose_data.atoms
         # Redocking validation for every pose, not just the top ones, so
-        # summary.csv can carry a crystal_rmsd column.
+        # summary.csv can carry a crystal_rmsd column.  Symmetry-aware
+        # RMSD (peer item 17): RDKit GetBestRMS when possible, else the
+        # element-greedy Kabsch fallback; the method is recorded.
         if reference_atoms is not None and index < len(result.poses):
-            result.poses[index].crystal_rmsd = crystal_rmsd(pose_atoms, reference_atoms)
+            value, method = crystal_rmsd_with_method(pose_atoms, reference_atoms)
+            result.poses[index].crystal_rmsd = value
+            if method:
+                rmsd_method = method
         if index >= top_poses:
             continue
         vina_result = pose_data.models[0].vina_result if pose_data.models else None
@@ -664,6 +805,7 @@ def analyze_docking_result(
             docking_score_efficiency=docking_score_efficiency(affinity, heavy),
             crystal_rmsd=result.poses[index].crystal_rmsd
             if index < len(result.poses) else None,
+            crystal_rmsd_method=rmsd_method,
         )
         analyses.append(analysis)
     return analyses
@@ -711,3 +853,140 @@ def write_analysis_json(analyses: Sequence[PoseAnalysis], path: str | Path) -> P
     payload = {"poses": [a.to_dict() for a in analyses]}
     target.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return target
+
+
+# ---------------------------------------------------------------------------
+# Interaction fingerprints (peer item 18)
+# ---------------------------------------------------------------------------
+def pose_ifp_keys(contacts: Sequence[Contact]) -> set[tuple[str, str, int, str]]:
+    """The IFP bit keys of one pose: ``(chain, resname, resseq, kind)``.
+
+    One bit per receptor residue x geometric contact type - the standard
+    PLIF (protein-ligand interaction fingerprint) layout.  The keys are
+    contact-derived, so an IFP says "which residues the pose touches and
+    how", not "how strongly" (contact counts are not energies).
+    """
+    return {
+        (contact.receptor_chain, contact.receptor_resname,
+         int(contact.receptor_resseq), contact.kind)
+        for contact in contacts
+    }
+
+
+def ifp_vocabulary(contact_sets: Sequence[set[tuple[str, str, int, str]]]
+                   ) -> list[tuple[str, str, int, str]]:
+    """Sorted union vocabulary over several poses (stable bit order)."""
+    union: set[tuple[str, str, int, str]] = set()
+    for keys in contact_sets:
+        union |= keys
+    return sorted(union)
+
+
+def ifp_bits(keys: set[tuple[str, str, int, str]],
+             vocabulary: Sequence[tuple[str, str, int, str]]) -> list[int]:
+    """Bit list for one pose against a vocabulary (1 = contact present)."""
+    wanted = set(keys)
+    return [1 if bit in wanted else 0 for bit in vocabulary]
+
+
+def tanimoto_ifp(bits_a: Sequence[int], bits_b: Sequence[int]) -> float:
+    """Tanimoto coefficient of two IFP bit vectors (dependency-free)."""
+    if len(bits_a) != len(bits_b):
+        raise ValueError("IFP vectors must share one vocabulary")
+    ones_a = sum(bits_a)
+    ones_b = sum(bits_b)
+    both = sum(1 for a, b in zip(bits_a, bits_b, strict=True) if a and b)
+    if ones_a == 0 and ones_b == 0:
+        return 1.0  # two contact-free poses are identical (both empty)
+    return both / (ones_a + ones_b - both)
+
+
+def ifp_similarity_matrix(bit_vectors: Sequence[Sequence[int]]
+                           ) -> list[list[float]]:
+    """Pairwise Tanimoto matrix over IFP bit vectors."""
+    size = len(bit_vectors)
+    matrix = [[1.0] * size for _ in range(size)]
+    for i in range(size):
+        for j in range(i + 1, size):
+            similarity = tanimoto_ifp(bit_vectors[i], bit_vectors[j])
+            matrix[i][j] = similarity
+            matrix[j][i] = similarity
+    return matrix
+
+
+def cluster_ifp(bit_vectors: Sequence[Sequence[int]],
+                threshold: float = 0.7) -> list[list[int]]:
+    """Single-linkage clustering of poses by IFP Tanimoto similarity.
+
+    Heuristic clustering by *interaction* similarity (not geometry): two
+    poses belong to one cluster when their fingerprints overlap by at
+    least ``threshold``.  Returns a list of clusters as lists of pose
+    indices (0-based, input order).
+    """
+    size = len(bit_vectors)
+    if size == 0:
+        return []
+    matrix = ifp_similarity_matrix(bit_vectors)
+    assigned: list[int | None] = [None] * size
+    clusters: list[list[int]] = []
+    for i in range(size):
+        if assigned[i] is not None:
+            continue
+        members = [i]
+        assigned[i] = len(clusters)
+        frontier = [i]
+        while frontier:
+            current = frontier.pop()
+            for j in range(size):
+                if assigned[j] is None and matrix[current][j] >= threshold:
+                    assigned[j] = len(clusters)
+                    members.append(j)
+                    frontier.append(j)
+        clusters.append(sorted(members))
+    return clusters
+
+
+def write_ifp_outputs(ligand_name: str,
+                      analyses: Sequence[PoseAnalysis],
+                      analysis_dir: str | Path) -> list[Path]:
+    """Write the per-ligand IFP artifacts (peer item 18b).
+
+    * ``<ligand>_ifp.csv``  - one row per pose, one column per bit
+      (vocabulary = union over that ligand's analysed poses),
+    * ``<ligand>_pose<N>_ifp.dat`` - RDKit ``ExplicitBitVect.to_binary``
+      per pose over the same vocabulary (skipped without RDKit).
+
+    Returns the list of files written (CSV always; .dat when RDKit is
+    importable).
+    """
+    analysis_dir = Path(analysis_dir)
+    analysis_dir.mkdir(parents=True, exist_ok=True)
+    contact_sets = [pose_ifp_keys(analysis.contacts) for analysis in analyses]
+    vocabulary = ifp_vocabulary(contact_sets)
+    header = ["pose"] + [
+        f"{chain or '-'}:{resname}{resseq}:{kind}"
+        for chain, resname, resseq, kind in vocabulary
+    ]
+    csv_path = analysis_dir / f"{ligand_name}_ifp.csv"
+    with open(csv_path, "w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(header)
+        for analysis, keys in zip(analyses, contact_sets, strict=True):
+            writer.writerow([analysis.pose_index]
+                            + ifp_bits(keys, vocabulary))
+    written = [csv_path]
+    try:
+        from rdkit.DataStructs import ExplicitBitVect
+
+        for analysis, keys in zip(analyses, contact_sets, strict=True):
+            bits = ifp_bits(keys, vocabulary)
+            vector = ExplicitBitVect(len(bits))
+            for position, bit in enumerate(bits):
+                if bit:
+                    vector.SetBit(position)
+            path = analysis_dir / f"{ligand_name}_pose{analysis.pose_index}_ifp.dat"
+            path.write_bytes(vector.ToBinary())
+            written.append(path)
+    except ImportError:
+        logger.debug("RDKit unavailable: IFP .dat export skipped")
+    return written

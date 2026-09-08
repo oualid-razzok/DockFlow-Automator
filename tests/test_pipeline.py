@@ -326,3 +326,30 @@ def test_pipeline_gridbox_warnings_in_manifest(config, monkeypatch,
     report = pipeline.run()
     assert not report.ok
     assert "exceeds AutoDock Vina's hard cap" in report.error
+
+
+# ---------------------------------------------------------------------------
+# Integrity checksums (work-order item 29)
+# ---------------------------------------------------------------------------
+def test_pipeline_manifest_has_input_output_checksums(config, monkeypatch,
+                                                       docked_pdbqt_text):
+    """SHA-256 of key files, run-dir-relative, verifiable afterwards."""
+    import hashlib as _hashlib
+
+    _mock_docking(monkeypatch, config.workdir, docked_pdbqt_text)
+    report = DockingPipeline(config).run()
+    assert report.ok
+    manifest = json.loads((report.run_dir / "manifest.json").read_text(encoding="utf-8"))
+    checksums: dict = manifest["checksums"]
+    assert checksums, "no checksums recorded"
+    # run-dir-relative keys only (portable manifest)
+    assert all(not key.startswith("/") for key in checksums)
+    # the docking protocol + results must be covered
+    assert "gridbox.txt" in checksums
+    assert any(key.startswith("prepared/") for key in checksums)
+    # (raw/ inputs appear only for downloaded targets; this fixture is local)
+    # spot-verify one entry against an independent re-hash
+    sample = "gridbox.txt"
+    digest = _hashlib.sha256(
+        (report.run_dir / sample).read_bytes()).hexdigest()
+    assert checksums[sample] == digest

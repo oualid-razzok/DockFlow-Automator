@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "oht_redock": {
+      "ligand_name": "oht_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/3ERT_benchmark/docking/oht_redock_out.pdbqt",
+      "best_affinity": -9.706,
+      "runtime": 34.87,
+      "backend": "python"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "complexes_attempted": 24,
+  "completed": 24,
+  "failed": 0,
+  "successful_within_2a": 18,
+  "success_rate_pct": 75.0,
+  "mean_rmsd_a": 1.32,
+  "median_rmsd_a": 0.96,
+  "mean_runtime_s": 58.5,
+  "mean_best_affinity": -8.86
+}

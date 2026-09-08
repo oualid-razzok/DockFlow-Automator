@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "905_redock": {
+      "ligand_name": "905_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1YGC_benchmark/docking/905_redock_out.pdbqt",
+      "best_affinity": -9.778,
+      "runtime": 79.14,
+      "backend": "python"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "ucn_redock": {
+      "ligand_name": "ucn_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1NVQ_benchmark/docking/ucn_redock_out.pdbqt",
+      "best_affinity": -12.506,
+      "runtime": 14.2,
+      "backend": "python"
+    }
+  }
+}

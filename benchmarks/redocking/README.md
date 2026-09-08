@@ -5,11 +5,25 @@ of classic protein–ligand complexes re-docked with the standard pipeline,
 reporting experimental-vs-predicted pose RMSD, success rate, docking
 scores and runtimes.
 
-**Status: the harness is complete and locally validated on 1HVR (best
-pose RMSD 1.08 Å, success).  The full 24-complex table requires roughly
-2–4 CPU-hours at exhaustiveness 8 and is intended to be executed on a
-workstation/cluster; `results/` is seeded with the locally produced
-rows and grows as the suite is run.**
+**Status: RUN on all 24 complexes (2026-09, exhaustiveness 8, seed 2026).
+Results in `results/`: 24/24 completed, 18/24 successes (75 %, best pose
+RMSD ≤ 2.0 Å), mean best-pose RMSD 1.32 Å / median 0.96 Å, failures and
+per-complex artifacts included - see `results/summary.md`.**
+
+Protocol notes from the actual run:
+
+* the 6 fails (1DWD, 1F0R, 1MQ6, 1YGC, 1HSG, 1HTG) are all large flexible
+  peptidomimetic inhibitors (5+ rotatable tails) - consistent with the
+  literature expectation that rigid-receptor Vina redocking struggles
+  exactly there; every fail keeps its full run directory for inspection;
+* complexes whose ligand appears in two copies (homodimers: 1HTG, 1Q41,
+  1XLZ, 1N46) use ONE instance (the largest) for the box and the RMSD
+  reference - the union of both copies would inflate the box past Vina's
+  30 Å cap and break the atom-count match for the RMSD;
+* every row is reproducible: fixed seed, deterministic Vina, recorded
+  environment fingerprint; re-running a row reproduces it bit-for-bit
+  (verified during the 2026-09 run: identical RMSDs across two
+  independent executions).
 
 ## Methodology
 

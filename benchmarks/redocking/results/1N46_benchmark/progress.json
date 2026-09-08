@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "pfa_redock": {
+      "ligand_name": "pfa_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1N46_benchmark/docking/pfa_redock_out.pdbqt",
+      "best_affinity": -11.527,
+      "runtime": 14.95,
+      "backend": "python"
+    }
+  }
+}

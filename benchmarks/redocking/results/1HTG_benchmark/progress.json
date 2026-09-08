@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "g37_redock": {
+      "ligand_name": "g37_redock",
+      "status": "ok",
+      "out": "/home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1HTG_benchmark/docking/g37_redock_out.pdbqt",
+      "best_affinity": -10.562,
+      "runtime": 265.5,
+      "backend": "python"
+    }
+  }
+}

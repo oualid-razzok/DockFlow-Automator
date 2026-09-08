@@ -31,8 +31,9 @@ import os
 import threading
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
+from shutil import which
 from typing import Any
 
 import yaml
@@ -49,6 +50,7 @@ from .downloader import (
 )
 from .gridbox import (
     GridBox,
+    assumption_strength,
     box_from_pocket,
     box_from_residues,
     box_from_structure,
@@ -57,7 +59,13 @@ from .gridbox import (
     validate_box,
 )
 from .models import LigandRecord
-from .preparator import LigandPreparator, LigandPrepOptions, ReceptorPreparator, ReceptorPrepOptions
+from .preparator import (
+    LigandPreparator,
+    LigandPrepOptions,
+    ReceptorPreparator,
+    ReceptorPrepOptions,
+    engine_comparability,
+)
 from .provenance import StageRecorder, scientific_environment, write_environment_sidecar
 from .utils import DockFlowError, get_logger, setup_logging, timestamped_run_id
 
@@ -227,6 +235,9 @@ class PipelineReport:
     analysis: dict[str, Any] = field(default_factory=dict)
     visualization: dict[str, Any] = field(default_factory=dict)
     paths: dict[str, Any] = field(default_factory=dict)
+    # SHA-256 of key input/output files, keyed by run-dir-relative path
+    # (work-order item 29: tamper detection for published runs).
+    checksums: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         data: dict[str, Any] = {}
@@ -411,6 +422,11 @@ class DockingPipeline:
         report.duration_s = report.timings["total"]
         report.stages = self._stages.to_list()
         report.environment = scientific_environment()
+        # Input/output integrity (work-order item 29): SHA-256 of the run's
+        # key files.  Signing is deliberately NOT implemented - an
+        # open-source tool has no key management; hashes give tamper
+        # DETECTION (re-hash with `sha256sum -c`-style verification).
+        report.checksums = self._checksums()
         manifest = self._run_dir / "manifest.json"
         report.save(manifest)
         sidecar = write_environment_sidecar(self._run_dir, report.environment)
@@ -419,6 +435,39 @@ class DockingPipeline:
         logger.info("run %s finished in %.1fs (ok=%s)", run_id,
                     report.duration_s, report.ok)
         return report
+
+    def _checksums(self) -> dict[str, str]:
+        """SHA-256 map of the run's key files (inputs + outputs).
+
+        Keys are run-dir-relative paths so the manifest stays portable;
+        missing files are silently skipped (partial runs still publish
+        whatever they produced).
+        """
+        from .utils import sha256_file
+
+        if self._run_dir is None:
+            return {}
+        run_dir = Path(self._run_dir)
+        wanted: list[Path] = []
+        # inputs
+        wanted += sorted((run_dir / "raw").glob("*.pdb"))
+        wanted += sorted((run_dir / "raw").glob("*.sdf"))
+        # preparation outputs (the scientific boundary: what Vina consumed)
+        wanted += [run_dir / "prepared" / "receptor.pdbqt"]
+        wanted += sorted((run_dir / "prepared").glob("*.pdbqt"))
+        # protocol + results
+        wanted += [run_dir / "gridbox.txt",
+                   run_dir / "docking" / "summary.csv"]
+        wanted += sorted((run_dir / "docking").glob("*_out.pdbqt"))
+        checksums: dict[str, str] = {}
+        for path in wanted:
+            if path.is_file():
+                try:
+                    rel = path.relative_to(run_dir).as_posix()
+                    checksums[rel] = sha256_file(path)
+                except OSError:
+                    logger.debug("checksum failed for %s", path, exc_info=True)
+        return checksums
 
     # -- stage selection (audit item 27) ---------------------------------------
     def _maybe_run(self, stage: str, method: Callable[..., Any], *args,
@@ -604,13 +653,57 @@ class DockingPipeline:
         result = preparator.prepare(
             target_record.path, self._run_dir / "prepared", basename="receptor"
         )
+        # Flexible side chains (peer item 8): split rigid/flex PDBQTs.
+        flex_selection = (self.config.receptor or {}).get("flexible_residues")
+        if flex_selection:
+            from .flexible import auto_flexible_residues, build_flexible_pdbqts, parse_flexible_residues
+            selection = parse_flexible_residues(flex_selection)
+            auto_mode = bool(selection) and selection[0].get("auto")
+            if auto_mode:
+                reference_resname = (self.config.gridbox or {}).get(
+                    "reference_ligand_resname") \
+                    or (target_record.ligand_codes or [None])[0]
+                if reference_resname is None:
+                    raise PipelineError(
+                        "receptor.flexible_residues: 'auto' needs a reference "
+                        "ligand (gridbox.reference_ligand_resname or a "
+                        "co-crystallized ligand in the target)")
+                selection = auto_flexible_residues(
+                    result.pdbqt_path, target_record.path)
+                self._log(
+                    f"flexible residues (auto): {len(selection)} residues "
+                    f"contacting {reference_resname} "
+                    "(heuristic: any contact within 4.5 A)")
+            if selection:
+                try:
+                    rigid, flex, report = build_flexible_pdbqts(
+                        result.pdbqt_path, selection,
+                        self._run_dir / "prepared", basename="receptor")
+                    result.rigid_pdbqt_path = rigid
+                    result.flex_pdbqt_path = flex
+                    result.flexible_residues = report
+                    skipped = [r for r in report if r.get("status") != "flexible"]
+                    for entry in skipped:
+                        result.warnings.append(
+                            f"flexible residue {entry['resname']}-"
+                            f"{entry['chain']}{entry['resseq']} skipped: "
+                            f"{entry['reason']}")
+                    result.warnings.append(
+                        "flexible-receptor docking is enabled: Vina scores "
+                        "are NOT comparable with rigid-receptor scores of "
+                        "the same ligand, and the search is slower.")
+                except DockFlowError as exc:
+                    raise PipelineError(f"flexible residues: {exc}") from exc
         removed_non_water = {
             name: count for name, count in result.removed_resnames.items()
             if name not in {"HOH", "DOD", "WAT", "H2O", "TIP", "TIP3", "SOL"}
         }
+        # Comparability of the resolved engine (peer item 4): which other
+        # engines would have produced scientifically comparable receptors.
+        comparability = engine_comparability(result.engine)
         # Every silent preparation decision, made explicit (audit item 10).
         decisions = {
-            "rigid_receptor": True,
+            "rigid_receptor": not bool(result.flex_pdbqt_path),
             "protonation": (
                 f"as deposited (PDB); polar hydrogens added by the "
                 f"{result.engine.split()[0]} engine (pH 7.4 convention)"
@@ -633,6 +726,17 @@ class DockingPipeline:
             },
             "alternate_conformations": f"altloc policy: {options.altloc}",
             "chains": options.chains or "all",
+            # peer item 4: results must never silently look comparable to
+            # runs prepared with a different engine
+            "comparable_to": comparability["comparable_to"],
+            "incomparable_to": comparability["incomparable_to"],
+            # peer items 6, 7, 10: structure quality findings
+            "missing_residues": result.missing_residues or "none",
+            "disulfides": result.disulfides or "none",
+            "reduced_cysteines": result.reduced_cysteines or "none",
+            "metal_coordination": result.metal_coordination or "none",
+            # peer item 8: flexible side chains
+            "flexible_residues": result.flexible_residues or "none",
         }
         self._report.receptor = {
             "pdbqt": str(result.pdbqt_path),
@@ -645,6 +749,11 @@ class DockingPipeline:
             "decisions": decisions,
             "warnings": result.warnings,
         }
+        if result.flex_pdbqt_path:
+            self._report.receptor.update({
+                "rigid_pdbqt": str(result.rigid_pdbqt_path),
+                "flex_pdbqt": str(result.flex_pdbqt_path),
+            })
         self._report.paths["receptor_pdbqt"] = str(result.pdbqt_path)
         self._log(f"receptor prepared with {result.engine} engine "
                   f"({result.atoms_out} atoms)")
@@ -662,7 +771,6 @@ class DockingPipeline:
         raw_dir = self._run_dir / "raw"
         prep_dir = self._run_dir / "prepared"
         downloader = LigandDownloader()
-        preparator = LigandPreparator(LigandPrepOptions())
         records: list[LigandRecord] = []
         for index, entry in enumerate(self.config.ligands):
             self._check_cancel()
@@ -678,14 +786,22 @@ class DockingPipeline:
                 continue
             try:
                 assert record.path is not None
+                # Per-ligand preparation options (peer items 11-13):
+                # protonation / tautomers / stereochemistry are scientific
+                # decisions configured per ligand entry in the YAML.
+                options = LigandPrepOptions(**{
+                    key: value
+                    for key, value in entry.items()
+                    if key in LigandPrepOptions.__dataclass_fields__
+                })
+                preparator = LigandPreparator(options)
                 prep = preparator.prepare(record.path, prep_dir, record.identifier)
-                record.pdbqt_path = prep.pdbqt_path
-                record.status = "prepared"
                 record.num_rotatable_bonds = prep.num_rotatable_bonds
                 record.num_heavy_atoms = prep.num_heavy_atoms
                 # Per-ligand preparation provenance (audit items 10 + 26):
-                # hydrogen source, protonation choice, charge model.
-                record.prep = {
+                # hydrogen source, protonation choice, charge model, and
+                # the state chemistry of items 11-14.
+                prep_dict = {
                     "engine": prep.engine,
                     "charge_model": prep.charge_model,
                     "input_had_explicit_hydrogens": prep.input_had_explicit_hydrogens,
@@ -695,11 +811,46 @@ class DockingPipeline:
                     ) if prep.input_had_explicit_hydrogens is not None else "unknown",
                     "protonation": prep.protonation_source,
                     "num_protonation_variants": prep.num_protonation_variants,
-                    "tautomer": "single input tautomer (no enumeration)",
+                    "tautomer": (prep.tautomers or {}).get(
+                        "source", "single input tautomer (no enumeration)"),
                     "warnings": prep.warnings,
                 }
-                records.append(record)
-                self._log(f"{record.identifier}: prepared ({prep.num_atoms} atoms)")
+                # Full provenance blocks for the manifest (items 11-14):
+                if prep.protonation:
+                    prep_dict["protonation_detail"] = prep.protonation
+                if prep.tautomers:
+                    prep_dict["tautomers"] = prep.tautomers
+                if prep.stereocenters:
+                    prep_dict["stereocenters"] = prep.stereocenters
+                if prep.salt_stripping:
+                    prep_dict["salt_stripping"] = prep.salt_stripping
+                # One LigandRecord per prepared state (peer item 11c: one
+                # input ligand -> N PDBQTs -> N summary.csv entries with the
+                # state in the ligand id).
+                variants = prep.variants or [{
+                    "name": record.identifier,
+                    "kind": "input", "tag": "", "index": 1,
+                    "smiles": prep.smiles, "pdbqt": str(prep.pdbqt_path),
+                }]
+                for position, variant in enumerate(variants):
+                    if position == 0:
+                        variant_record = record
+                        variant_record.pdbqt_path = Path(variant["pdbqt"])
+                    else:
+                        variant_record = replace(
+                            record, identifier=variant["name"],
+                            pdbqt_path=Path(variant["pdbqt"]))
+                    variant_record.status = "prepared"
+                    variant_record.prep = {
+                        **prep_dict, "variant": {
+                            key: value for key, value in variant.items()
+                            if key != "pdbqt"}}
+                    records.append(variant_record)
+                self._log(
+                    f"{record.identifier}: prepared "
+                    f"({len(variants)} state(s), {prep.num_atoms} atoms)")
+                for warning in prep.warnings:
+                    self._log(f"warning: {record.identifier}: {warning}")
             except DockFlowError as exc:
                 record.status = "error"
                 record.error = str(exc)
@@ -713,7 +864,7 @@ class DockingPipeline:
         if not prepared:
             raise PipelineError("no ligand could be prepared")
         self._report.ligands = [r.to_dict() for r in records]
-        self._step("prepare_ligands", "done", f"{len(prepared)} ligands")
+        self._step("prepare_ligands", "done", f"{len(prepared)} ligand states")
         self._report.timings["prepare_ligands"] = round(time.perf_counter() - start, 2)
         return records
 
@@ -822,6 +973,34 @@ class DockingPipeline:
                 "ligand/residues found): the search space is almost certainly "
                 "too large for meaningful docking; set gridbox.source or center/size"
             )
+        # Box provenance (peer item 15): how strong is the pocket assumption,
+        # and how much of the receptor does the box swallow.
+        strength = assumption_strength(source)
+        if strength in ("weak", "medium"):
+            box_warnings.append(
+                f"Box derived from {source!r} (assumption strength: "
+                f"{strength}); consider confirming the pocket with "
+                "conservation analysis or a known active-site residue list."
+            )
+        receptor_coverage: float | None = None
+        prepared = self._receptor_result
+        if prepared is not None and prepared.pdbqt_path is not None:
+            try:
+                from .pdbio import parse_pdbqt
+
+                rec_atoms = [a for a in parse_pdbqt(prepared.pdbqt_path).atoms
+                             if not a.is_hydrogen]
+                if rec_atoms:
+                    inside = sum(1 for a in rec_atoms if box.contains(a.xyz))
+                    receptor_coverage = 100.0 * inside / len(rec_atoms)
+                    if receptor_coverage > 60.0:
+                        box_warnings.append(
+                            f"Box covers {receptor_coverage:.0f}% of the "
+                            "receptor (heavy atoms inside the box) - likely "
+                            "too large; consider a tighter pocket definition."
+                        )
+            except Exception:  # noqa: BLE001 - coverage is informational only
+                logger.debug("receptor coverage not computable", exc_info=True)
         ligand_heavy = next(
             (record.num_heavy_atoms for record in ligand_records
              if record.status == "prepared" and record.num_heavy_atoms),
@@ -843,6 +1022,10 @@ class DockingPipeline:
             **box.to_dict(),
             "vina_config": str(config_path),
             "warnings": box_warnings,
+            # peer item 15: provenance of the pocket assumption
+            "assumption_strength": strength,
+            "receptor_coverage_pct": (round(receptor_coverage, 1)
+                                      if receptor_coverage is not None else None),
         }
         self._report.paths["gridbox_config"] = str(config_path)
         self._log(f"grid box: {box}")
@@ -856,6 +1039,60 @@ class DockingPipeline:
         self._step("docking", "running")
         start = time.perf_counter()
         cfg = self.config.docking or {}
+        # Covalent docking (peer item 9): only backends that support a
+        # reactive-atom constraint may run it; the chemistry assumption is
+        # recorded, not assumed silently.
+        covalent_cfg = cfg.get("covalent") or {}
+        covalent_enabled = bool(covalent_cfg.get("enabled"))
+        covalent_decision: Any = "off"
+        covalent_residue: str | None = None
+        requested_backend = cfg.get("backend", "auto")
+        if covalent_enabled:
+            residue = covalent_cfg.get("receptor_reactive_residue") or {}
+            missing = [key for key in ("chain", "resseq", "atom")
+                       if not residue.get(key)]
+            if missing or not covalent_cfg.get("ligand_reactive_atom"):
+                raise PipelineError(
+                    "docking.covalent requires ligand_reactive_atom (index) "
+                    "and receptor_reactive_residue {chain, resseq, atom}"
+                )
+            supported = ("gnina", "vina-reactive")
+            if requested_backend not in supported:
+                raise PipelineError(
+                    f"covalent docking is not supported by backend "
+                    f"{requested_backend!r}; supported: {', '.join(supported)} "
+                    "(covalent docking needs a reactive-atom constraint that "
+                    "plain Vina cannot express)"
+                )
+            covalent_residue = (
+                f"{residue['chain']}:{int(residue['resseq'])}:"
+                f"{residue['atom']}")
+            bond_length = float(covalent_cfg.get("bond_length", 1.7))
+            covalent_decision = {
+                "enabled": True,
+                "ligand_reactive_atom": covalent_cfg.get("ligand_reactive_atom"),
+                "receptor_reactive_residue": residue,
+                "bond_length_a": bond_length,
+                "backend": requested_backend,
+                "chemistry_assumption": (
+                    "single covalent bond of "
+                    f"{bond_length:.2f} A between ligand atom "
+                    f"{covalent_cfg.get('ligand_reactive_atom')} (reactive "
+                    "atom type) and "
+                    f"{covalent_residue}; bond order and protonation of the "
+                    "linked atoms are NOT modelled - the constraint is "
+                    "geometric only"
+                ),
+            }
+            self._log(
+                f"covalent docking: reactive bond {covalent_residue} at "
+                f"{bond_length:.2f} A (chemistry assumption recorded in the "
+                "manifest)")
+        # Flexible receptor (peer item 8): the rigid part + flex file pair.
+        flex_path = (str(receptor_result.flex_pdbqt_path)
+                     if receptor_result.flex_pdbqt_path else None)
+        receptor_for_docking = (receptor_result.rigid_pdbqt_path
+                                or receptor_result.pdbqt_path)
         vina_cfg = VinaConfig.from_gridbox(
             box,
             scoring=cfg.get("scoring", "vina"),
@@ -867,16 +1104,22 @@ class DockingPipeline:
             timeout=float(cfg.get("timeout", 3600)),
             cnn_scoring=cfg.get("cnn_scoring"),
             cnn=cfg.get("cnn"),
+            flex_pdbqt=flex_path,
+            covalent_residue=covalent_residue,
         )
         engine = VinaEngine(
             vina_cfg,
-            backend=cfg.get("backend", "auto"),
+            backend=requested_backend,
             workdir=self._run_dir / "docking",
             vina_exec=self.app_config.vina_exec,
             smina_exec=self.app_config.smina_exec,
             gnina_exec=self.app_config.gnina_exec,
         )
         self._log(f"docking backend: {engine.backend}")
+        if flex_path:
+            self._log(f"flexible receptor docking: rigid part "
+                      f"{Path(receptor_for_docking).name} + "
+                      f"{Path(flex_path).name}")
         ligand_pdbqts = [
             record.pdbqt_path
             for record in ligand_records
@@ -951,7 +1194,7 @@ class DockingPipeline:
             if r.pdbqt_path is not None and Path(r.pdbqt_path).stem not in completed
         ]
         results = engine.dock_batch(
-            receptor_result.pdbqt_path,
+            receptor_for_docking,
             pending_pdbqts,
             out_dir=self._run_dir / "docking",
             ligand_records=pending_records,
@@ -961,6 +1204,77 @@ class DockingPipeline:
             on_result=on_result,
         )
         results = resumed_results + results
+
+        # Consensus scoring (peer item 16): re-dock every ligand with each
+        # additional scoring function / backend and merge the ranks
+        # (rank-by-rank consensus; every component is reported).
+        consensus_cfg = cfg.get("consensus")
+        consensus_decision: Any = "off"
+        if consensus_cfg:
+            if not isinstance(consensus_cfg, (list, tuple)) or not consensus_cfg:
+                raise PipelineError(
+                    "docking.consensus must be a non-empty list of scoring "
+                    "functions, e.g. [vina, vinardo, gnina_affinity]")
+            allowed = {"vina", "vinardo", "ad4", "gnina_affinity"}
+            unknown = [name for name in consensus_cfg if name not in allowed]
+            if unknown:
+                raise PipelineError(
+                    f"unknown consensus scoring {unknown}; allowed: "
+                    f"{sorted(allowed)}")
+            primary = cfg.get("scoring", "vina")
+            extras = [name for name in consensus_cfg if name != primary]
+            consensus_decision = {
+                "scoring_functions": list(consensus_cfg),
+                "method": "rank-by-rank (mean of per-scoring ligand ranks)",
+                "note": "consensus ranks are heuristic screening statistics",
+            }
+            for name in extras:
+                if name == "gnina_affinity":
+                    if not which(self.app_config.gnina_exec or "gnina"):
+                        raise PipelineError(
+                            "consensus scoring 'gnina_affinity' requires the "
+                            "gnina executable (not found)")
+                    extra_backend = "gnina"
+                else:
+                    extra_backend = "python"
+                extra_cfg = VinaConfig.from_gridbox(
+                    box,
+                    scoring=name,
+                    exhaustiveness=int(cfg.get("exhaustiveness", 8)),
+                    num_modes=int(cfg.get("num_modes", 9)),
+                    refine=int(cfg.get("refine", 5)),
+                    seed=cfg.get("seed"),
+                    cpu=int(cfg.get("cpu", 0)),
+                    timeout=float(cfg.get("timeout", 3600)),
+                    flex_pdbqt=flex_path,
+                    covalent_residue=covalent_residue,
+                )
+                extra_engine = VinaEngine(
+                    extra_cfg, backend=extra_backend,
+                    workdir=self._run_dir / "docking" / f"consensus_{name}",
+                    vina_exec=self.app_config.vina_exec,
+                    smina_exec=self.app_config.smina_exec,
+                    gnina_exec=self.app_config.gnina_exec,
+                )
+                self._log(f"consensus scoring: re-docking with {name}")
+                for result in results:
+                    if not result.ok or result.ligand is None:
+                        continue
+                    try:
+                        extra_result = extra_engine.dock(
+                            receptor_for_docking, result.ligand.pdbqt_path,
+                            out_path=(self._run_dir / "docking" /
+                                      f"consensus_{name}" /
+                                      f"{result.ligand_name}_out.pdbqt"),
+                            ligand_record=result.ligand,
+                        )
+                        if extra_result.best_affinity is not None:
+                            result.extra_scores[name] = extra_result.best_affinity
+                    except DockFlowError as exc:
+                        docking_warnings.append(
+                            f"consensus scoring {name} failed for "
+                            f"{result.ligand_name}: {exc}")
+
         summary_csv = write_summary_csv(results, self._run_dir / "docking" / "summary.csv")
         self._report.docking = {
             "backend": engine.backend,
@@ -968,6 +1282,11 @@ class DockingPipeline:
             "num_ok": sum(1 for r in results if r.ok),
             "resumed": len(resumed_results),
             "warnings": docking_warnings,
+            "decisions": {
+                "covalent": covalent_decision,
+                "consensus": consensus_decision,
+                "flexible_receptor": bool(flex_path),
+            },
             "results": [r.to_dict() for r in results],
             "summary_csv": str(summary_csv),
         }
@@ -1026,6 +1345,7 @@ class DockingPipeline:
         # ground truth - extract it and compute crystal_rmsd for every pose.
         reference_atoms = self._crystal_reference(target_record, box)
         payload: dict[str, Any] = {}
+        rmsd_method: str | None = None
         for result in rank_results(results):
             if not result.ok or result.out_path is None:
                 continue
@@ -1034,7 +1354,15 @@ class DockingPipeline:
                 reference_atoms=reference_atoms,
             )
             payload[result.ligand_name] = [a.to_dict() for a in analyses]
+            # Interaction fingerprints (peer item 18): bit per residue x
+            # contact type, CSV + RDKit bitvector exports.
+            if analyses:
+                from .analyzer import write_ifp_outputs
+
+                write_ifp_outputs(result.ligand_name, analyses, analysis_dir)
             for analysis in analyses:
+                if analysis.crystal_rmsd_method:
+                    rmsd_method = analysis.crystal_rmsd_method
                 if analysis.contacts:
                     from .analyzer import write_contacts_csv
 
@@ -1043,7 +1371,12 @@ class DockingPipeline:
         (analysis_dir / "interactions.json").write_text(
             json.dumps(payload, indent=2), encoding="utf-8"
         )
-        self._report.analysis = payload
+        # manifest.analysis carries the pose payload plus the RMSD method
+        # actually used (peer item 17).
+        self._report.analysis = {
+            "crystal_rmsd_method": rmsd_method,
+            "poses": payload,
+        }
         self._report.paths["analysis_json"] = str(analysis_dir / "interactions.json")
         self._report.paths["crystal_rmsd_reference"] = (
             f"{self._crystal_reference_resname} in {target_record.path.name}"
@@ -1082,7 +1415,8 @@ class DockingPipeline:
         source = getattr(box, "source", "") or ""
         resname = None
         if source.startswith(("pocket:", "ligand:")):
-            resname = source.split(":", 1)[1]
+            # pocket:XK2(A451) -> resname XK2 (instance label optional)
+            resname = source.split(":", 1)[1].split("(", 1)[0].strip()
         elif cfg.get("reference_ligand_resname"):
             resname = cfg["reference_ligand_resname"]
         elif cfg.get("source", "auto") in ("ligand", "auto") and \
@@ -1148,10 +1482,33 @@ class DockingPipeline:
                 rendered.extend(str(p) for p in images)
             except DockFlowError as exc:
                 self._log(f"visualization failed for {result.ligand_name}: {exc}")
-        self._report.visualization = {"images": rendered}
+        # Interactive 3D viewer (peer item 20): always generated for a
+        # completed run - self-contained HTML (3Dmol.js CDN), receptor +
+        # poses + grid box + clickable contacts + crystal reference
+        # overlay when redocking validation exists.
+        interactive_path = None
+        try:
+            from .interactive_viewer import build_interactive_html
+
+            # The viewer reads run_dir/manifest.json, which is normally
+            # published at the END of the run; snapshot the in-memory
+            # report now so the viewer sees the current state (the report
+            # stage rewrites the file with the final, complete data).
+            self._report.stages = self._stages.to_list()
+            self._report.save(self._run_dir / "manifest.json")
+            interactive_path = build_interactive_html(self._run_dir)
+        except Exception as exc:  # noqa: BLE001 - viewer must never fail a run
+            logger.warning("interactive viewer failed: %s", exc)
+        self._report.visualization = {
+            "images": rendered,
+            "interactive_html": str(interactive_path) if interactive_path else None,
+        }
+        self._report.paths["interactive_html"] = (
+            str(interactive_path) if interactive_path else None)
         self._report.paths["visualization_dir"] = str(viz_dir)
         self._step("visualization", "done" if rendered else "fallback",
-                   f"{len(rendered)} images")
+                   f"{len(rendered)} images"
+                   + (" + interactive.html" if interactive_path else ""))
         self._report.timings["visualization"] = round(time.perf_counter() - start, 2)
         self._progress(0.92, "visualization complete")
 
@@ -1182,6 +1539,25 @@ class DockingPipeline:
             "",
         ]
 
+        # -- Engine comparability + metal sites (peer items 4, 10) ----------
+        incomparable = decisions.get("incomparable_to") or []
+        if incomparable:
+            lines += [
+                f"> Comparability: results from this run are NOT directly "
+                f"comparable to receptors prepared with "
+                f"{', '.join(incomparable)} (hydrogen/charge differences); "
+                f"see manifest.receptor.decisions.comparable_to.",
+                "",
+            ]
+        from .structure_qc import metal_warning
+        metal_note = metal_warning(
+            decisions.get("metal_coordination")
+            if isinstance(decisions.get("metal_coordination"), list) else [],
+            backend=(self.config.docking or {}).get("backend", "vina"),
+        )
+        if metal_note:
+            lines += [f"> Metal site: {metal_note}", ""]
+
         # -- Redocking banner (audit item 18) --------------------------------
         banner_pose, banner_rmsd = None, None
         for result in ranked:
@@ -1194,13 +1570,20 @@ class DockingPipeline:
                     break
         if banner_rmsd is not None:
             verdict = "PASS" if banner_rmsd <= 2.0 else "FAIL"
+            method_text = (self._report.analysis or {}).get("crystal_rmsd_method")
+            method_note = (
+                f" Method: {method_text}." if method_text else ""
+            )
             lines += [
                 f"> **Redocking pose recovery: best pose RMSD = {banner_rmsd:.2f} A"
-                f" for {banner_pose}** (success threshold: <= 2.0 A) - {verdict}",
+                f" for {banner_pose}** - {verdict}",
                 "",
-                "RMSD is symmetry-tolerant heavy-atom Kabsch RMSD to the "
-                "co-crystallized ligand pose extracted from the target "
-                "structure; see docs/interaction_criteria.md.",
+                f"RMSD is symmetry-aware heavy-atom RMSD to the co-crystallized"
+                f" ligand pose extracted from the target structure"
+                f"{method_note}.",
+                "The 2.0 A pass mark is a **heuristic success threshold** "
+                "(community convention, not a validated cutoff for this "
+                "target); see docs/interaction_criteria.md.",
                 "",
             ]
 
@@ -1209,7 +1592,7 @@ class DockingPipeline:
             "## Results",
             "",
             "| ligand | best affinity (kcal/mol) | best crystal RMSD (A) | poses |"
-            " docking score efficiency | runtime (s) |",
+            " docking score efficiency (heuristic proxy) | runtime (s) |",
             "|---|---|---|---|---|---|",
         ]
         for result in ranked:
@@ -1226,8 +1609,9 @@ class DockingPipeline:
             )
         lines += [
             "",
-            "_docking score efficiency = affinity / heavy-atom count: a "
-            "Vina-score-derived proxy, **not** experimental ligand efficiency._",
+            "_docking score efficiency (heuristic proxy) = affinity / "
+            "heavy-atom count: a Vina-score-derived proxy, **not** "
+            "experimental ligand efficiency._",
             "",
         ]
 
@@ -1241,7 +1625,11 @@ class DockingPipeline:
                 )
                 if clusters:
                     lines += [
-                        f"## Pose clustering ({best.ligand_name}, Kabsch RMSD 2.0 A)",
+                        f"## Heuristic pose clustering ({best.ligand_name})",
+                        "",
+                        "Heuristic clustering: Kabsch RMSD, 2.0 A threshold; "
+                        "no thermodynamic meaning (cluster membership says "
+                        "nothing about binding free energy).",
                         "",
                         f"{len(best.poses)} poses in **{len(clusters)} cluster(s)**"
                         + (" (converged to a single binding mode)"
@@ -1264,7 +1652,8 @@ class DockingPipeline:
         # -- Residue hotspots (qualified terminology, audit item 13) ----------
         lines += ["## Residue contact hotspots (best ligand, top pose)", ""]
         if ranked and ranked[0].ok and self._report.analysis:
-            best = self._report.analysis.get(ranked[0].ligand_name) or []
+            best = (self._report.analysis.get("poses") or {}).get(
+                ranked[0].ligand_name) or []
             if best and best[0].get("residues"):
                 lines += [
                     "Contact types are **geometric criteria** (distance + atom "

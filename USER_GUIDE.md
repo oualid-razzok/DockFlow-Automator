@@ -296,6 +296,7 @@ runs/<run_id>/
 │                         #   <ligand>_poses.sdf (one record per pose)
 ├── analysis/             # interactions.json, per-pose contact CSVs
 ├── visualization/        # rendered PNGs (+ .pse sessions)
+│                         #   interactive.html - 3Dmol.js viewer
 └── logs/pipeline.log     # everything the app did, command by command
 ```
 
@@ -320,8 +321,33 @@ Key files:
   wall time, ISO start/stop, exit status, resolved engine/backend).
 - **`.pse` session** — opens in open-source PyMOL with receptor cartoon,
   poses, and the CGO grid-box wireframe already set up.
+- **`visualization/interactive.html`** — a self-contained interactive 3D
+  viewer (3Dmol.js from CDN; needs internet to open): pose switching,
+  grid box, clickable contact highlighting, and the crystal-pose overlay
+  when redocking validation exists (ADR-0006).  Generated for every
+  completed run; best-effort - never fails a run.
 - **`report.md`** — the run summarized for your lab notebook (results,
   pose-cluster table, warnings and the assumptions footer).
+- **`manifest.checksums`** — SHA-256 of every key input/output file
+  (run-dir-relative keys): verify a published run with any re-hash
+  (tamper detection, not signatures - ADR note in the manifest).
+
+### Post-run analysis commands (on a completed run directory)
+
+```bash
+# interaction fingerprints: pose similarity + clustering (ADR-0005)
+dockflow ifp --run-dir runs/hiv1_protease_redocking
+
+# consensus pose ranking: score z + IFP density + geometry (0.5/0.3/0.2)
+dockflow rank --run-dir runs/hiv1_protease_redocking
+# tune the weights (echoed in the output so tables stay reproducible)
+dockflow rank --run-dir runs/my_screen \
+    --score-weight 0.6 --ifp-weight 0.2 --geometry-weight 0.2
+```
+
+Both operate on the run's own outputs and label themselves as
+  **heuristic screening statistics** - the same honest framing as
+  everything else (see `docs/adr/ADR-0005-ifp-consensus-ranking.md`).
 
 ## 6. Choosing & interpreting results
 
@@ -416,26 +442,58 @@ dockflow enrich --summary big_screen/docking/summary.csv \
 prints ROC AUC, EF@1%, EF@5% and BEDROC (α=20).  Build the panel with
 `benchmarks/enrichment/download_dude.py` (DUD-E; see its README).
 
-For libraries beyond GUI comfort (hundreds to thousands of ligands):
+For libraries beyond GUI comfort (hundreds to 100k+ ligands):
 
 ```bash
-# parallel batches across a whole SDF library
+# a whole SDF library: chunked streaming + checkpoint resume
 python scripts/batch_dock.py \
     --receptor runs/prepared/receptor.pdbqt \
-    --ligands library.sdf \
-    --config runs/gridbox.txt \
+    --sdf library.sdf \
+    --center 12.3,-4.5,21.7 --size 22,24,20 \
     --out-dir runs/screen \
-    --parallel 4 --exhaustiveness 8
+    --chunk-size 500 --parallel 4 --exhaustiveness 8
+
+# already-prepared PDBQT libraries
+python scripts/batch_dock.py \
+    --receptor runs/prepared/receptor.pdbqt \
+    --ligands "screening/prepared/*.pdbqt" \
+    --center 12.3,-4.5,21.7 --size 22,24,20 \
+    --out-dir runs/screen --parallel 4
 ```
 
-- Prepare an SDF once (`dockflow prep ligand --in library.sdf --out-dir …`
-  handles multi-record files), then dock in parallel batches.
+- **Large-library safety (100k+ records)**: SDF/SMILES libraries are
+  prepared and docked in `--chunk-size` batches (default 500), so memory
+  stays constant no matter the library size; every finished ligand is
+  appended to `batch_results.csv` immediately, and re-running the SAME
+  command skips already-recorded ligands (interrupted screens resume;
+  `--no-resume` starts over).  The ranked `batch_summary.csv` is rebuilt
+  from the incremental file at the end.
+- `--backend python` uses the Vina python bindings per worker instead
+  of the CLI subprocesses (same science, no vina executable needed).
 - Lower `--exhaustiveness` (4–8) for the first pass; re-dock the top 1 %
   at 16–32.
-- The CLI backend with `--parallel N` runs N vina processes; the python
-  backend parallelizes inside Vina (`--cpu`). Either way, `summary.csv`
-  accumulates everything for spreadsheet triage.
 - `DOCKFLOW_CPU` caps cores globally if you share the machine.
+
+### Clusters (slurm array jobs)
+
+DockFlow does not manage a scheduler - it generates correct job files
+and makes every task resumable (ADR-0007):
+
+```bash
+python scripts/generate_sbatch.py \
+    --receptor runs/prepared/receptor.pdbqt \
+    --ligand-glob "screening/prepared/*.pdbqt" \
+    --center 12.3,-4.5,21.7 --size 22,24,20 \
+    --chunk-size 500 --array 0-19 --out dockflow_screen.sbatch
+# edit PARTITION/ACCOUNT/TIME, then: sbatch dockflow_screen.sbatch
+```
+
+One array task = one 500-ligand chunk = one `batch_dock.py --skip-first
+N --take 500` call with the shared checkpoint file, so failed tasks
+simply re-run and continue where they died.  Keep `--parallel 1` per
+task (Vina is shared-memory parallel; `dockflow info` warns about
+`cpu x parallel` oversubscription inside batch jobs).  Full discussion:
+`docs/adr/ADR-0007-hpc-execution.md`.
 
 ## 8. Python API cookbook
 

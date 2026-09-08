@@ -1,0 +1,10 @@
+ligand,pose,affinity_kcal_mol,rmsd_lb,rmsd_ub,crystal_rmsd,docking_score_efficiency,num_heavy_atoms,runtime_s,backend,error
+ixm_redock,1,-10.560,0.000,0.000,0.247,-0.5029,21,4.0,python,
+ixm_redock,2,-10.533,1.533,3.453,0.247,-0.5016,21,4.0,python,
+ixm_redock,3,-10.357,1.008,6.725,0.247,-0.4932,21,4.0,python,
+ixm_redock,4,-10.238,1.270,6.092,0.247,-0.4875,21,4.0,python,
+ixm_redock,5,-9.611,1.626,6.132,0.247,-0.4577,21,4.0,python,
+ixm_redock,6,-9.417,1.516,7.003,0.247,-0.4484,21,4.0,python,
+ixm_redock,7,-9.282,2.592,6.942,0.247,-0.4420,21,4.0,python,
+ixm_redock,8,-9.233,3.204,4.999,0.247,-0.4397,21,4.0,python,
+ixm_redock,9,-8.990,1.748,2.314,0.247,-0.4281,21,4.0,python,

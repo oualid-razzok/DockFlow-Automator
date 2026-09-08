@@ -1,0 +1,24 @@
+2026-09-08 01:34:00,341 | INFO    | dockflow.pipeline. | DockFlow-Automator 0.2.1 starting run 1BTY_benchmark
+2026-09-08 01:34:00,341 | INFO    | dockflow.pipeline. | pipeline step download: running 
+2026-09-08 01:34:00,341 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/download/1BTY.pdb -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1BTY_benchmark/raw/1bty.pdb
+2026-09-08 01:34:01,247 | INFO    | dockflow.pipeline. | pipeline step download: done 1BTY
+2026-09-08 01:34:01,250 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: running 
+2026-09-08 01:34:01,275 | WARNING | dockflow.preparator. | removed hetero species: 16 BEN, 1 CA. These may be structurally or catalytically required (metals/cofactors); keep them with receptor.keep_resnames or keep_hetero if they belong in the binding site
+2026-09-08 01:34:01,281 | WARNING | dockflow.preparator. | Receptor has 11 missing residues (chain A: 35-36; chain A: 67-68; chain A: 126; chain A: 131 (+2 more)). Vina cannot model loops; consider Modeller/SWISS-MODEL before docking. (Heuristic numbering-gap detection; see manifest.receptor.decisions.missing_residues.)
+2026-09-08 01:34:01,496 | INFO    | dockflow.preparator. | receptor prepared: 4108 -> 2021 atoms (engine=openbabel, +13H) -> receptor.pdbqt
+2026-09-08 01:34:01,497 | INFO    | dockflow.pipeline. | pipeline step prepare_receptor: done 2021 atoms
+2026-09-08 01:34:01,497 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: running 
+2026-09-08 01:34:01,498 | INFO    | dockflow.downloader. | downloading https://files.rcsb.org/ligands/view/BEN_ideal.sdf -> /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1BTY_benchmark/raw/ben.sdf
+2026-09-08 01:34:03,508 | INFO    | dockflow.pipeline. | pipeline step prepare_ligands: done 1 ligand states
+2026-09-08 01:34:03,509 | INFO    | dockflow.pipeline. | pipeline step gridbox: running 
+2026-09-08 01:34:03,584 | INFO    | dockflow.pipeline. | pipeline step gridbox: done ligand:BEN
+2026-09-08 01:34:03,585 | INFO    | dockflow.pipeline. | pipeline step docking: running 
+2026-09-08 01:34:05,896 | INFO    | dockflow.engine. | docked ben_redock with python backend in 2.3s, best affinity -5.55
+2026-09-08 01:34:05,897 | INFO    | dockflow.pipeline. | pipeline step docking: done 1 ligands
+2026-09-08 01:34:05,897 | INFO    | dockflow.pipeline. | pipeline step analysis: running 
+2026-09-08 01:34:05,953 | INFO    | dockflow.sdf_export. | exported 1 pose(s) to /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1BTY_benchmark/docking/ben_redock_poses.sdf
+2026-09-08 01:34:05,953 | INFO    | dockflow.pipeline. | pipeline step analysis: done 
+2026-09-08 01:34:05,953 | INFO    | dockflow.pipeline. | pipeline step visualization: skipped disabled in config
+2026-09-08 01:34:05,953 | INFO    | dockflow.pipeline. | pipeline step report: running 
+2026-09-08 01:34:05,964 | INFO    | dockflow.pipeline. | pipeline step report: done /home/z/my-project/DockFlow-Automator/benchmarks/redocking/results/1BTY_benchmark/report.md
+2026-09-08 01:34:05,974 | INFO    | dockflow.pipeline. | run 1BTY_benchmark finished in 5.6s (ok=True)
