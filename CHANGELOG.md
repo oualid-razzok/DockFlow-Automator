@@ -1,5 +1,53 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed - CI (nightly red on all four runs since Sep 9)
+- **Every redocking-benchmark worker died on GitHub runners and the driver
+  hid why.**  The nightly `regenerate.py` step reported
+  `error: worker crashed or produced no result` for all 24 complexes on
+  every run since Sep 9.  Three stacked defects:
+  - *The driver discarded the workers' output.*  `run_benchmark.py`
+    captured worker stdout/stderr (`capture_output=True`) and threw them
+    away, so a hard worker death (segfault, OOM kill) was indistinguishable
+    from a silent no-result.  The driver now reports the worker's exit
+    code - with the killing signal named (`killed by SIGSEGV (-11)`) -
+    plus the last lines of worker stderr/stdout into the job log, into
+    `<out>/worker_failures.log` (uploaded with the artifacts) and into the
+    CSV status column; a malformed worker JSON line is handled instead of
+    crashing the driver.
+  - *The worker could die without answering.*  `json.dumps(result)` sat
+    OUTSIDE the worker's try/except, so any non-serializable value in the
+    pipeline report killed the worker after all the docking work was done
+    - with exactly the opaque "worker crashed" symptom.  The worker now
+    guarantees one JSON status line in every failure mode (unserializable
+    result, unreadable complexes table, pipeline exception).
+  - *The nightly installed the wrong scientific stack.*  It installed
+    `.[prep,engine,viz,test]` unpinned: no `obabel` extra, so receptor prep
+    resolved to rdkit while every published row records
+    `engine=openbabel` (the regeneration's exact-column match could never
+    pass), and rdkit 2026.x / pandas 3.x drifted from the published
+    environment.  The nightly now pins the published recipe from
+    `results/1HVR_benchmark/environment.json` (openbabel 3.1.1.23,
+    rdkit 2025.9.6, pandas 2.2.3, numpy 2.5.3, meeko 0.8.0, gemmi 0.7.5)
+    and docks through the **official static AutoDock Vina 1.2.7 CLI
+    binary** instead of the PyPI python bindings - same libvina C++ core,
+    verified bit-identical (all 9 poses, delta 0.0) with identical inputs,
+    seed and threads; 1STP and 1HVR reproduce the published numbers
+    exactly through the new path.  A single-complex worker-smoke step runs
+    with full output before the 90-minute regeneration, and the artifact
+    upload now ships the regenerated results (it previously re-uploaded
+    the committed publication).
+- **The vina CLI backend passed `--log`, which Vina 1.2.x rejects.**
+  `cli_args()` emitted `--log` (a Vina 1.1.x option, removed in 1.2.x -
+  the table goes to stdout), so `backend: cli`/`smina`-style invocations
+  failed at argument parsing.  The log is now persisted from stdout.
+  Grid-box center/size are also passed at full round-trip precision
+  (`repr`) instead of `%.4f`: a 1-ULP box shift changes Vina's search
+  trajectory and breaks cross-backend regeneration.
+- New `tests/test_benchmark_harness.py` locks in the forensic behaviour
+  and the worker's one-JSON-line guarantee.
+
 ## [1.0.0rc1] - 2026-09-08
 
 **Feature freeze for v1.0 release and paper submission.**  Final

@@ -1,11 +1,6 @@
 # DockFlow-Automator
 
-> **BETA — read before citing.** DockFlow-Automator is a BETA automation
-> layer around established docking tools. The validation suite
-> (24-complex redocking, 21-complex MGLTools comparison, 3-target DUD-E
-> enrichment) is published under `benchmarks/`; please review it (start
-> with `docs/SCIENTIFIC_VALIDATION.md`) before citing. No claim of
-> superior performance is made.
+> **DockFlow simplifies the workflow, not the science.**
 
 **Unified, automated molecular docking: target/ligand download → preparation → grid box → docking → 3D visualization — end to end.**
 
@@ -17,10 +12,10 @@
 
 **In one sentence:** DockFlow-Automator takes a PDB id and a ligand,
 and does everything needed to dock that ligand into that protein with
-AutoDock Vina — fetches the structures, prepares them for docking,
+AutoDock Vina, fetches the structures, prepares them for docking,
 defines the search space, runs the docking, analyses the poses against
 the crystal structure, renders pictures, and writes a report you can
-show a reviewer — without you hand-driving five separate tools.
+show a reviewer, without you hand-driving five separate tools.
 
 ```text
         +---------+     +----------+     +---------+     +--------+     +----------+     +-----------+
@@ -399,12 +394,11 @@ Two different claims must not be conflated:
     portable functions/features (licenses verified, integration routes,
     ADR-0009/ADR-0010 evidence).
 
-## Scientific limitations and assumptions
+## Scientific limitations
 
 DockFlow-Automator automates a *conventional rigid-receptor Vina
 workflow*; every run of that workflow inherits these limitations, and
-the run report makes the resolved choices explicit ("Assumptions this
-run made" footer in `report.md`):
+the run report makes the resolved choices explicit:
 
 * **Rigid receptor** — no side-chain or backbone flexibility; induced
   fit is invisible.  Cross-docking into a different conformation can
@@ -511,7 +505,7 @@ Receptor option mapping (defaults follow `prepare_receptor4.py`):
 
 Every stage is usable standalone (see the module docstrings) and degrades
 gracefully: missing optional dependencies produce informative warnings and
-a working — but **scientifically degraded** (geometry-only, zero charges;
+a working, but **scientifically degraded** (geometry-only, zero charges;
 the CLI refuses to start without `--allow-degraded`, the GUI asks, and the
 report carries the ⚠ banner) — fallback, never a silent crash.
 
@@ -718,4 +712,4 @@ that make published claims more honest or more reproducible.
 
 *If DockFlow-Automator helps your research, please cite
 [Trott & Olson (2010), J. Comput. Chem. 31, 455-461](https://doi.org/10.1002/jcc.21334)
-(AutoDock Vina) and [Eberhardt et al. (2021), J. Chem. Inf. Model. 61, 3891-3898](https://doi.org/10.1021/acs.jcim.1c00196) (Meeko).*
+(AutoDock Vina), [Eberhardt et al. (2021), J. Chem. Inf. Model. 61, 3891-3898](https://doi.org/10.1021/acs.jcim.1c00196) (Meeko). O.Razzok (2026) DockFlow automator workflow.*

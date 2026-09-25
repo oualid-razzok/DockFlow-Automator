@@ -125,22 +125,32 @@ class VinaConfig:
 
     def cli_args(self, receptor: Path, ligand: Path, out: Path, log: Path,
                  mode: str = "dock") -> list[str]:
-        """Build the argument vector for the vina/smina CLI backend."""
+        """Build the argument vector for the vina/smina CLI backend.
+
+        ``log`` is accepted for signature compatibility but NOT passed on:
+        AutoDock Vina 1.2.x has no ``--log`` option (it was dropped after
+        1.1.x) and prints its results table to stdout, so :meth:`_dock_cli`
+        captures stdout and writes the log file itself.
+        """
+        del log
         args = [
             "--receptor", str(receptor),
             "--ligand", str(ligand),
             "--out", str(out),
-            "--log", str(log),
-            "--center_x", f"{self.center[0]:.4f}",
-            "--center_y", f"{self.center[1]:.4f}",
-            "--center_z", f"{self.center[2]:.4f}",
-            "--size_x", f"{self.size[0]:.4f}",
-            "--size_y", f"{self.size[1]:.4f}",
-            "--size_z", f"{self.size[2]:.4f}",
+            # Full round-trip precision (repr): a lossy %.4f center/size
+            # silently shifts the grid box by up to 1 ULP, which changes
+            # Vina's search trajectory and breaks regeneration of
+            # published numbers across python/CLI backends.
+            "--center_x", f"{self.center[0]!r}",
+            "--center_y", f"{self.center[1]!r}",
+            "--center_z", f"{self.center[2]!r}",
+            "--size_x", f"{self.size[0]!r}",
+            "--size_y", f"{self.size[1]!r}",
+            "--size_z", f"{self.size[2]!r}",
             "--scoring", self.scoring,
             "--num_modes", str(self.num_modes),
-            "--min_rmsd", f"{self.min_rmsd:g}",
-            "--energy_range", f"{self.energy_range:g}",
+            "--min_rmsd", f"{self.min_rmsd!r}",
+            "--energy_range", f"{self.energy_range!r}",
         ]
         if mode == "dock":
             args += ["--exhaustiveness", str(self.exhaustiveness)]
@@ -610,6 +620,13 @@ class VinaEngine:
             log_text = log_path.read_text(encoding="utf-8", errors="replace")
         elif result.stdout:
             log_text = result.stdout
+            # vina 1.2.x has no --log flag: persist the stdout table ourselves
+            # so the run directory keeps the same artifacts as every other
+            # backend.
+            try:
+                log_path.write_text(log_text, encoding="utf-8")
+            except OSError:
+                pass
         if not result.ok and not out.is_file():
             tail = "\n".join(result.stdout.splitlines()[-12:])
             raise DockingEngineError(

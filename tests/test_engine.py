@@ -29,9 +29,16 @@ def test_vina_config_cli_args(tmp_path: Path):
     )
     joined = " ".join(args)
     assert "--receptor r.pdbqt" in joined
-    assert "--center_x 1.5000" in joined
-    assert "--center_y -2.5000" in joined
-    assert "--size_z 20.0000" in joined
+    # center/size must round-trip EXACTLY (repr precision) so the CLI
+    # backend produces bit-identical maps to the python backend.
+    assert "--center_x 1.5" in joined
+    assert "--center_y -2.5" in joined
+    assert "--size_z 20" in joined
+    lookup = {args[i][2:]: args[i + 1] for i in range(len(args) - 1)
+              if args[i].startswith("--")}
+    for axis in "xyz":
+        assert float(lookup[f"center_{axis}"]) == config.center["xyz".index(axis)]
+        assert float(lookup[f"size_{axis}"]) == config.size["xyz".index(axis)]
     assert "--exhaustiveness 16" in joined
     assert "--num_modes 5" in joined
     assert "--seed 42" in joined
@@ -208,12 +215,11 @@ def test_engine_dock_with_mocked_cli(monkeypatch, tmp_path: Path,
     def fake_run_command(command, timeout=None, cwd=None, env=None, on_output=None):
         from dockflow_core.utils import CommandResult
 
-        # the CLI writes the poses file and log per the --out/--log args
+        # the CLI writes the poses file per --out; the log file is written
+        # by _dock_cli from stdout (vina 1.2.x has no --log flag)
         out_index = command.index("--out") + 1
-        log_index = command.index("--log") + 1
         Path(command[out_index]).write_text(docked_pdbqt_text, encoding="utf-8")
-        Path(command[log_index]).write_text("mode | affinity\n", encoding="utf-8")
-        return CommandResult(command=command, returncode=0, stdout="done")
+        return CommandResult(command=command, returncode=0, stdout="mode | affinity\n")
 
     _block_python_vina(monkeypatch)
     monkeypatch.setattr(engine_mod, "run_command", fake_run_command)

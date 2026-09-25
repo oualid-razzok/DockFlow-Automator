@@ -800,6 +800,56 @@ def _write_topn(pose_rmsds: dict[str, list[float]], out_dir: Path) -> None:
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# Worker-failure forensics (never swallow a crash)
+# ---------------------------------------------------------------------------
+def _exit_code_text(code: int) -> str:
+    """Human-readable worker exit status, incl. the killing signal."""
+    if code >= 0:
+        return f"exit code {code}"
+    try:
+        import signal
+
+        return f"killed by {signal.Signals(-code).name} ({code})"
+    except ValueError:
+        return f"killed by signal {-code}"
+
+
+def _tail(text: str, lines: int) -> str:
+    """Last ``lines`` non-empty lines of ``text`` (crash output at the end)."""
+    kept = [line for line in text.splitlines() if line.strip()]
+    return "\n".join(kept[-lines:])
+
+
+def _report_worker_failure(out_dir: Path, pdb_id: str, proc,
+                           note: str | None) -> None:
+    """Surface a dead worker's exit code and output tails.
+
+    The detail is printed to the driver log (so CI shows it), appended to
+    ``<out>/worker_failures.log`` (so it is uploaded with the artifacts) and
+    summarised in the CSV status column.  Without this, a hard worker crash
+    (segfault, OOM kill, ...) is indistinguishable from a silent no-result.
+    """
+    code = getattr(proc, "returncode", None)
+    stderr_tail = _tail(getattr(proc, "stderr", "") or "", 30)
+    stdout_tail = _tail(getattr(proc, "stdout", "") or "", 8)
+    header = [f"worker failure: {pdb_id}",
+              f"  exit: {_exit_code_text(code) if code is not None else 'unknown'}"]
+    if note:
+        header.append(f"  note: {note}")
+    block = "\n".join(header)
+    if stderr_tail:
+        block += f"\n  --- worker stderr (last lines) ---\n{stderr_tail}"
+    if stdout_tail:
+        block += f"\n  --- worker stdout (last lines) ---\n{stdout_tail}"
+    print("    " + block.replace("\n", "\n    "), flush=True)
+    try:
+        with open(out_dir / "worker_failures.log", "a", encoding="utf-8") as fh:
+            fh.write(block + "\n\n")
+    except OSError:
+        pass
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -830,17 +880,35 @@ def main() -> int:
     csv_path = out_dir / "redocking_results.csv"
 
     # ---- worker mode: run a single complex in this fresh interpreter ----
+    # A worker must ALWAYS terminate by printing exactly one JSON line -
+    # even when it dies in unusual ways (unserializable result value,
+    # unreadable complexes.csv, ...).  If it does not, the driver can only
+    # report the opaque "worker crashed" status - the failure mode this
+    # harness was built to avoid.
     if args.worker:
-        complexes = load_complexes(Path(args.complexes))
-        row = next(c for c in complexes if c["pdb_id"] == args.worker)
+        result: dict | None = None
         try:
-            result = run_complex(row, out_dir, args.exhaustiveness,
-                                 args.seed, args.cpu)
-        except Exception as exc:  # noqa: BLE001 - record, never crash the driver
-            result = {"pdb_id": row["pdb_id"], "ligand": row["ligand_resname"],
-                      "target": row.get("target", ""),
+            complexes = load_complexes(Path(args.complexes))
+            row = next(c for c in complexes if c["pdb_id"] == args.worker)
+        except Exception as exc:  # noqa: BLE001 - table unreadable / id missing
+            row = None
+            result = {"pdb_id": args.worker, "ligand": "", "target": "",
                       "status": f"error: {exc}"}
-        print(json.dumps(result), flush=True)
+        if result is None:
+            try:
+                result = run_complex(row, out_dir, args.exhaustiveness,
+                                     args.seed, args.cpu)
+            except Exception as exc:  # noqa: BLE001 - record, never crash the driver
+                result = {"pdb_id": row["pdb_id"], "ligand": row["ligand_resname"],
+                          "target": row.get("target", ""),
+                          "status": f"error: {exc}"}
+        try:
+            payload = json.dumps(result)
+        except (TypeError, ValueError) as exc:
+            payload = json.dumps(
+                {"pdb_id": args.worker, "ligand": "", "target": "",
+                 "status": f"error: result not JSON-serializable ({exc})"})
+        print(payload, flush=True)
         return 0
 
     # ---- report-only mode ------------------------------------------------
@@ -890,18 +958,33 @@ def main() -> int:
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True,
                                   timeout=args.worker_timeout)
-            last = proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() \
-                else ""
-            result = json.loads(last) if last.startswith("{") else None
         except subprocess.TimeoutExpired:
             result = {"pdb_id": pdb_id, "ligand": complex_row["ligand_resname"],
                       "target": complex_row.get("target", ""),
                       "status": f"error: worker exceeded "
                                 f"{args.worker_timeout:.0f}s timeout"}
-        if result is None:
-            result = {"pdb_id": pdb_id, "ligand": complex_row["ligand_resname"],
-                      "target": complex_row.get("target", ""),
-                      "status": "error: worker crashed or produced no result"}
+        else:
+            last = proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() \
+                else ""
+            result = None
+            note = None
+            if last.startswith("{"):
+                try:
+                    result = json.loads(last)
+                except ValueError as exc:
+                    note = f"worker printed a malformed JSON line ({exc})"
+            if result is None:
+                # The worker died without emitting its result JSON.  Capture
+                # WHY (exit code / signal + output tails) instead of hiding
+                # it: the detail goes into this log, into
+                # <out>/worker_failures.log and into the CSV status column.
+                _report_worker_failure(out_dir, pdb_id, proc, note)
+                status = "error: worker crashed or produced no result"
+                if proc.returncode not in (None, 0):
+                    status += f" ({_exit_code_text(proc.returncode)})"
+                result = {"pdb_id": pdb_id, "ligand": complex_row["ligand_resname"],
+                          "target": complex_row.get("target", ""),
+                          "status": status}
         append_row(csv_path, result)
         if result.get("status") == "ok":
             print(f"    best {result.get('best_affinity_kcal_mol')} kcal/mol, "

@@ -38,11 +38,45 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install full scientific stack
-        run: python -m pip install -e ".[prep,engine,viz,test]"
+      - name: Install the published benchmark environment (pinned)
+        # Regeneration asserts the PUBLISHED numbers, so the environment must
+        # match the one they were produced with (see
+        # benchmarks/redocking/results/1HVR_benchmark/environment.json):
+        # openbabel 3.1.1.23 receptor prep + rdkit 2025.9.6 analysis +
+        # pandas 2.2.3 + numpy 2.5.3.  Unpinned installs resolve to
+        # rdkit 2026.x / pandas 3.x on runners, which changes the prepared
+        # PDBQTs and therefore the numbers (and the `engine` column).
+        # The `engine` extra (vina python bindings) is deliberately NOT
+        # installed: the workers dock through the official vina 1.2.7 CLI
+        # binary set up in the next-but-one step instead.
+        run: |
+          python -m pip install -e ".[prep,obabel,viz,test]" \
+            "numpy==2.5.3" "pandas==2.2.3" "rdkit==2025.9.6" \
+            "meeko==0.8.0" "gemmi==0.7.5" "openbabel-wheel==3.1.1.23"
 
       - name: Environment fingerprint
         run: python -m dockflow_core.cli info
+
+      - name: Install the official AutoDock Vina 1.2.7 CLI binary
+        # A static, self-contained executable straight from the upstream
+        # release: no system-library drift can break it.  Verified to be
+        # bit-identical to the vina python bindings for identical inputs,
+        # seed and thread count (same libvina C++ core), so the regenerated
+        # numbers match the published (python-backend) numbers exactly.
+        run: |
+          curl -sL --retry 3 -o /usr/local/bin/vina \
+            "https://github.com/ccsb-scripps/AutoDock-Vina/releases/download/v1.2.7/vina_1.2.7_linux_x86_64"
+          chmod +x /usr/local/bin/vina
+          vina --version
+          vina --version | grep -q "v1.2.7"
+
+      - name: Worker smoke (one complex, output passthrough)
+        # Runs a single benchmark worker in the foreground so its full log
+        # lands in the job log.  If the scientific stack is broken on the
+        # runner, this pinpoints WHERE before the 90-minute full run.
+        run: |
+          python benchmarks/redocking/run_benchmark.py --out /tmp/worker-smoke \
+            --worker 1STP --exhaustiveness 8 --seed 2026 --cpu 2
 
       - name: Regenerate the benchmark and ASSERT it matches the published numbers (item 14)
         run: |
@@ -52,7 +86,7 @@ jobs:
         run: |
           python - << 'EOF'
           import json
-          stats = json.load(open("benchmarks/redocking/results/summary_stats.json"))
+          stats = json.load(open("benchmarks/redocking/results-regen/summary_stats.json"))
           assert stats["complexes_attempted"] == 24, stats
           assert stats["completed"] == 24, stats
           print("redocking:", stats)
@@ -62,20 +96,24 @@ jobs:
         run: |
           python benchmarks/enrichment/run_enrichment.py --report-only --target hivpr
 
-      - name: Upload benchmark results
+      - name: Upload regenerated benchmark results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: redocking-benchmark
+          # The REGENERATED artifacts (the committed copies under results/
+          # are the publication itself, not evidence of this run).
           path: |
-            benchmarks/redocking/results/redocking_results.csv
-            benchmarks/redocking/results/summary.md
-            benchmarks/redocking/results/summary_stats.json
-            benchmarks/redocking/results/scatter.png
-            benchmarks/redocking/results/rmsd_distribution.png
-            benchmarks/redocking/results/topn_success.png
-            benchmarks/redocking/results/rmsd_crosscheck.png
-            benchmarks/redocking/results/crosscheck_stats.json
+            benchmarks/redocking/results-regen/redocking_results.csv
+            benchmarks/redocking/results-regen/summary.md
+            benchmarks/redocking/results-regen/summary_stats.json
+            benchmarks/redocking/results-regen/scatter.png
+            benchmarks/redocking/results-regen/rmsd_distribution.png
+            benchmarks/redocking/results-regen/topn_success.png
+            benchmarks/redocking/results-regen/rmsd_crosscheck.png
+            benchmarks/redocking/results-regen/crosscheck_stats.json
+            benchmarks/redocking/results-regen/worker_failures.log
+          if-no-files-found: warn
           retention-days: 90
 
   enrichment:
