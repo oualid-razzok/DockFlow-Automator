@@ -2,6 +2,41 @@
 
 ## [Unreleased]
 
+### Fixed - CI
+- **The nightly RMSD cross-check disagreed with the published crystal
+  RMSDs by up to 5.15 A (mean 2.07 A over 193 poses).**  The 24-complex
+  regeneration itself passed exactly (all values within 1e-6); only
+  `rmsd_crosscheck.py` failed.  Root cause: its fallback implementation
+  (the hand-rolled Kabsch + automorphism used whenever spyrmsd is not
+  installed - i.e. on every CI runner) compared `pose[i]` against
+  `ref[i]` - an assumed index-identity between the pose PDBQT's atom
+  order and the crystal PDB's atom order.  Those orders differ (meeko
+  writes PDBQTs in RDKit order, crystal PDBs list atoms in file order;
+  20 of the 24 complexes are affected), so the independent RMSD compared
+  the wrong atom pairs and over-penalised.  The fallback now enumerates
+  the graph isomorphisms between the pose molecule and the reference
+  molecule (both built from their own coordinates with this script's
+  distance-bond rule) and minimises its own Kabsch RMSD over those
+  correspondences - when both graphs coincide these are exactly the
+  reference automorphisms, and any atom reordering is resolved natively,
+  exactly like spyrmsd's `match_graphs` and the production analyzer's
+  two-molecule `GetBestRMS` path.  A pose whose graph is too distorted
+  to be isomorphic falls back to a greedy mutual-nearest same-element
+  correspondence seeded under the reference automorphisms (mirroring the
+  analyzer's transplant fallback) instead of silently comparing the
+  wrong atoms.  No tolerance, pose set or expected value was changed:
+  all 193 poses still compared, limit still 0.1 A, and both independent
+  implementations now match the published values exactly (max |delta|
+  0.0 A, hand-rolled and spyrmsd alike).
+- **Windows: `_exit_code_text(-9)` reported `killed by signal 9` instead
+  of `killed by SIGKILL (-9)`.**  `signal.Signals(9)` raises `ValueError`
+  on Windows (no SIGKILL exists there), hitting the generic fallback
+  branch.  The fallback now consults a canonical POSIX signal-number ->
+  name table, so every runner reports the identical, greppable text;
+  SIGSEGV (present in Windows' enum) keeps its existing enum-resolved
+  name, and a new regression test simulates the Windows signal enum to
+  lock both branches in.
+
 ### Fixed - CI (nightly red on all four runs since Sep 9)
 - **Every redocking-benchmark worker died on GitHub runners and the driver
   hid why.**  The nightly `regenerate.py` step reported

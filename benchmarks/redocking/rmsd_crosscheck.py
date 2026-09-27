@@ -13,10 +13,17 @@ every pose of the 24-complex redocking benchmark:
   a package dependency;
 * **fallback** (when spyrmsd is not installed, e.g. in CI): a
   hand-rolled Kabsch + automorphism-enumeration implementation -
-  automorphisms enumerated with RDKit ``GetSubstructMatches`` on a
-  graph built by THIS script, RMSD minimised with THIS script's own
-  numpy Kabsch over every automorphism permutation (the same algorithm
-  spyrmsd implements, independently written).
+  atom correspondences enumerated with RDKit ``GetSubstructMatches``
+  as the graph ISOMORPHISMS between the pose molecule and the
+  reference molecule (each built by THIS script from its own
+  coordinates; when both graphs coincide these are exactly the
+  reference's automorphisms), RMSD minimised with THIS script's own
+  numpy Kabsch over every correspondence (the same algorithm spyrmsd
+  implements, independently written).  Matching graphs rather than
+  assuming an index-identical atom order is essential: meeko writes
+  pose PDBQTs in RDKit order while crystal PDBs list atoms in file
+  order, so an index-identity assumption compares the wrong atom
+  pairs.
 
 The method actually used is printed, written to
 ``crosscheck_stats.json`` and recorded on the plot, so the check is
@@ -128,12 +135,47 @@ def _spyrmsd_rmsd(ref_atoms, pose_atoms):
                           am_ref, am_pose, minimize=True))
 
 
+def _geometric_correspondence(ref_atoms, pose_atoms) -> list[int]:
+    """Greedy mutual-nearest same-element pose->ref index correspondence.
+
+    Docking poses are written in the receptor frame the crystal
+    reference lives in, so raw distances are a meaningful pairing
+    metric.  Only used to seed poses whose distance-bond graph is too
+    distorted to be isomorphic to the reference graph.
+    """
+    coords_ref = _coords(ref_atoms)
+    coords_pose = _coords(pose_atoms)
+    elements_ref = [chemical_element(a).upper() for a in ref_atoms]
+    elements_pose = [chemical_element(a).upper() for a in pose_atoms]
+    candidates = sorted(
+        (float(np.linalg.norm(coords_pose[i] - coords_ref[j])), i, j)
+        for i, pose_element in enumerate(elements_pose)
+        for j, ref_element in enumerate(elements_ref)
+        if pose_element == ref_element
+    )
+    seed: dict[int, int] = {}
+    used_ref: set[int] = set()
+    for _distance, i, j in candidates:
+        if i in seed or j in used_ref:
+            continue
+        seed[i] = j
+        used_ref.add(j)
+    return [seed[i] for i in range(len(pose_atoms))]
+
+
 def _handrolled_rmsd(ref_atoms, pose_atoms):
     """Hand-rolled Kabsch + automorphism enumeration (fallback).
 
-    Automorphisms are enumerated with RDKit substructure self-matches on
-    a molecule built by THIS function; the Kabsch superposition and the
-    minimum over permutations are implemented here with numpy.
+    The atom correspondence between the pose and the reference is taken
+    from ALL graph isomorphisms between the pose molecule and the
+    reference molecule - both built by THIS function from their own
+    coordinates with the distance-bond rule above - never from an
+    assumed index-identity between the pose file's atom order and the
+    crystal PDB's atom order (meeko/RDKit reordering breaks that
+    assumption and would compare the wrong atom pairs).  When both
+    graphs coincide, the isomorphisms are exactly the reference's
+    automorphisms.  The Kabsch superposition and the minimum over the
+    correspondences are implemented here with numpy.
     """
     from rdkit import Chem
     from rdkit.Chem import rdMolAlign  # noqa: F401 - documented contrast
@@ -159,8 +201,7 @@ def _handrolled_rmsd(ref_atoms, pose_atoms):
         return mol
 
     ref_mol = _mol(ref_atoms)
-    automorphisms = ref_mol.GetSubstructMatches(
-        ref_mol, uniquify=False, useChirality=False, maxMatches=10000)
+    pose_mol = _mol(pose_atoms)
     coords_ref = _coords(ref_atoms)
     coords_pose = _coords(pose_atoms)
 
@@ -174,10 +215,31 @@ def _handrolled_rmsd(ref_atoms, pose_atoms):
         aligned = (p - pc) @ rotation + qc
         return float(np.sqrt(np.mean(np.sum((aligned - q) ** 2, axis=1))))
 
+    # All graph isomorphisms reference -> pose: match[j] is the pose atom
+    # corresponding to reference atom j, so permuting the pose
+    # coordinates by match compares pose[match[j]] against ref[j].
+    matches = pose_mol.GetSubstructMatches(
+        ref_mol, uniquify=False, useChirality=False, maxMatches=100000)
     best = np.inf
-    for automorphism in automorphisms:
-        permuted = coords_pose[list(automorphism)]
+    for match in matches:
+        permuted = coords_pose[list(match)]
         best = min(best, _kabsch_rmsd(permuted, coords_ref))
+    if best < np.inf:
+        return float(best)
+
+    # The pose graph is too distorted to be isomorphic to the reference
+    # graph: seed a correspondence geometrically and minimise over the
+    # reference automorphisms composed with that seed (the same strategy
+    # the production analyzer's transplant fallback uses).
+    print("pose graph not isomorphic to the reference - "
+          "geometric correspondence fallback", file=sys.stderr)
+    automorphisms = ref_mol.GetSubstructMatches(
+        ref_mol, uniquify=False, useChirality=False, maxMatches=100000)
+    seed = _geometric_correspondence(ref_atoms, pose_atoms)
+    for automorphism in automorphisms:
+        permuted_ref = coords_ref[[automorphism[seed[i]]
+                                   for i in range(len(pose_atoms))]]
+        best = min(best, _kabsch_rmsd(coords_pose, permuted_ref))
     return float(best)
 
 

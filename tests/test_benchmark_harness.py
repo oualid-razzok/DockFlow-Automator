@@ -48,6 +48,32 @@ def test_exit_code_text_names_the_signal(harness):
     assert harness._exit_code_text(-9) == "killed by SIGKILL (-9)"
 
 
+def test_exit_code_text_falls_back_to_posix_names(harness, monkeypatch):
+    """Platforms whose signal enum lacks SIGKILL (Windows) still report the
+    canonical POSIX name - ``killed by SIGKILL (-9)`` - instead of the
+    generic ``killed by signal 9``."""
+    import enum
+    import signal
+
+    class WindowsLikeSignals(enum.IntEnum):
+        # the signals Windows' signal module defines (no SIGKILL among them)
+        SIGINT = 2
+        SIGILL = 4
+        SIGFPE = 8
+        SIGSEGV = 11
+        SIGTERM = 15
+        SIGBREAK = 21
+        SIGABRT = 22
+
+    monkeypatch.setattr(signal, "Signals", WindowsLikeSignals)
+    # still resolved through the (patched) platform enum:
+    assert harness._exit_code_text(-11) == "killed by SIGSEGV (-11)"
+    # resolved through the canonical POSIX table:
+    assert harness._exit_code_text(-9) == "killed by SIGKILL (-9)"
+    # a number no table knows about degrades to the generic text:
+    assert harness._exit_code_text(-99) == "killed by signal 99"
+
+
 def test_tail_keeps_the_last_non_empty_lines(harness):
     text = "\n".join(f"line {i}" for i in range(10)) + "\n\n\n"
     tail = harness._tail(text, 3)

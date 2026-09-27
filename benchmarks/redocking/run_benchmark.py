@@ -803,6 +803,21 @@ def _write_topn(pose_rmsds: dict[str, list[float]], out_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # Worker-failure forensics (never swallow a crash)
 # ---------------------------------------------------------------------------
+# Canonical POSIX signal numbers -> names, consulted only when the LOCAL
+# platform's signal enum lacks the number.  Windows defines no SIGKILL, so
+# ``signal.Signals(9)`` raises ValueError there and the name must come from
+# this table; the message text then matches the Linux runners exactly.
+_POSIX_SIGNAL_NAMES = {
+    1: "SIGHUP", 2: "SIGINT", 3: "SIGQUIT", 4: "SIGILL", 5: "SIGTRAP",
+    6: "SIGABRT", 7: "SIGBUS", 8: "SIGFPE", 9: "SIGKILL", 10: "SIGUSR1",
+    11: "SIGSEGV", 12: "SIGUSR2", 13: "SIGPIPE", 14: "SIGALRM",
+    15: "SIGTERM", 16: "SIGSTKFLT", 17: "SIGCHLD", 18: "SIGCONT",
+    19: "SIGSTOP", 20: "SIGTSTP", 21: "SIGTTIN", 22: "SIGTTOU",
+    23: "SIGURG", 24: "SIGXCPU", 25: "SIGXFSZ", 26: "SIGVTALRM",
+    27: "SIGPROF", 28: "SIGWINCH", 29: "SIGIO", 30: "SIGPWR", 31: "SIGSYS",
+}
+
+
 def _exit_code_text(code: int) -> str:
     """Human-readable worker exit status, incl. the killing signal."""
     if code >= 0:
@@ -812,6 +827,12 @@ def _exit_code_text(code: int) -> str:
 
         return f"killed by {signal.Signals(-code).name} ({code})"
     except ValueError:
+        # Signal number not defined on this platform (e.g. SIGKILL on
+        # Windows): use the canonical POSIX name so every runner reports
+        # the identical, greppable text.
+        name = _POSIX_SIGNAL_NAMES.get(-code)
+        if name is not None:
+            return f"killed by {name} ({code})"
         return f"killed by signal {-code}"
 
 
